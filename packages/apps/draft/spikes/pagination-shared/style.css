@@ -1,0 +1,80 @@
+:root {
+  color-scheme: light;
+  background: #ddd;
+  color: #111;
+}
+body {
+  margin: 0;
+}
+#editor {
+  width: 170mm;
+  margin: 24px auto;
+  padding: 20mm;
+  background: white;
+}
+.tiptap {
+  outline: none;
+  font:
+    16px / var(--line) Arial,
+    sans-serif;
+}
+p {
+  margin: 0;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+td,
+th {
+  border: 1px solid black;
+  padding: 4px;
+}
+img {
+  display: block;
+}
+.page-spacer {
+  background: #eee;
+  border-block: 1px dashed #555;
+  box-sizing: border-box;
+}
+@page {
+  size: 210mm 297mm;
+  margin: 20mm;
+  @top-center {
+    content: 'Draft spike header';
+  }
+  @bottom-center {
+    content: 'Page ' counter(page) ' / ' counter(pages);
+  }
+}
+@media print {
+  :root {
+    background: white;
+  }
+  #editor {
+    width: auto;
+    margin: 0;
+    padding: 0;
+  }
+  .page-spacer {
+    display: none;
+  }
+  p {
+    widows: 2;
+    orphans: 2;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+  img {
+    max-height: 257mm;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    break-inside: avoid;
+  }
+}

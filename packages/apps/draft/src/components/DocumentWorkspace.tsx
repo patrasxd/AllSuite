@@ -1,0 +1,804 @@
+import { TableTools } from './TableTools'
+import { LinkDialog, ReferencesDialog, ReferenceTools } from './ReferenceTools'
+import { NavigationPanel } from './NavigationPanel'
+import { exportLabels } from './ExportMenu'
+import { PageSetupDialog, pageLabels } from './PageSetupDialog'
+import {
+  DEFAULT_PAGE_SETUP,
+  orientPage,
+  pagePreset,
+  presetPage,
+  readPageSetup,
+  type PageSetup,
+} from '../engine/page-setup'
+import { setPageSetup } from '../editor/page-setup'
+import type { ExportFormat } from '../engine/export/model'
+import { useEffect, useRef, useState } from 'react'
+import { useEditor } from '@tiptap/react'
+import type { Editor } from '@tiptap/core'
+import { Slice } from '@tiptap/pm/model'
+import { closeHistory } from '@tiptap/pm/history'
+import { EditorState } from '@tiptap/pm/state'
+import {
+  Alert,
+  Button,
+  CheckIcon,
+  CloseIcon,
+  Dialog,
+  FullBleedLayout,
+  StatsHeader,
+  Text,
+  safeGetJSON,
+  safeSetJSON,
+} from '@all/ui'
+import { editorExtensions } from '../editor/extensions'
+import { setFormattingMarks } from '../editor/formatting-marks'
+import { setDocumentColumns } from '../editor/paragraph-commands'
+import { sanitizeClipboardHTML } from '../editor/paste'
+import { copySelection, pasteFromClipboard } from '../editor/clipboard'
+import { insertImageContent } from '../editor/image-insertion'
+import { DEFAULT_IMAGE_MAX_EDGE, type ImageOptions } from '../engine/images'
+import { ImageInsertDialog, ImageTools, imageLabels } from './ImageTools'
+import { plainTextParagraphs } from '../engine/formatting'
+import { countText } from '../engine/stats'
+import { loadDocumentFont, loadDocumentFonts } from '../engine/fonts'
+import { textBlockChange } from '../editor/text-block-change'
+import { normalizeDocumentLanguage } from '../engine/language'
+import { autoformatReplacement, isBlockAutoformatTrigger } from '../engine/autoformat'
+import { emptyDocument, type DraftDocument, type ImportResult } from '../engine/document-model'
+import {
+  chooseFile,
+  chooseSaveHandle,
+  docxName,
+  download,
+  readDocument,
+  writeToHandle,
+  type FileHandle,
+} from '../engine/files'
+import { EditorToolbar } from './EditorToolbar'
+import { PageCanvas } from './PageCanvas'
+import { PrintPreview, printLabels, type PreviewDocument } from './PrintPreview'
+import { printLayoutHTML } from '../engine/print-layout'
+import { applyReferenceSnapshot } from '../editor/references'
+import { ParagraphDialog } from './ParagraphDialog'
+import { FindReplacePanel } from './FindReplacePanel'
+import { SymbolDialog } from './SymbolDialog'
+import { translations } from '../i18n'
+import type { AppComponentProps } from '../types'
+
+export default function DocumentWorkspace({
+  locale,
+  isEink = false,
+  setHeader,
+  setIsDirty,
+  isDirty,
+}: AppComponentProps) {
+  const t = translations[locale]
+  const [dirty, setDirty] = useState(false)
+  const [fileName, setFileName] = useState('Untitled')
+  const [fileHandle, setFileHandle] = useState<FileHandle>()
+  const [documentLanguage, setDocumentLanguage] = useState<string>()
+  const [pendingImport, setPendingImport] = useState<ImportResult & { name: string; handle?: FileHandle }>()
+  const [busy, setBusy] = useState<'opening' | 'saving' | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [preview, setPreview] = useState<PreviewDocument | null>(null)
+  const exportAbort = useRef(new AbortController())
+  const printWindows = useRef(new Set<Window>())
+  const [progress, setProgress] = useState<number>()
+  const [zoom, setZoom] = useState<import('../engine/page-view').PageZoom>(100)
+  const [pageView, setPageView] = useState<import('../engine/page-view').PageView>('print')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pages, setPages] = useState(1)
+  const [pageSetup, updatePageSetup] = useState<PageSetup>({ ...DEFAULT_PAGE_SETUP })
+  const [pageSetupDialog, setPageSetupDialog] = useState(false)
+  const [initialStoryTarget, setInitialStoryTarget] = useState<string>()
+  const [columns, setColumns] = useState(1)
+  const [paragraphDialog, setParagraphDialog] = useState(false)
+  const [linkDialog, setLinkDialog] = useState(false)
+  const [referencesDialog, setReferencesDialog] = useState(false)
+  const [navigation, setNavigation] = useState(false)
+  const [findMode, setFindMode] = useState<'find' | 'replace' | null>(null)
+  const [symbolDialog, setSymbolDialog] = useState<'symbols' | 'emoji' | null>(null)
+  const [imageDialog, setImageDialog] = useState(false)
+  const [imageAltDialog, setImageAltDialog] = useState(false)
+  const [imageBusy, setImageBusy] = useState(false)
+  const [imageError, setImageError] = useState(false)
+  const [imageOptions, setImageOptions] = useState<ImageOptions>(() => {
+    const stored = safeGetJSON('allsuite:draft:image-options', { maxEdge: DEFAULT_IMAGE_MAX_EDGE, keepOriginal: false })
+    return {
+      maxEdge: Math.max(64, Math.min(16384, Number(stored?.maxEdge) || DEFAULT_IMAGE_MAX_EDGE)),
+      keepOriginal: stored?.keepOriginal === true,
+    }
+  })
+  const imageOptionsRef = useRef(imageOptions)
+  imageOptionsRef.current = imageOptions
+  const imageAbort = useRef(new AbortController())
+  const imageJobs = useRef(0)
+  const [preferences, setPreferences] = useState(() => ({
+    showRuler: true,
+    showFormattingMarks: false,
+    autoformat: true,
+    hyphenation: false,
+    ...safeGetJSON('allsuite:draft:view-preferences', {}),
+  }))
+  const [notice, setNotice] = useState<
+    'clipboardError' | 'fileError' | 'exportError' | 'printBlocked' | 'printColumns' | null
+  >(null)
+  const [counts, setCounts] = useState({
+    document: countText(''),
+    selection: undefined as ReturnType<typeof countText> | undefined,
+  })
+  const plainPasteUntil = useRef(0)
+  const autoformatEnabled = useRef(preferences.autoformat)
+  const currentLocale = useRef(locale)
+  const countCache = useRef<{ doc: Editor['state']['doc']; value: ReturnType<typeof countText> }>()
+  autoformatEnabled.current = preferences.autoformat
+  currentLocale.current = locale
+  const dirtyCallback = useRef(setIsDirty)
+  dirtyCallback.current = setIsDirty
+  const hasUnsavedChanges = dirty || Boolean(isDirty)
+  useEffect(() => {
+    if (exportAbort.current.signal.aborted) exportAbort.current = new AbortController()
+    const windows = printWindows.current
+    return () => {
+      exportAbort.current.abort()
+      for (const target of windows) if (!target.closed) target.close()
+      windows.clear()
+    }
+  }, [])
+  function updateCounts(current: Editor) {
+    if (countCache.current?.doc !== current.state.doc)
+      countCache.current = { doc: current.state.doc, value: countText(current.getText({ blockSeparator: '\n' })) }
+    const { from, to } = current.state.selection
+    const selectionText = from === to ? '' : current.state.doc.textBetween(from, to, '\n')
+    setCounts({ document: countCache.current.value, selection: selectionText ? countText(selectionText) : undefined })
+  }
+  const editor = useEditor({
+    extensions: editorExtensions({
+      requestPlainPaste: () => {
+        plainPasteUntil.current = Date.now() + 1500
+      },
+      requestLink: () => setLinkDialog(true),
+      requestImageEdit: () => setImageAltDialog(true),
+      getLocale: () => currentLocale.current,
+      onPages: setPages,
+    }),
+    content: '<p></p>',
+    editorProps: {
+      attributes: {
+        role: 'textbox',
+        'aria-label': t.editor,
+        'aria-multiline': 'true',
+        spellcheck: 'true',
+        lang: locale,
+      },
+      transformPastedHTML: sanitizeClipboardHTML,
+      handlePaste: (view, event) => {
+        if (plainPasteUntil.current < Date.now()) {
+          const files = Array.from(event.clipboardData?.files || [])
+          if (files.length) {
+            void addImages(files)
+            return true
+          }
+          const svg = event.clipboardData?.getData('image/svg+xml')
+          if (svg) {
+            void addImages([new Blob([svg], { type: 'image/svg+xml' })])
+            return true
+          }
+          const html = event.clipboardData?.getData('text/html')
+          if (html) {
+            const safe = sanitizeClipboardHTML(html)
+            if (safe.includes('<img')) {
+              void addImages(safe)
+              return true
+            }
+          }
+          return false
+        }
+        plainPasteUntil.current = 0
+        const text = event.clipboardData?.getData('text/plain')
+        if (text === undefined) return false
+        if (!text) return true
+        const nodes = plainTextParagraphs(text).map((node) => view.state.schema.nodeFromJSON(node))
+        const fragment = view.state.schema.node('doc', null, nodes).content
+        view.dispatch(view.state.tr.replaceSelection(new Slice(fragment, 0, 0)))
+        return true
+      },
+      handleTextInput: (view, from, to, input) => {
+        const start = view.state.doc.resolve(from).start()
+        const textBefore = view.state.doc.textBetween(start, from, '', '')
+        if (!autoformatEnabled.current && isBlockAutoformatTrigger(textBefore, input)) {
+          view.dispatch(view.state.tr.insertText(input, from, to))
+          return true
+        }
+        if (!autoformatEnabled.current) return false
+        const replacement = autoformatReplacement(textBefore, input, currentLocale.current)
+        if (!replacement) return false
+        view.dispatch(view.state.tr.insertText(input, from, to))
+        const insertedTo = from + input.length
+        view.dispatch(
+          closeHistory(
+            view.state.tr.insertText(
+              replacement.insert,
+              insertedTo - replacement.deleteBefore - input.length,
+              insertedTo,
+            ),
+          ),
+        )
+        return true
+      },
+      handleDrop: (view, event, _slice, moved) => {
+        if (moved) return false
+        const files = Array.from(event.dataTransfer?.files || [])
+        if (!files.length) return false
+        const position = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? view.state.selection.from
+        void addImages(files, '', position)
+        return true
+      },
+    },
+    onUpdate: ({ editor: current, transaction }) => {
+      setDirty(true)
+      dirtyCallback.current?.(true)
+      updateCounts(current)
+      setColumns(Number(current.state.doc.attrs.columns) || 1)
+      const page = readPageSetup({ attrs: current.state.doc.attrs })
+      updatePageSetup((previous) => (JSON.stringify(previous) === JSON.stringify(page) ? previous : page))
+      const changed = textBlockChange(transaction.before, transaction.doc)
+      if (changed)
+        changed.node.forEach((child) =>
+          child.marks.forEach((mark) => {
+            if (mark.type.name === 'textStyle' && typeof mark.attrs.fontFamily === 'string')
+              void loadDocumentFont(mark.attrs.fontFamily)
+          }),
+        )
+      else void loadDocumentFonts(current.getJSON() as DraftDocument)
+    },
+    onSelectionUpdate: ({ editor: current }) => updateCounts(current),
+  })
+  async function addImages(source: Blob[] | string, alt = '', position?: number) {
+    const signal = imageAbort.current.signal
+    imageJobs.current++
+    setImageBusy(true)
+    setImageError(false)
+    try {
+      await insertImageContent(editor, source, imageOptionsRef.current, signal, alt, position)
+    } catch {
+      if (!signal.aborted) setImageError(true)
+    } finally {
+      if (!signal.aborted) {
+        imageJobs.current--
+        setImageBusy(imageJobs.current > 0)
+      }
+    }
+  }
+  useEffect(() => {
+    safeSetJSON('allsuite:draft:image-options', imageOptions)
+  }, [imageOptions])
+  useEffect(() => {
+    if (imageAbort.current.signal.aborted) imageAbort.current = new AbortController()
+    return () => imageAbort.current.abort()
+  }, [])
+  useEffect(() => {
+    safeSetJSON('allsuite:draft:view-preferences', preferences)
+    if (editor) setFormattingMarks(editor, preferences.showFormattingMarks)
+  }, [editor, preferences])
+  useEffect(() => {
+    editor?.setOptions({
+      editorProps: {
+        ...editor.options.editorProps,
+        attributes: {
+          role: 'textbox',
+          'aria-label': t.editor,
+          'aria-multiline': 'true',
+          spellcheck: 'true',
+          lang: documentLanguage || locale,
+        },
+      },
+    })
+  }, [editor, locale, t.editor, documentLanguage])
+  useEffect(() => {
+    setHeader?.(
+      <StatsHeader
+        items={[
+          { key: 'words', label: t.words, value: counts.document.words },
+          { key: 'characters', label: t.characters, value: counts.document.charactersWithSpaces },
+        ]}
+      />,
+    )
+    return () => setHeader?.(null)
+  }, [setHeader, counts.document.words, counts.document.charactersWithSpaces, t.words, t.characters])
+  useEffect(() => {
+    if (!hasUnsavedChanges) return
+    const guard = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', guard)
+    return () => window.removeEventListener('beforeunload', guard)
+  }, [hasUnsavedChanges])
+  function replaceDocument(result: ImportResult & { name: string; handle?: FileHandle }) {
+    imageAbort.current.abort()
+    imageAbort.current = new AbortController()
+    imageJobs.current = 0
+    setImageBusy(false)
+    setImageError(false)
+    setImageAltDialog(false)
+    setLinkDialog(false)
+    setReferencesDialog(false)
+    setPageSetupDialog(false)
+    // A replacement recreates pagination's plugin view, whose initial count is one.
+    // Reset the React chrome too: an empty document does not emit a count change.
+    setPages(1)
+    setCurrentPage(1)
+    void loadDocumentFonts(result.document)
+    // A replacement document must release the preceding document's image/history graph.
+    editor.view.updateState(
+      EditorState.create({
+        schema: editor.schema,
+        doc: editor.schema.nodeFromJSON(result.document),
+        plugins: editor.state.plugins,
+      }),
+    )
+    setFormattingMarks(editor, preferences.showFormattingMarks)
+    editor.commands.setTextSelection(1)
+    updateCounts(editor)
+    setFileName(result.name)
+    setFileHandle(result.handle)
+    setDocumentLanguage(normalizeDocumentLanguage(result.language))
+    setColumns(Number(result.document.attrs?.columns) || 1)
+    updatePageSetup(readPageSetup(result.document))
+    setDirty(false)
+    dirtyCallback.current?.(false)
+  }
+  function changeDocumentLanguage(value: string) {
+    const normalized = normalizeDocumentLanguage(value)
+    if (!normalized || normalized === documentLanguage) return
+    setDocumentLanguage(normalized)
+    setDirty(true)
+    dirtyCallback.current?.(true)
+  }
+  async function openDocument() {
+    if (hasUnsavedChanges && !window.confirm(t.discardChanges)) return
+    try {
+      setBusy('opening')
+      setProgress(0)
+      setNotice(null)
+      const selected = await chooseFile()
+      if (!selected) return
+      const result = await readDocument(selected.file, selected.handle, setProgress)
+      if (result.unsupported.length) setPendingImport(result)
+      else replaceDocument(result)
+    } catch {
+      setNotice('fileError')
+    } finally {
+      setBusy(null)
+      setProgress(undefined)
+    }
+  }
+  function newDocument() {
+    if (hasUnsavedChanges && !window.confirm(t.discardChanges)) return
+    replaceDocument({ document: emptyDocument(), name: 'Untitled', unsupported: [] })
+  }
+  async function saveDocument(saveAs = false) {
+    try {
+      setBusy('saving')
+      setNotice(null)
+      const snapshot = editor.getJSON()
+      const { prepareReferenceExport } = await import('../browser/reference-layout')
+      const updated = await prepareReferenceExport(snapshot as DraftDocument, exportAbort.current.signal)
+      const { exportDocx } = await import('../engine/docx/export')
+      const blob = await exportDocx(updated, documentLanguage || locale)
+      let handle = fileHandle
+      if (saveAs || !handle) handle = await chooseSaveHandle(docxName(fileName))
+      if (handle) {
+        await writeToHandle(handle, blob)
+        setFileHandle(handle)
+        setFileName(handle.name)
+      } else download(blob, docxName(fileName))
+      if (JSON.stringify(editor.getJSON()) === JSON.stringify(snapshot)) {
+        setDirty(false)
+        dirtyCallback.current?.(false)
+      }
+    } catch {
+      setNotice('fileError')
+    } finally {
+      setBusy(null)
+    }
+  }
+  async function exportDocument(format: ExportFormat | 'print' | 'preview') {
+    const signal = exportAbort.current.signal
+    let snapshot = editor.getJSON() as DraftDocument
+    const sourceDocument = editor.state.doc
+    let target: Window | null = null
+    const close = () => {
+      if (target && printWindows.current.delete(target) && !target.closed) target.close()
+    }
+    setExporting(true)
+    setNotice(null)
+    try {
+      // Open during the trusted click, before importing converters or decoding fonts.
+      if (format === 'print') {
+        target = window.open('', '_blank')
+        if (!target) throw new Error('printBlocked')
+        target.opener = null
+        printWindows.current.add(target)
+        target.document.body.textContent = exportLabels[locale].preparing
+      }
+      const options = {
+        title: fileName.replace(/\.(docx|txt|md)$/i, '') || 'Untitled',
+        language: documentLanguage || locale,
+      }
+      if (format === 'pdf' || format === 'print' || format === 'preview') {
+        const browser = await import('../browser/export')
+        if (columns !== 1) {
+          if (format !== 'print') throw new Error('printColumns')
+          // Continuous multi-column documents retain their existing semantic print path.
+          const engine = await import('../engine/export')
+          const fonts = await browser.loadExportFonts(snapshot, signal)
+          await browser.printHTML(
+            target!,
+            engine.exportPDF(snapshot, { ...options, fonts, fontLicense: browser.fontLicense }),
+            signal,
+            close,
+          )
+          return
+        }
+        const { capturePrintLayout } = await import('../browser/print-layout')
+        const value = preview || {
+          layout: await capturePrintLayout(snapshot, options.title, options.language, signal, {
+            hyphenation: preferences.hyphenation,
+            onResolved: (resolved) => {
+              if (!signal.aborted && !editor.isDestroyed && editor.state.doc === sourceDocument)
+                applyReferenceSnapshot(editor, resolved)
+            },
+          }),
+          fonts: await browser.loadExportFonts(snapshot, signal),
+          license: browser.fontLicense,
+        }
+        if (signal.aborted || target?.closed) {
+          close()
+          return
+        }
+        if (format === 'preview') setPreview(value)
+        else if (format === 'print')
+          await browser.printHTML(target!, printLayoutHTML(value.layout, value.fonts, value.license), signal, close)
+        else {
+          const { exportPaginatedPDF } = await import('../engine/paginated-pdf')
+          const fonts = await browser.loadExportFonts(snapshot, signal, 'woff')
+          const bytes = await exportPaginatedPDF(value.layout, fonts, signal)
+          if (!signal.aborted)
+            download(new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' }), options.title + '.pdf')
+        }
+        return
+      }
+      const engine = await import('../engine/export')
+      const { prepareReferenceExport } = await import('../browser/reference-layout')
+      snapshot = await prepareReferenceExport(snapshot, signal)
+      if (format === 'html') {
+        const browser = await import('../browser/export')
+        const fonts = await browser.loadExportFonts(snapshot, signal)
+        if (signal.aborted || target?.closed) {
+          close()
+          return
+        }
+        const configured = { ...options, fonts, fontLicense: browser.fontLicense }
+        download(
+          new Blob([engine.exportHTML(snapshot, configured)], { type: 'text/html;charset=utf-8' }),
+          engine.exportFileName(fileName, format),
+        )
+      } else {
+        if (signal.aborted) return
+        const content = format === 'markdown' ? engine.exportMarkdown(snapshot) : engine.exportText(snapshot)
+        download(
+          new Blob([content], {
+            type: format === 'markdown' ? 'text/markdown;charset=utf-8' : 'text/plain;charset=utf-8',
+          }),
+          engine.exportFileName(fileName, format),
+        )
+      }
+    } catch (error) {
+      const canceled = signal.aborted || target?.closed
+      close()
+      if (!canceled)
+        setNotice(
+          (error as Error).message === 'printBlocked'
+            ? 'printBlocked'
+            : (error as Error).message === 'printColumns'
+              ? 'printColumns'
+              : 'exportError',
+        )
+    } finally {
+      if (!signal.aborted) setExporting(false)
+    }
+  }
+  useEffect(() => {
+    const keyboardUtilities = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey)) return
+      const key = event.key.toLowerCase()
+      if (key === 'p') {
+        event.preventDefault()
+        void exportDocument('print')
+        return
+      }
+      if (preview) return
+      if (key === 's') {
+        event.preventDefault()
+        void saveDocument()
+      }
+      if (key === 'f' || key === 'h') {
+        event.preventDefault()
+        setFindMode(key === 'h' ? 'replace' : 'find')
+      }
+    }
+    window.addEventListener('keydown', keyboardUtilities)
+    return () => window.removeEventListener('keydown', keyboardUtilities)
+  })
+  async function clipboard(action: 'cut' | 'copy' | 'paste' | 'plain') {
+    if (!editor) return
+    setNotice(null)
+    try {
+      if (action === 'cut' || action === 'copy') await copySelection(editor, action === 'cut')
+      else await pasteFromClipboard(editor, action === 'plain', (source) => addImages(source))
+    } catch {
+      setNotice('clipboardError')
+    }
+  }
+  if (!editor) return null
+  return (
+    <>
+      {preview && (
+        <PrintPreview
+          value={preview}
+          locale={locale}
+          busy={exporting}
+          error={notice ? (notice === 'printColumns' ? printLabels[locale].columns : t[notice]) : undefined}
+          onClose={() => {
+            setPreview(null)
+            requestAnimationFrame(() => editor.commands.focus())
+          }}
+          onPrint={() => {
+            void exportDocument('print')
+          }}
+          onPDF={() => {
+            void exportDocument('pdf')
+          }}
+        />
+      )}
+      <FullBleedLayout
+        className={`draft-workspace${preview ? ' draft-workspace--preview-hidden' : ''}`}
+        footer={
+          <div className="draft-status-bar">
+            <Text as="span" variant="caption" role="status" title={t.unsavedHint}>
+              {dirty ? t.dirty : t.clean}
+            </Text>
+            <Text as="span" variant="caption">
+              {t.words}: {counts.document.words}
+            </Text>
+            <Text as="span" variant="caption">
+              {t.charactersWithSpaces}: {counts.document.charactersWithSpaces}
+            </Text>
+            <Text as="span" variant="caption">
+              {t.charactersWithoutSpaces}: {counts.document.charactersWithoutSpaces}
+            </Text>
+            {counts.selection && (
+              <Text as="span" variant="caption">
+                {t.selection}: {counts.selection.words} {t.words.toLowerCase()}, {counts.selection.charactersWithSpaces}{' '}
+                {t.characters.toLowerCase()}
+              </Text>
+            )}
+            <Text as="span" variant="caption">
+              {t.pages}: {columns === 1 && pageView === 'print' ? pages : '—'}
+            </Text>
+            {columns === 1 && pageView === 'print' && (
+              <Text as="span" variant="caption">
+                {locale === 'pl' ? 'Bieżąca strona' : 'Current page'}: {Math.min(currentPage, pages)}
+              </Text>
+            )}
+          </div>
+        }
+      >
+        <EditorToolbar
+          editor={editor}
+          locale={locale}
+          zoom={zoom}
+          onZoom={setZoom}
+          pageView={pageView}
+          onPageView={setPageView}
+          pageSize={pagePreset(pageSetup)}
+          onPageSize={(preset) => {
+            if (preset === 'custom' || !setPageSetup(editor, presetPage(pageSetup, preset))) setPageSetupDialog(true)
+          }}
+          orientation={pageSetup.orientation}
+          onOrientation={(orientation) => {
+            if (!setPageSetup(editor, orientPage(pageSetup, orientation as PageSetup['orientation'])))
+              setPageSetupDialog(true)
+          }}
+          onPageSetup={() => setPageSetupDialog(true)}
+          onNew={newDocument}
+          onOpen={() => {
+            void openDocument()
+          }}
+          onSave={() => {
+            void saveDocument()
+          }}
+          onSaveAs={() => {
+            void saveDocument(true)
+          }}
+          saving={busy === 'saving' || exporting}
+          onExport={(format) => {
+            void exportDocument(format)
+          }}
+          onPrint={() => {
+            void exportDocument('print')
+          }}
+          onPrintPreview={() => {
+            void exportDocument('preview')
+          }}
+          onParagraphDialog={() => setParagraphDialog(true)}
+          showRuler={preferences.showRuler}
+          onShowRuler={(showRuler) => setPreferences((current) => ({ ...current, showRuler }))}
+          showFormattingMarks={preferences.showFormattingMarks}
+          onShowFormattingMarks={(showFormattingMarks) =>
+            setPreferences((current) => ({ ...current, showFormattingMarks }))
+          }
+          autoformat={preferences.autoformat}
+          onAutoformat={(autoformat) => setPreferences((current) => ({ ...current, autoformat }))}
+          hyphenation={preferences.hyphenation}
+          onHyphenation={(hyphenation) => setPreferences((current) => ({ ...current, hyphenation }))}
+          columns={columns}
+          onColumns={(value) => {
+            setDocumentColumns(editor, value)
+            setColumns(value)
+          }}
+          onFind={() => setFindMode('find')}
+          onReplace={() => setFindMode('replace')}
+          onSymbols={() => setSymbolDialog('symbols')}
+          onEmoji={() => setSymbolDialog('emoji')}
+          onImage={() => setImageDialog(true)}
+          onLink={() => setLinkDialog(true)}
+          onReferences={() => setReferencesDialog(true)}
+          onNavigation={() => setNavigation((current) => !current)}
+          showNavigation={navigation}
+          documentLanguage={documentLanguage || locale}
+          onDocumentLanguage={changeDocumentLanguage}
+          onClipboard={(action) => {
+            void clipboard(action)
+          }}
+        />
+        <TableTools editor={editor} locale={locale} />
+        <ReferenceTools editor={editor} locale={locale} onEditLink={() => setLinkDialog(true)} />
+        <LinkDialog editor={editor} locale={locale} open={linkDialog} onClose={() => setLinkDialog(false)} />
+        <ReferencesDialog
+          editor={editor}
+          locale={locale}
+          open={referencesDialog}
+          onClose={() => setReferencesDialog(false)}
+        />
+        <ImageTools editor={editor} locale={locale} editAlt={imageAltDialog} onEditAlt={setImageAltDialog} />
+        <ImageInsertDialog
+          open={imageDialog}
+          onClose={() => setImageDialog(false)}
+          locale={locale}
+          options={imageOptions}
+          onOptions={setImageOptions}
+          onInsert={(files, alt) => addImages(files, alt)}
+          busy={imageBusy}
+        />
+        {imageBusy && <Text role="status">{imageLabels[locale].processing}</Text>}
+        {imageError && (
+          <Alert variant="info" onClose={() => setImageError(false)}>
+            {imageLabels[locale].error}
+          </Alert>
+        )}
+        {findMode && (
+          <FindReplacePanel
+            editor={editor}
+            locale={locale}
+            mode={findMode}
+            onModeChange={setFindMode}
+            onClose={() => setFindMode(null)}
+          />
+        )}
+        {notice && (
+          <Alert variant="info" onClose={() => setNotice(null)}>
+            {notice === 'printColumns' ? printLabels[locale].columns : t[notice]}
+          </Alert>
+        )}
+        {busy === 'opening' && (
+          <Alert variant="info">
+            {t.opening}
+            {progress !== undefined ? ` ${progress}%` : ''}
+          </Alert>
+        )}
+        {busy === 'saving' && <Alert variant="info">{t.saving}</Alert>}
+        {exporting && <Text role="status">{exportLabels[locale].preparing}</Text>}
+        <div className="draft-content-region">
+          <NavigationPanel editor={editor} locale={locale} open={navigation} onClose={() => setNavigation(false)} />
+          <PageCanvas
+            onEditStories={(kind, variant) => {
+              setInitialStoryTarget(`${kind}:${variant}`)
+              setPageSetupDialog(true)
+            }}
+            editor={editor}
+            page={pageSetup}
+            pages={pages}
+            zoom={zoom}
+            onZoom={setZoom}
+            view={pageView}
+            onCurrentPage={setCurrentPage}
+            isEink={isEink}
+            locale={locale}
+            ruler={preferences.showRuler}
+            hyphenation={preferences.hyphenation}
+            columns={columns}
+          />
+        </div>
+        <ParagraphDialog
+          editor={editor}
+          locale={locale}
+          open={paragraphDialog}
+          onClose={() => setParagraphDialog(false)}
+        />
+        {pageSetupDialog && (
+          <PageSetupDialog
+            isEink={isEink}
+            initialStoryTarget={initialStoryTarget}
+            styleDefinitions={editor.state.doc.attrs.styleDefinitions}
+            page={pageSetup}
+            locale={locale}
+            open={pageSetupDialog}
+            onClose={() => {
+              setPageSetupDialog(false)
+              setInitialStoryTarget(undefined)
+            }}
+            onApply={(page) => setPageSetup(editor, page)}
+          />
+        )}
+        <SymbolDialog
+          editor={editor}
+          locale={locale}
+          open={Boolean(symbolDialog)}
+          initialTab={symbolDialog || 'symbols'}
+          onClose={() => setSymbolDialog(null)}
+        />
+        <Dialog
+          open={Boolean(pendingImport)}
+          onClose={() => setPendingImport(undefined)}
+          title={t.importReport}
+          description={t.importReportDescription}
+        >
+          <div className="draft-import-report">
+            <ul>
+              {pendingImport?.unsupported.map((item, index) => (
+                <li key={`${item.kind}-${index}`}>
+                  {item.kind in pageLabels[locale]
+                    ? pageLabels[locale][item.kind as keyof typeof pageLabels.en]
+                    : item.kind.startsWith('chart')
+                      ? item.kind
+                          .replace(/converted to images$/, t.chartConverted)
+                          .replace(/could not be rendered$/, t.chartFailed)
+                      : item.kind}
+                </li>
+              ))}
+            </ul>
+            <div className="draft-dialog-actions">
+              <Button variant="secondary" size="sm" icon={<CloseIcon />} onClick={() => setPendingImport(undefined)}>
+                {t.cancel}
+              </Button>
+              <Button
+                size="sm"
+                icon={<CheckIcon />}
+                onClick={() => {
+                  if (pendingImport) replaceDocument(pendingImport)
+                  setPendingImport(undefined)
+                }}
+              >
+                {t.continue}
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      </FullBleedLayout>
+    </>
+  )
+}

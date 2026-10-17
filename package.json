@@ -1,0 +1,84 @@
+{
+  "name": "allsuite",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Private, offline office tools with an independent ink-and-paper interface",
+  "workspaces": [
+    "apps/*",
+    "packages/apps/*"
+  ],
+  "overrides": {
+    "pako": "$pako",
+    "pdf-lib@1.17.1": {
+      "pako": "1.0.4"
+    },
+    "@pdf-lib/standard-fonts@1.0.0": {
+      "pako": "1.0.4"
+    },
+    "@pdf-lib/upng@1.0.1": {
+      "pako": "1.0.4"
+    },
+    "@tiptap/core": "3.32.0",
+    "@tiptap/pm": "3.32.0",
+    "@tiptap/extension-bubble-menu": "3.32.0",
+    "@tiptap/extension-floating-menu": "3.32.0",
+    "docx@9.11.0": {
+      "jszip": {
+        "pako": "1.0.4"
+      },
+      "xml-js": {
+        "sax": "1.2.4"
+      }
+    }
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace=@allsuite/shell",
+    "start": "npm run dev",
+    "preview": "npm run preview --workspace=@allsuite/shell",
+    "build": "npm run build --workspace=@allsuite/shell",
+    "typecheck": "tsc -p apps/shell/tsconfig.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "license:check": "node scripts/audit-dependency-licenses.mjs",
+    "test": "vitest run",
+    "test:ui": "npm --prefix AllUI test",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@all/ui": "file:./AllUI",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "framer-motion": "^11.3.0",
+    "pako": "1.0.4",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "sax": "1.2.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@napi-rs/canvas": "1.0.8",
+    "@playwright/test": "^1.64.0",
+    "@testing-library/jest-dom": "^6.4.8",
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "eslint": "^9.20.0",
+    "eslint-config-prettier": "^10.0.0",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.0.0",
+    "jsdom": "^24.1.1",
+    "pdfjs-dist": "6.3.289",
+    "prettier": "^3.5.0",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.24.0",
+    "vite": "^5.4.2",
+    "vite-plugin-pwa": "^0.20.0",
+    "vitest": "^2.0.5"
+  }
+}

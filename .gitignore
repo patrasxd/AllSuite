@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+npm-debug.log
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Dev dist (Vite PWA plugin)
+dev-dist/
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.gemini/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+
+# PWA/Service Worker
+sw.js
+sw.js.map
+workbox-*.js
+test-results/
+playwright-report/
+
+# Local scratch work and generated audit evidence (CI uploads these as artifacts)
+/tmp/
+*.log
+/docs/
+
+# Archived editor and its browser test; outside the active workspaces
+/packages/tools/draft/
+/tests/legacy/

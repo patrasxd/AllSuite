@@ -1,0 +1,93 @@
+/* Inter (Latin & Latin-ext for Polish characters) */
+@import '@fontsource/inter/latin-300.css';
+@import '@fontsource/inter/latin-ext-300.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-ext-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-ext-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-ext-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/inter/latin-ext-700.css';
+@import '@fontsource/inter/latin-800.css';
+@import '@fontsource/inter/latin-ext-800.css';
+
+/* JetBrains Mono (Latin & Latin-ext for Polish characters) */
+@import '@fontsource/jetbrains-mono/latin-400.css';
+@import '@fontsource/jetbrains-mono/latin-ext-400.css';
+@import '@fontsource/jetbrains-mono/latin-500.css';
+@import '@fontsource/jetbrains-mono/latin-ext-500.css';
+@import '@fontsource/jetbrains-mono/latin-600.css';
+@import '@fontsource/jetbrains-mono/latin-ext-600.css';
+@import '@fontsource/jetbrains-mono/latin-700.css';
+@import '@fontsource/jetbrains-mono/latin-ext-700.css';
+
+@import '@all/ui/tokens.css';
+@import '@all/ui/global.css';
+
+.suite-shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.suite-shell .all-header {
+  flex-shrink: 0;
+}
+.suite-shell .header-logo {
+  min-width: 44px;
+  min-height: 44px;
+}
+@media (pointer: coarse) {
+  .suite-shell .all-header-menu-btn,
+  .suite-shell .all-header-menu-option,
+  .suite-shell .all-header-menu-install-btn {
+    position: relative;
+  }
+  .suite-shell .all-header-menu-btn::after,
+  .suite-shell .all-header-menu-option::after,
+  .suite-shell .all-header-menu-install-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+.suite-workspace {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.home-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--all-space-16) 0 var(--all-space-20);
+}
+.suite-privacy {
+  font-size: 0.7rem;
+  color: var(--all-text-dim);
+}
+@media (max-width: 640px) {
+  .home-page {
+    padding: var(--all-space-6) 0 var(--all-space-12);
+  }
+}
+
+[data-motion='none'] *,
+[data-motion='none'] *::before,
+[data-motion='none'] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+.legal-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--all-space-16) 0;
+}

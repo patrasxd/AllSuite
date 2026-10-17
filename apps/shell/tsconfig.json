@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@allsuite/draft": ["../../packages/apps/draft/src/index.tsx"],
+      "@allsuite/draft/metadata": ["../../packages/apps/draft/src/metadata.ts"]
+    }
+  },
+  "include": ["src", "../../packages/apps/*/src"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "../../packages/**/*.test.ts", "../../packages/**/*.test.tsx"]
+}
