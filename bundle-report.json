@@ -1,0 +1,233 @@
+[
+  {
+    "file": "assets/draft-paste-sanitizer-DowdsyMd.js",
+    "entry": false,
+    "bytes": 30463,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/index-DyfyYw7S.js",
+    "entry": true,
+    "bytes": 299743,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [],
+    "dynamicImports": [
+      "assets/index-CvxP6ESD.js"
+    ]
+  },
+  {
+    "file": "assets/index-CvxP6ESD.js",
+    "entry": false,
+    "bytes": 441,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [
+      "assets/index-DyfyYw7S.js"
+    ],
+    "dynamicImports": [
+      "assets/DocumentWorkspace-CYUgp4uU.js"
+    ]
+  },
+  {
+    "file": "assets/DocumentWorkspace-CYUgp4uU.js",
+    "entry": false,
+    "bytes": 767525,
+    "editor": true,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [
+      "assets/index-DyfyYw7S.js",
+      "assets/draft-paste-sanitizer-DowdsyMd.js"
+    ],
+    "dynamicImports": [
+      "assets/reference-layout-DubJoRG6.js",
+      "assets/carlito-DRsPRvRv.js",
+      "assets/caladea-BFoHbI4T.js",
+      "assets/arimo-OfVQoPeE.js",
+      "assets/tinos-DABV4FGP.js",
+      "assets/cousine-C2LY-noq.js",
+      "assets/index-quOsxCDj.js",
+      "assets/reference-layout-DubJoRG6.js",
+      "assets/index-CbY1Tvom.js",
+      "assets/export-D1E6ReAr.js",
+      "assets/index-cbPTnwom.js",
+      "assets/print-layout-DoXXBXWw.js",
+      "assets/paginated-pdf-0oYiIx5R.js",
+      "assets/index-cbPTnwom.js",
+      "assets/reference-layout-DubJoRG6.js",
+      "assets/export-D1E6ReAr.js"
+    ]
+  },
+  {
+    "file": "assets/index-CbY1Tvom.js",
+    "entry": false,
+    "bytes": 429918,
+    "editor": false,
+    "docx": true,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [
+      "assets/DocumentWorkspace-CYUgp4uU.js",
+      "assets/index-DyfyYw7S.js",
+      "assets/draft-paste-sanitizer-DowdsyMd.js"
+    ],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/export-D1E6ReAr.js",
+    "entry": false,
+    "bytes": 37189,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": true,
+    "imports": [
+      "assets/DocumentWorkspace-CYUgp4uU.js",
+      "assets/index-DyfyYw7S.js",
+      "assets/draft-paste-sanitizer-DowdsyMd.js"
+    ],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/index-cbPTnwom.js",
+    "entry": false,
+    "bytes": 5575,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [
+      "assets/DocumentWorkspace-CYUgp4uU.js",
+      "assets/index-DyfyYw7S.js",
+      "assets/draft-paste-sanitizer-DowdsyMd.js"
+    ],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/print-layout-DoXXBXWw.js",
+    "entry": false,
+    "bytes": 6578,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [
+      "assets/reference-layout-DubJoRG6.js",
+      "assets/DocumentWorkspace-CYUgp4uU.js",
+      "assets/index-DyfyYw7S.js",
+      "assets/draft-paste-sanitizer-DowdsyMd.js"
+    ],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/reference-layout-DubJoRG6.js",
+    "entry": false,
+    "bytes": 4114,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [
+      "assets/DocumentWorkspace-CYUgp4uU.js",
+      "assets/index-DyfyYw7S.js",
+      "assets/draft-paste-sanitizer-DowdsyMd.js"
+    ],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/paginated-pdf-0oYiIx5R.js",
+    "entry": false,
+    "bytes": 796230,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [
+      "assets/index-DyfyYw7S.js",
+      "assets/DocumentWorkspace-CYUgp4uU.js",
+      "assets/draft-paste-sanitizer-DowdsyMd.js"
+    ],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/carlito-DRsPRvRv.js",
+    "entry": false,
+    "bytes": 1,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": true,
+    "imports": [],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/caladea-BFoHbI4T.js",
+    "entry": false,
+    "bytes": 1,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": true,
+    "imports": [],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/arimo-OfVQoPeE.js",
+    "entry": false,
+    "bytes": 1,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": true,
+    "imports": [],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/tinos-DABV4FGP.js",
+    "entry": false,
+    "bytes": 1,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": true,
+    "imports": [],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/cousine-C2LY-noq.js",
+    "entry": false,
+    "bytes": 1,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": true,
+    "imports": [],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/index-quOsxCDj.js",
+    "entry": false,
+    "bytes": 36866,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [
+      "assets/DocumentWorkspace-CYUgp4uU.js",
+      "assets/index-DyfyYw7S.js",
+      "assets/draft-paste-sanitizer-DowdsyMd.js"
+    ],
+    "dynamicImports": []
+  }
+]
