@@ -56,6 +56,12 @@ test('@smoke Polish preferences and blocked browser storage both work', async ({
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
+test('@smoke e-ink keeps the home hero visible with motion disabled', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('allsuite:theme', 'e-ink-dark'))
+  await page.goto('./')
+  await expect(page.getByRole('heading', { level: 1, name: /All\s*Suite/ })).toBeVisible()
+})
+
 test('header changes language, theme and e-reader mode', async ({ page }) => {
   await page.goto('./#/draft')
   await page.getByRole('button', { name: 'Open preferences menu', exact: true }).click()

@@ -10,7 +10,7 @@ export const metadata: AppMetadata = {
     pl: 'Pisz i formatuj dokumenty prywatnie, w przejrzystej przestrzeni działającej offline.',
   },
   category: 'documents',
-  tags: { en: ['Documents', 'Offline', 'Private'], pl: ['Dokumenty', 'Offline', 'Prywatnie'] },
+  tags: { en: ['Documents'], pl: ['Dokumenty'] },
   icon: createElement(
     'svg',
     {
