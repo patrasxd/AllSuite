@@ -137,7 +137,9 @@ export function SuggestionsPanel({
                   <Badge size="sm" variant={badgeVariant(suggestion)}>
                     {label(suggestion)}
                   </Badge>
-                  <Text as="span" variant="secondary">{suggestion.author}</Text>
+                  <Text as="span" variant="secondary">
+                    {suggestion.author}
+                  </Text>
                   <time className="all-text-elem all-text--caption" dateTime={suggestion.timestamp}>
                     {date(suggestion.timestamp)}
                   </time>

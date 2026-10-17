@@ -36,7 +36,11 @@ export function StarterTemplatePicker({ open, locale, onClose, onBlank, onSelect
       description={t.newDocumentDescription}
       maxWidth="full"
       className="draft-template-dialog"
-      footer={<Button variant="secondary" onClick={onClose}>{t.cancel}</Button>}
+      footer={
+        <Button variant="secondary" onClick={onClose}>
+          {t.cancel}
+        </Button>
+      }
     >
       <div className="draft-template-browser">
         <PillGroup
@@ -49,11 +53,7 @@ export function StarterTemplatePicker({ open, locale, onClose, onBlank, onSelect
         />
         <div className="draft-template-grid" role="group" aria-label={t.starterTemplates}>
           {category === 'all' && (
-            <Button
-              variant="outline"
-              className="draft-template-card draft-template-card--blank"
-              onClick={onBlank}
-            >
+            <Button variant="outline" className="draft-template-card draft-template-card--blank" onClick={onBlank}>
               <span className="draft-template-preview draft-template-preview--blank" aria-hidden="true">
                 <span className="draft-template-preview__sheet">
                   <span className="draft-template-blank-mark">+</span>

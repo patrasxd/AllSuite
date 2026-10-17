@@ -50,7 +50,13 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
       fileName: 'Modern CV',
       title: 'Name Surname',
       subtitle: 'Role · City · Email · Phone',
-      sections: { profile: 'Profile', experience: 'Experience', projects: 'Selected projects', education: 'Education', skills: 'Skills' },
+      sections: {
+        profile: 'Profile',
+        experience: 'Experience',
+        projects: 'Selected projects',
+        education: 'Education',
+        skills: 'Skills',
+      },
       lines: {
         profile: ['Summarize your strengths and the value you bring in two or three lines.'],
         experience: ['Role · Organization · YYYY–present', 'Describe an outcome with a clear result or measure.'],
@@ -65,7 +71,14 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
       fileName: 'Academic CV',
       title: 'Name Surname',
       subtitle: 'Discipline · Institution · Email',
-      sections: { profile: 'Research profile', education: 'Education', research: 'Research experience', teaching: 'Teaching', publications: 'Selected publications', awards: 'Awards and grants' },
+      sections: {
+        profile: 'Research profile',
+        education: 'Education',
+        research: 'Research experience',
+        teaching: 'Teaching',
+        publications: 'Selected publications',
+        awards: 'Awards and grants',
+      },
       lines: {
         profile: ['Describe your research interests and academic focus.'],
         education: ['Degree · Institution · Dissertation or thesis · Year'],
@@ -129,7 +142,13 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
       fileName: 'Project plan',
       title: 'Project plan',
       subtitle: 'Project · Owner · Date',
-      sections: { objective: 'Objective', scope: 'Scope', milestones: 'Milestones', risks: 'Risks and dependencies', next: 'Next steps' },
+      sections: {
+        objective: 'Objective',
+        scope: 'Scope',
+        milestones: 'Milestones',
+        risks: 'Risks and dependencies',
+        next: 'Next steps',
+      },
       lines: {
         prepared: ['Prepared by · Date'],
         objective: ['State the outcome and how success will be measured.'],
@@ -192,7 +211,13 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
       fileName: 'CV nowoczesne',
       title: 'Imię i nazwisko',
       subtitle: 'Stanowisko · Miasto · E-mail · Telefon',
-      sections: { profile: 'Profil', experience: 'Doświadczenie', projects: 'Wybrane projekty', education: 'Wykształcenie', skills: 'Umiejętności' },
+      sections: {
+        profile: 'Profil',
+        experience: 'Doświadczenie',
+        projects: 'Wybrane projekty',
+        education: 'Wykształcenie',
+        skills: 'Umiejętności',
+      },
       lines: {
         profile: ['W dwóch lub trzech zdaniach opisz swoje mocne strony i wartość, którą wnosisz.'],
         experience: ['Stanowisko · Organizacja · RRRR–obecnie', 'Opisz rezultat i podaj konkretny efekt.'],
@@ -207,7 +232,14 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
       fileName: 'CV akademickie',
       title: 'Imię i nazwisko',
       subtitle: 'Dziedzina · Uczelnia · E-mail',
-      sections: { profile: 'Profil badawczy', education: 'Wykształcenie', research: 'Doświadczenie badawcze', teaching: 'Dydaktyka', publications: 'Wybrane publikacje', awards: 'Nagrody i granty' },
+      sections: {
+        profile: 'Profil badawczy',
+        education: 'Wykształcenie',
+        research: 'Doświadczenie badawcze',
+        teaching: 'Dydaktyka',
+        publications: 'Wybrane publikacje',
+        awards: 'Nagrody i granty',
+      },
       lines: {
         profile: ['Opisz zainteresowania badawcze i obszar specjalizacji.'],
         education: ['Stopień · Uczelnia · Rozprawa lub praca · Rok'],
@@ -268,7 +300,13 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
       fileName: 'Plan projektu',
       title: 'Plan projektu',
       subtitle: 'Projekt · Osoba odpowiedzialna · Data',
-      sections: { objective: 'Cel', scope: 'Zakres', milestones: 'Etapy', risks: 'Ryzyka i zależności', next: 'Dalsze kroki' },
+      sections: {
+        objective: 'Cel',
+        scope: 'Zakres',
+        milestones: 'Etapy',
+        risks: 'Ryzyka i zależności',
+        next: 'Dalsze kroki',
+      },
       lines: {
         prepared: ['Autor · Data'],
         objective: ['Opisz rezultat i sposób mierzenia powodzenia.'],
@@ -308,17 +346,18 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
   },
 }
 
-const palette: Record<StarterTemplateId, { heading: string; title: string; body: string; align?: 'left' | 'center' }> = {
-  cv: { heading: '#245764', title: '#173d49', body: 'Arimo' },
-  'cv-modern': { heading: '#5b4b8a', title: '#3c315f', body: 'Arimo' },
-  'cv-academic': { heading: '#405d4a', title: '#2a4032', body: 'Carlito' },
-  'cover-letter': { heading: '#6a4b37', title: '#493424', body: 'Carlito' },
-  letter: { heading: '#52634a', title: '#394735', body: 'Carlito' },
-  report: { heading: '#68503c', title: '#493424', body: 'Arimo' },
-  'project-plan': { heading: '#3f5b73', title: '#2c4257', body: 'Arimo' },
-  'meeting-notes': { heading: '#3f5b73', title: '#2c4257', body: 'Carlito' },
-  essay: { heading: '#624755', title: '#49333f', body: 'Tinos', align: 'center' },
-}
+const palette: Record<StarterTemplateId, { heading: string; title: string; body: string; align?: 'left' | 'center' }> =
+  {
+    cv: { heading: '#245764', title: '#173d49', body: 'Arimo' },
+    'cv-modern': { heading: '#5b4b8a', title: '#3c315f', body: 'Arimo' },
+    'cv-academic': { heading: '#405d4a', title: '#2a4032', body: 'Carlito' },
+    'cover-letter': { heading: '#6a4b37', title: '#493424', body: 'Carlito' },
+    letter: { heading: '#52634a', title: '#394735', body: 'Carlito' },
+    report: { heading: '#68503c', title: '#493424', body: 'Arimo' },
+    'project-plan': { heading: '#3f5b73', title: '#2c4257', body: 'Arimo' },
+    'meeting-notes': { heading: '#3f5b73', title: '#2c4257', body: 'Carlito' },
+    essay: { heading: '#624755', title: '#49333f', body: 'Tinos', align: 'center' },
+  }
 
 function styledDefinitions(id: StarterTemplateId): DocumentStyle[] {
   const theme = palette[id]

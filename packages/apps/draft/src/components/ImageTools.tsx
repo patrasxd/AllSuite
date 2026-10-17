@@ -1,14 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  Button,
-  CheckIcon,
-  Dialog,
-  Input,
-  PhotoIcon,
-  SettingsGroup,
-  Text,
-  UploadIcon,
-} from '@all/ui'
+import { Button, CheckIcon, Dialog, Input, PhotoIcon, SettingsGroup, Text, UploadIcon } from '@all/ui'
 import { DraftIcon } from './DraftIcons'
 import { imageLabels } from './image-labels'
 import { useEditorState } from '@tiptap/react'

@@ -1,16 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
-import {
-  Button,
-  ControlsBar,
-  Dialog,
-  ExternalLinkIcon,
-  Input,
-  Select,
-  Text,
-  TrashIcon,
-} from '@all/ui'
+import { Button, ControlsBar, Dialog, ExternalLinkIcon, Input, Select, Text, TrashIcon } from '@all/ui'
 import type { Locale } from '../types'
 import type { DraftDocument } from '../engine/document-model'
 import {

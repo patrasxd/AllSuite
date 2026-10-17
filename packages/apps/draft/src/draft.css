@@ -1843,7 +1843,9 @@
 .draft-image--selected {
   outline: max(1.5px, calc(2px / var(--draft-page-scale, 1))) dashed var(--all-accent);
   outline-offset: 0;
-  box-shadow: 0 0 0 1px var(--all-surface), 0 2px 8px rgb(0 0 0 / 20%);
+  box-shadow:
+    0 0 0 1px var(--all-surface),
+    0 2px 8px rgb(0 0 0 / 20%);
 }
 .draft-image--selected > img {
   cursor: grab;

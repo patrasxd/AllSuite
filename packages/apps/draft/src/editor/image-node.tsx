@@ -131,14 +131,17 @@ function ImageView({ node, selected, editor, getPos, extension }: NodeViewProps)
         w: 'left edge',
       }
 
-  useLayoutEffect(() => () => {
-    const listeners = resizeListeners.current
-    if (!listeners) return
-    window.removeEventListener('pointermove', listeners.move, true)
-    window.removeEventListener('pointerup', listeners.up, true)
-    window.removeEventListener('pointercancel', listeners.cancel, true)
-    resizeListeners.current = undefined
-  }, [])
+  useLayoutEffect(
+    () => () => {
+      const listeners = resizeListeners.current
+      if (!listeners) return
+      window.removeEventListener('pointermove', listeners.move, true)
+      window.removeEventListener('pointerup', listeners.up, true)
+      window.removeEventListener('pointercancel', listeners.cancel, true)
+      resizeListeners.current = undefined
+    },
+    [],
+  )
 
   useLayoutEffect(() => {
     if (!selected) return
@@ -161,7 +164,7 @@ function ImageView({ node, selected, editor, getPos, extension }: NodeViewProps)
         return
       }
 
-  const maxWidth = Math.max(0, areaRect.width - 24)
+      const maxWidth = Math.max(0, areaRect.width - 24)
       toolbar.style.maxWidth = `${maxWidth}px`
       const toolbarRect = toolbar.getBoundingClientRect()
       const leftMin = areaRect.left + 12
@@ -330,7 +333,13 @@ function ImageView({ node, selected, editor, getPos, extension }: NodeViewProps)
           event.preventDefault()
           editor.commands.setNodeSelection(position)
           editor.view.focus()
-          move.current = { pointerId: event.pointerId, from: position, x: event.clientX, y: event.clientY, moved: false }
+          move.current = {
+            pointerId: event.pointerId,
+            from: position,
+            x: event.clientX,
+            y: event.clientY,
+            moved: false,
+          }
           event.currentTarget.setPointerCapture(event.pointerId)
         }}
         onPointerMove={(event) => {
@@ -347,7 +356,8 @@ function ImageView({ node, selected, editor, getPos, extension }: NodeViewProps)
           const start = move.current
           if (!start || start.pointerId !== event.pointerId) return
           move.current = undefined
-          if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+          if (event.currentTarget.hasPointerCapture(event.pointerId))
+            event.currentTarget.releasePointerCapture(event.pointerId)
           setMovePreview(undefined)
           if (start.moved) {
             const target = editor.view.posAtCoords({ left: event.clientX, top: event.clientY })
@@ -373,7 +383,8 @@ function ImageView({ node, selected, editor, getPos, extension }: NodeViewProps)
           ))}
         </span>
       )}
-      {selected && toolbarHost &&
+      {selected &&
+        toolbarHost &&
         createPortal(
           <div
             ref={toolbarRef}
@@ -384,7 +395,12 @@ function ImageView({ node, selected, editor, getPos, extension }: NodeViewProps)
             onPointerDown={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
           >
-            <Button size="sm" variant="outline" icon={<DraftIcon name="alt" />} onClick={() => extension.options.onEdit()}>
+            <Button
+              size="sm"
+              variant="outline"
+              icon={<DraftIcon name="alt" />}
+              onClick={() => extension.options.onEdit()}
+            >
               {t.alt}
             </Button>
             <Select
@@ -433,7 +449,11 @@ function ImageView({ node, selected, editor, getPos, extension }: NodeViewProps)
               onClick={() => {
                 const position = getPos()
                 if (typeof position === 'number') {
-                  editor.chain().focus().deleteRange({ from: position, to: position + node.nodeSize }).run()
+                  editor
+                    .chain()
+                    .focus()
+                    .deleteRange({ from: position, to: position + node.nodeSize })
+                    .run()
                 }
               }}
             >

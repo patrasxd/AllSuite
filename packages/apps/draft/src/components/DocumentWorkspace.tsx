@@ -19,16 +19,7 @@ import type { Editor } from '@tiptap/core'
 import { Slice } from '@tiptap/pm/model'
 import { closeHistory } from '@tiptap/pm/history'
 import { EditorState } from '@tiptap/pm/state'
-import {
-  Alert,
-  Button,
-  Dialog,
-  FullBleedLayout,
-  StatsHeader,
-  Text,
-  safeGetJSON,
-  safeSetJSON,
-} from '@all/ui'
+import { Alert, Button, Dialog, FullBleedLayout, StatsHeader, Text, safeGetJSON, safeSetJSON } from '@all/ui'
 import { editorExtensions } from '../editor/extensions'
 import { setFormattingMarks } from '../editor/formatting-marks'
 import { setDocumentColumns } from '../editor/paragraph-commands'

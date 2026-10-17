@@ -78,15 +78,14 @@ export function StarterTemplatePreview({ template }: { template: StarterTemplate
       const listOffset = line.list ? 4 : 0
       return (
         <g key={`section-${sectionIndex}-line-${lineIndex}`}>
-          {line.list && (
-            template.id === 'project-plan' || template.id === 'meeting-notes' ? (
+          {line.list &&
+            (template.id === 'project-plan' || template.id === 'meeting-notes' ? (
               <text x={left} y={lineY + 1.7} fontFamily={fontFamily} fontSize="3" fill={headingColor}>
                 {sectionIndex + lineIndex + 1}.
               </text>
             ) : (
               <circle cx={left + 1} cy={lineY + 1} r=".7" fill={headingColor} />
-            )
-          )}
+            ))}
           <rect
             x={left + listOffset}
             y={lineY}
@@ -115,7 +114,9 @@ export function StarterTemplatePreview({ template }: { template: StarterTemplate
             >
               {section.heading}
             </text>
-            {template.id === 'report' && <rect x={left} y={headingY + 4} width="61" height=".45" fill={headingColor} opacity=".45" />}
+            {template.id === 'report' && (
+              <rect x={left} y={headingY + 4} width="61" height=".45" fill={headingColor} opacity=".45" />
+            )}
           </>
         )}
         {lineElements}
