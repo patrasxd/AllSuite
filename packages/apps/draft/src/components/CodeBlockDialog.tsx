@@ -33,7 +33,7 @@ export function CodeBlockDialog({ open, locale, onClose, onInsert }: Props) {
       title={t.codeBlock}
       className="draft-code-dialog"
       footer={
-        <div className="draft-dialog-actions">
+        <>
           <Button variant="secondary" onClick={onClose}>
             {t.cancel}
           </Button>
@@ -46,7 +46,7 @@ export function CodeBlockDialog({ open, locale, onClose, onInsert }: Props) {
           >
             {t.insert}
           </Button>
-        </div>
+        </>
       }
     >
       <Select

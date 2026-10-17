@@ -22,8 +22,6 @@ import { EditorState } from '@tiptap/pm/state'
 import {
   Alert,
   Button,
-  CheckIcon,
-  CloseIcon,
   Dialog,
   FullBleedLayout,
   StatsHeader,
@@ -70,6 +68,7 @@ import { CodeBlockDialog } from './CodeBlockDialog'
 import { StarterTemplatePicker } from './StarterTemplatePicker'
 import { createStarterTemplate, type StarterTemplateId } from '../engine/starter-templates'
 import { translations } from '../i18n'
+import { clampZoom } from '../engine/page-view'
 import type { CodeLanguage } from '../editor/code-block'
 import type { AppComponentProps } from '../types'
 import { readCommentThreads, serializeCommentThreads, type CommentThread } from '../engine/comments'
@@ -79,6 +78,11 @@ import {
   setSuggestionTracking,
   type SuggestionSummary,
 } from '../editor/suggestions'
+
+const zoomControlLabels = {
+  en: { group: 'Document zoom', out: 'Zoom out', in: 'Zoom in', fit: 'Fit' },
+  pl: { group: 'Powiększenie dokumentu', out: 'Pomniejsz', in: 'Powiększ', fit: 'Dopasuj' },
+} as const
 
 export default function DocumentWorkspace({
   locale,
@@ -732,6 +736,20 @@ export default function DocumentWorkspace({
     requestAnimationFrame(() => editor?.commands.focus())
   }
   if (!editor) return null
+  const characterStatusLabel =
+    `${t.charactersWithSpaces}: ${counts.document.charactersWithSpaces}; ` +
+    `${t.charactersWithoutSpaces}: ${counts.document.charactersWithoutSpaces}`
+  const hasPageStatus = columns === 1 && pageView === 'print'
+  const visibleCurrentPage = Math.min(currentPage, pages)
+  const pageStatusLabel = hasPageStatus
+    ? locale === 'pl'
+      ? `Strona ${visibleCurrentPage} z ${pages}`
+      : `Page ${visibleCurrentPage} of ${pages}`
+    : t.pages
+  const selectionStatusLabel = counts.selection
+    ? `${t.selection}: ${counts.selection.words} ${t.words.toLowerCase()}, ` +
+      `${counts.selection.charactersWithSpaces} ${t.characters.toLowerCase()}`
+    : ''
   return (
     <>
       {preview && (
@@ -762,29 +780,67 @@ export default function DocumentWorkspace({
               <Text as="span" variant="caption" role="status" title={t.unsavedHint}>
                 {dirty ? t.dirty : t.clean}
               </Text>
-              <Text as="span" variant="caption">
+              <Text as="span" variant="caption" className="draft-status-item">
                 {t.words}: {counts.document.words}
               </Text>
-              <Text as="span" variant="caption">
-                {t.charactersWithSpaces}: {counts.document.charactersWithSpaces}
-              </Text>
-              <Text as="span" variant="caption">
-                {t.charactersWithoutSpaces}: {counts.document.charactersWithoutSpaces}
+              <Text
+                as="span"
+                variant="caption"
+                className="draft-status-item"
+                title={characterStatusLabel}
+                aria-label={characterStatusLabel}
+              >
+                {locale === 'pl' ? 'Znaki (ze spacjami / bez spacji)' : 'Chars (with / without spaces)'}:{' '}
+                {counts.document.charactersWithSpaces} / {counts.document.charactersWithoutSpaces}
               </Text>
               {counts.selection && (
-                <Text as="span" variant="caption">
-                  {t.selection}: {counts.selection.words} {t.words.toLowerCase()},{' '}
-                  {counts.selection.charactersWithSpaces} {t.characters.toLowerCase()}
+                <Text
+                  as="span"
+                  variant="caption"
+                  className="draft-status-item"
+                  title={selectionStatusLabel}
+                  aria-label={selectionStatusLabel}
+                >
+                  {locale === 'pl' ? 'Zazn.' : 'Sel.'}: {counts.selection.words}w /{' '}
+                  {counts.selection.charactersWithSpaces}c
                 </Text>
               )}
-              <Text as="span" variant="caption">
-                {t.pages}: {columns === 1 && pageView === 'print' ? pages : '—'}
+              <Text
+                as="span"
+                variant="caption"
+                className="draft-status-item draft-status-item--pages"
+                title={pageStatusLabel}
+                aria-label={pageStatusLabel}
+              >
+                {hasPageStatus ? `${visibleCurrentPage}/${pages}` : '—'}
               </Text>
-              {columns === 1 && pageView === 'print' && (
-                <Text as="span" variant="caption">
-                  {locale === 'pl' ? 'Bieżąca strona' : 'Current page'}: {Math.min(currentPage, pages)}
+              <div className="draft-status-zoom" role="group" aria-label={zoomControlLabels[locale].group}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="draft-status-zoom-button"
+                  aria-label={zoomControlLabels[locale].out}
+                  title={zoomControlLabels[locale].out}
+                  disabled={zoom !== 'fit' && zoom <= 50}
+                  onClick={() => setZoom(clampZoom((zoom === 'fit' ? 100 : zoom) - 10))}
+                >
+                  −
+                </Button>
+                <Text as="span" variant="caption" aria-live="polite">
+                  {zoom === 'fit' ? zoomControlLabels[locale].fit : `${zoom}%`}
                 </Text>
-              )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="draft-status-zoom-button"
+                  aria-label={zoomControlLabels[locale].in}
+                  title={zoomControlLabels[locale].in}
+                  disabled={zoom !== 'fit' && zoom >= 200}
+                  onClick={() => setZoom(clampZoom((zoom === 'fit' ? 100 : zoom) + 10))}
+                >
+                  +
+                </Button>
+              </div>
             </div>
           )
         }
@@ -1070,6 +1126,21 @@ export default function DocumentWorkspace({
             onClose={() => setPendingImport(undefined)}
             title={t.importReport}
             description={t.importReportDescription}
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setPendingImport(undefined)}>
+                  {t.cancel}
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (pendingImport) replaceDocument(pendingImport)
+                    setPendingImport(undefined)
+                  }}
+                >
+                  {t.continue}
+                </Button>
+              </>
+            }
           >
             <div className="draft-import-report">
               <ul>
@@ -1085,21 +1156,6 @@ export default function DocumentWorkspace({
                   </li>
                 ))}
               </ul>
-              <div className="draft-dialog-actions">
-                <Button variant="secondary" size="sm" icon={<CloseIcon />} onClick={() => setPendingImport(undefined)}>
-                  {t.cancel}
-                </Button>
-                <Button
-                  size="sm"
-                  icon={<CheckIcon />}
-                  onClick={() => {
-                    if (pendingImport) replaceDocument(pendingImport)
-                    setPendingImport(undefined)
-                  }}
-                >
-                  {t.continue}
-                </Button>
-              </div>
             </div>
           </Dialog>
         )}

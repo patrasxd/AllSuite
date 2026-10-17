@@ -3,8 +3,6 @@ import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import {
   Button,
-  CheckIcon,
-  CloseIcon,
   ControlsBar,
   Dialog,
   ExternalLinkIcon,
@@ -192,7 +190,32 @@ export function LinkDialog({
     onClose()
   }
   return (
-    <Dialog open={open} onClose={onClose} title={t.link} className="draft-reference-dialog">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t.link}
+      className="draft-reference-dialog"
+      footer={
+        <>
+          {editor.isActive('link') && (
+            <Button
+              variant="danger"
+              onClick={() => {
+                editor.chain().focus().extendMarkRange('link').unsetLink().run()
+                returnToEditor.current = true
+                onClose()
+              }}
+            >
+              {t.remove}
+            </Button>
+          )}
+          <Button variant="secondary" onClick={onClose}>
+            {t.cancel}
+          </Button>
+          <Button onClick={apply}>{t.apply}</Button>
+        </>
+      }
+    >
       <div className="draft-reference-fields">
         <Input
           ref={addressRef}
@@ -220,28 +243,6 @@ export function LinkDialog({
           />
         )}
         {invalid && <Text role="alert">{t.invalid}</Text>}
-        <div className="draft-dialog-actions">
-          {editor.isActive('link') && (
-            <Button
-              size="sm"
-              variant="outline"
-              icon={<TrashIcon />}
-              onClick={() => {
-                editor.chain().focus().extendMarkRange('link').unsetLink().run()
-                returnToEditor.current = true
-                onClose()
-              }}
-            >
-              {t.remove}
-            </Button>
-          )}
-          <Button size="sm" variant="outline" icon={<CloseIcon />} onClick={onClose}>
-            {t.cancel}
-          </Button>
-          <Button size="sm" icon={<CheckIcon />} onClick={apply}>
-            {t.apply}
-          </Button>
-        </div>
       </div>
     </Dialog>
   )
@@ -382,7 +383,49 @@ export function ReferencesDialog({
     onClose()
   }
   return (
-    <Dialog open={open} onClose={onClose} title={t.references} className="draft-reference-dialog">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t.references}
+      className="draft-reference-dialog"
+      footer={
+        <>
+          <Button
+            variant="outline"
+            disabled={updating}
+            onClick={async () => {
+              setUpdating(true)
+              setUpdateError(false)
+              try {
+                if (!(await updatePagedFields(editor))) throw new Error('Document changed')
+                returnToEditor.current = true
+                onClose()
+              } catch {
+                setUpdateError(true)
+              } finally {
+                setUpdating(false)
+              }
+            }}
+          >
+            {updating ? t.updating : t.updateRef}
+          </Button>
+          <Button variant="secondary" onClick={onClose}>
+            {t.cancel}
+          </Button>
+          <Button
+            disabled={
+              updating ||
+              (['caption', 'figures', 'tables'].includes(kind) && !captionLabel) ||
+              ((kind === 'internal' || kind === 'cross') && !target) ||
+              ((kind === 'footnote' || kind === 'endnote') && editor.isActive('note'))
+            }
+            onClick={insert}
+          >
+            {kind === 'labels' ? t.apply : t.insert}
+          </Button>
+        </>
+      }
+    >
       <div className="draft-reference-fields">
         <Select
           density="compact"
@@ -512,45 +555,6 @@ export function ReferencesDialog({
           <Text role="alert">{kind === 'labels' || kind === 'caption' ? t.invalidLabels : t.invalidBookmark}</Text>
         )}
         {updateError && <Text role="alert">{t.updateError}</Text>}
-        <div className="draft-dialog-actions">
-          <Button
-            size="sm"
-            variant="outline"
-            icon={<DraftIcon name="references" />}
-            disabled={updating}
-            onClick={async () => {
-              setUpdating(true)
-              setUpdateError(false)
-              try {
-                if (!(await updatePagedFields(editor))) throw new Error('Document changed')
-                returnToEditor.current = true
-                onClose()
-              } catch {
-                setUpdateError(true)
-              } finally {
-                setUpdating(false)
-              }
-            }}
-          >
-            {updating ? t.updating : t.updateRef}
-          </Button>
-          <Button size="sm" variant="outline" icon={<CloseIcon />} onClick={onClose}>
-            {t.cancel}
-          </Button>
-          <Button
-            size="sm"
-            icon={<CheckIcon />}
-            disabled={
-              updating ||
-              (['caption', 'figures', 'tables'].includes(kind) && !captionLabel) ||
-              ((kind === 'internal' || kind === 'cross') && !target) ||
-              ((kind === 'footnote' || kind === 'endnote') && editor.isActive('note'))
-            }
-            onClick={insert}
-          >
-            {kind === 'labels' ? t.apply : t.insert}
-          </Button>
-        </div>
       </div>
     </Dialog>
   )

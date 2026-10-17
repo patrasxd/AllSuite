@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, CheckIcon, CloseIcon, Dialog, Input, Select, SettingsGroup, Text } from '@all/ui'
+import { Button, Dialog, Input, Select, SettingsGroup, Text } from '@all/ui'
 import type { Editor } from '@tiptap/core'
 import type { Locale } from '../types'
 import { translations } from '../i18n'
@@ -89,7 +89,20 @@ export function ParagraphDialog({ editor, locale, open, onClose }: Props) {
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title={t.paragraphDialog} description={t.paragraphDialogDescription}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t.paragraphDialog}
+      description={t.paragraphDialogDescription}
+      footer={
+        <div className="draft-dialog-actions">
+          <Button variant="secondary" onClick={onClose}>
+            {t.cancel}
+          </Button>
+          <Button onClick={apply}>{t.apply}</Button>
+        </div>
+      }
+    >
       <div className="draft-paragraph-dialog">
         <SettingsGroup label={t.spacingGroup}>
           <div className="draft-paragraph-fields draft-paragraph-fields--three">
@@ -147,14 +160,6 @@ export function ParagraphDialog({ editor, locale, open, onClose }: Props) {
             {t.invalidParagraphValue}
           </Text>
         )}
-        <div className="draft-dialog-actions">
-          <Button variant="secondary" size="sm" icon={<CloseIcon />} onClick={onClose}>
-            {t.cancel}
-          </Button>
-          <Button size="sm" icon={<CheckIcon />} onClick={apply}>
-            {t.apply}
-          </Button>
-        </div>
       </div>
     </Dialog>
   )

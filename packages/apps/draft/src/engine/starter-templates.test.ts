@@ -15,7 +15,7 @@ function textParts(node: DraftNode): string[] {
 }
 
 describe.each(['en', 'pl'] as const)('starter templates in %s', (locale) => {
-  it('provides all five templates with localized names, content, and named styles', () => {
+  it('provides every template with localized names, content, and named styles', () => {
     const templates = getStarterTemplates(locale)
     expect(templates.map(({ id }) => id)).toEqual(starterTemplateIds)
     for (const template of templates) {

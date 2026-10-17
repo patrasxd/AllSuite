@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, CheckIcon, CloseIcon, Dialog, Input, Select, SettingsGroup, Text } from '@all/ui'
+import { Button, Dialog, Input, Select, SettingsGroup, Text } from '@all/ui'
 import type { Locale } from '../types'
 import { translations } from '../i18n'
 import { mmToTwips, twipsToMM, validatePageSetup, type PageSetup } from '../engine/page-setup'
@@ -164,6 +164,14 @@ export function PageSetupDialog({
       title={labels.title}
       description={labels.hint}
       className="draft-page-setup-modal"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            {t.cancel}
+          </Button>
+          <Button onClick={apply}>{t.apply}</Button>
+        </>
+      }
     >
       <div className="draft-paragraph-dialog">
         <SettingsGroup label={labels.dimensions}>
@@ -328,14 +336,6 @@ export function PageSetupDialog({
           </div>
         </SettingsGroup>
         {invalid && <Text role="alert">{labels.invalid}</Text>}
-        <div className="draft-dialog-actions">
-          <Button size="sm" variant="secondary" icon={<CloseIcon />} onClick={onClose}>
-            {t.cancel}
-          </Button>
-          <Button size="sm" icon={<CheckIcon />} onClick={apply}>
-            {t.apply}
-          </Button>
-        </div>
       </div>
     </Dialog>
   )

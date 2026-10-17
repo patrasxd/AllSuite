@@ -29,7 +29,7 @@ export function EquationDialog({ open, locale, onClose, onInsert }: Props) {
       title={t.equation}
       className="draft-equation-dialog"
       footer={
-        <div className="draft-dialog-actions">
+        <>
           <Button variant="secondary" onClick={onClose}>
             {t.cancel}
           </Button>
@@ -45,7 +45,7 @@ export function EquationDialog({ open, locale, onClose, onInsert }: Props) {
           >
             {t.insert}
           </Button>
-        </div>
+        </>
       }
     >
       <div className="draft-equation-fields">

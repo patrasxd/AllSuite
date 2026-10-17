@@ -3,8 +3,19 @@ import type { DraftDocument, DraftNode } from './document-model'
 import { defaultStyles, type DocumentStyle } from './styles'
 import type { Locale } from '../types'
 
-export const starterTemplateIds = ['cv', 'letter', 'report', 'meeting-notes', 'essay'] as const
+export const starterTemplateIds = [
+  'cv',
+  'cv-modern',
+  'cv-academic',
+  'cover-letter',
+  'letter',
+  'report',
+  'project-plan',
+  'meeting-notes',
+  'essay',
+] as const
 export type StarterTemplateId = (typeof starterTemplateIds)[number]
+export type StarterTemplateCategory = 'cv' | 'work' | 'academic'
 
 type TemplateCopy = {
   label: string
@@ -19,7 +30,7 @@ type TemplateCopy = {
 const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
   en: {
     cv: {
-      label: 'CV',
+      label: 'Classic CV',
       description: 'A clear profile with space for experience, education, and skills.',
       fileName: 'CV',
       title: 'Name Surname',
@@ -31,6 +42,53 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
         experience: ['Role · Organization · YYYY–present', 'Describe a result, contribution, or area of ownership.'],
         education: ['Qualification · Institution · Year'],
         skills: ['Skill or tool', 'Language · proficiency'],
+      },
+    },
+    'cv-modern': {
+      label: 'Modern CV',
+      description: 'A concise, contemporary profile with a strong skills section.',
+      fileName: 'Modern CV',
+      title: 'Name Surname',
+      subtitle: 'Role · City · Email · Phone',
+      sections: { profile: 'Profile', experience: 'Experience', projects: 'Selected projects', education: 'Education', skills: 'Skills' },
+      lines: {
+        profile: ['Summarize your strengths and the value you bring in two or three lines.'],
+        experience: ['Role · Organization · YYYY–present', 'Describe an outcome with a clear result or measure.'],
+        projects: ['Project · Your contribution · Result'],
+        education: ['Qualification · Institution · Year'],
+        skills: ['Core skill · Core skill · Tool · Language'],
+      },
+    },
+    'cv-academic': {
+      label: 'Academic CV',
+      description: 'A structured academic profile for research, teaching, and publications.',
+      fileName: 'Academic CV',
+      title: 'Name Surname',
+      subtitle: 'Discipline · Institution · Email',
+      sections: { profile: 'Research profile', education: 'Education', research: 'Research experience', teaching: 'Teaching', publications: 'Selected publications', awards: 'Awards and grants' },
+      lines: {
+        profile: ['Describe your research interests and academic focus.'],
+        education: ['Degree · Institution · Dissertation or thesis · Year'],
+        research: ['Position · Institution · Dates', 'Summarize methods, contributions, and outcomes.'],
+        teaching: ['Course · Institution · Role · Year'],
+        publications: ['Author · Title · Journal or publisher · Year'],
+        awards: ['Award or grant · Organization · Year'],
+      },
+    },
+    'cover-letter': {
+      label: 'Cover letter',
+      description: 'A focused application letter that connects your experience to a role.',
+      fileName: 'Cover letter',
+      title: 'Cover letter',
+      subtitle: 'Your name · Email · City',
+      sections: { recipient: 'Hiring team', opening: 'Opening', fit: 'Why I am a fit', closing: 'Closing' },
+      lines: {
+        date: ['City, date'],
+        recipient: ['Organization', 'Hiring manager'],
+        greeting: ['Dear hiring manager,'],
+        opening: ['Name the role and give a concise reason you are interested.'],
+        fit: ['Connect one or two relevant achievements to what the role needs.'],
+        closing: ['Thank you for your consideration.', 'Kind regards,', 'Your name'],
       },
     },
     letter: {
@@ -63,6 +121,22 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
         summary: ['State the purpose, key result, and most important context in a few sentences.'],
         findings: ['Finding or observation one', 'Finding or observation two'],
         next: ['Action · Owner · Target date', 'Action · Owner · Target date'],
+      },
+    },
+    'project-plan': {
+      label: 'Project plan',
+      description: 'Set out a project goal, scope, milestones, and next steps.',
+      fileName: 'Project plan',
+      title: 'Project plan',
+      subtitle: 'Project · Owner · Date',
+      sections: { objective: 'Objective', scope: 'Scope', milestones: 'Milestones', risks: 'Risks and dependencies', next: 'Next steps' },
+      lines: {
+        prepared: ['Prepared by · Date'],
+        objective: ['State the outcome and how success will be measured.'],
+        scope: ['Included work', 'Out of scope'],
+        milestones: ['Milestone · Owner · Target date', 'Milestone · Owner · Target date'],
+        risks: ['Risk or dependency · Response · Owner'],
+        next: ['Action · Owner · Target date'],
       },
     },
     'meeting-notes': {
@@ -98,7 +172,7 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
   },
   pl: {
     cv: {
-      label: 'CV',
+      label: 'CV klasyczne',
       description: 'Czytelny profil z miejscem na doświadczenie, wykształcenie i umiejętności.',
       fileName: 'CV',
       title: 'Imię i nazwisko',
@@ -110,6 +184,53 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
         experience: ['Stanowisko · Organizacja · RRRR–obecnie', 'Opisz rezultat, wkład lub obszar odpowiedzialności.'],
         education: ['Kwalifikacja · Uczelnia lub szkoła · Rok'],
         skills: ['Umiejętność lub narzędzie', 'Język · poziom'],
+      },
+    },
+    'cv-modern': {
+      label: 'CV nowoczesne',
+      description: 'Zwięzły, współczesny profil z wyraźną sekcją umiejętności.',
+      fileName: 'CV nowoczesne',
+      title: 'Imię i nazwisko',
+      subtitle: 'Stanowisko · Miasto · E-mail · Telefon',
+      sections: { profile: 'Profil', experience: 'Doświadczenie', projects: 'Wybrane projekty', education: 'Wykształcenie', skills: 'Umiejętności' },
+      lines: {
+        profile: ['W dwóch lub trzech zdaniach opisz swoje mocne strony i wartość, którą wnosisz.'],
+        experience: ['Stanowisko · Organizacja · RRRR–obecnie', 'Opisz rezultat i podaj konkretny efekt.'],
+        projects: ['Projekt · Twój wkład · Rezultat'],
+        education: ['Kwalifikacja · Uczelnia lub szkoła · Rok'],
+        skills: ['Umiejętność · Umiejętność · Narzędzie · Język'],
+      },
+    },
+    'cv-academic': {
+      label: 'CV akademickie',
+      description: 'Układ dla osób z doświadczeniem badawczym, dydaktycznym i publikacjami.',
+      fileName: 'CV akademickie',
+      title: 'Imię i nazwisko',
+      subtitle: 'Dziedzina · Uczelnia · E-mail',
+      sections: { profile: 'Profil badawczy', education: 'Wykształcenie', research: 'Doświadczenie badawcze', teaching: 'Dydaktyka', publications: 'Wybrane publikacje', awards: 'Nagrody i granty' },
+      lines: {
+        profile: ['Opisz zainteresowania badawcze i obszar specjalizacji.'],
+        education: ['Stopień · Uczelnia · Rozprawa lub praca · Rok'],
+        research: ['Stanowisko · Uczelnia · Okres', 'Podsumuj metody, wkład i wyniki.'],
+        teaching: ['Kurs · Uczelnia · Rola · Rok'],
+        publications: ['Autor · Tytuł · Czasopismo lub wydawnictwo · Rok'],
+        awards: ['Nagroda lub grant · Organizacja · Rok'],
+      },
+    },
+    'cover-letter': {
+      label: 'List motywacyjny',
+      description: 'List, który łączy Twoje doświadczenie z wymaganiami stanowiska.',
+      fileName: 'List motywacyjny',
+      title: 'List motywacyjny',
+      subtitle: 'Imię i nazwisko · E-mail · Miasto',
+      sections: { recipient: 'Adresat', opening: 'Wstęp', fit: 'Dlaczego pasuję', closing: 'Zakończenie' },
+      lines: {
+        date: ['Miasto, data'],
+        recipient: ['Organizacja', 'Osoba rekrutująca'],
+        greeting: ['Szanowni Państwo,'],
+        opening: ['Podaj nazwę stanowiska i krótko wyjaśnij, dlaczego Cię interesuje.'],
+        fit: ['Połącz jedno lub dwa osiągnięcia z potrzebami opisanymi w ofercie.'],
+        closing: ['Dziękuję za rozpatrzenie mojej kandydatury.', 'Z poważaniem,', 'Imię i nazwisko'],
       },
     },
     letter: {
@@ -139,6 +260,22 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
         summary: ['W kilku zdaniach podaj cel, najważniejszy wynik i potrzebny kontekst.'],
         findings: ['Ustalenie lub obserwacja pierwsza', 'Ustalenie lub obserwacja druga'],
         next: ['Działanie · Osoba odpowiedzialna · Termin', 'Działanie · Osoba odpowiedzialna · Termin'],
+      },
+    },
+    'project-plan': {
+      label: 'Plan projektu',
+      description: 'Zapisz cel projektu, jego zakres, etapy i dalsze działania.',
+      fileName: 'Plan projektu',
+      title: 'Plan projektu',
+      subtitle: 'Projekt · Osoba odpowiedzialna · Data',
+      sections: { objective: 'Cel', scope: 'Zakres', milestones: 'Etapy', risks: 'Ryzyka i zależności', next: 'Dalsze kroki' },
+      lines: {
+        prepared: ['Autor · Data'],
+        objective: ['Opisz rezultat i sposób mierzenia powodzenia.'],
+        scope: ['Prace w zakresie', 'Poza zakresem'],
+        milestones: ['Etap · Osoba odpowiedzialna · Termin', 'Etap · Osoba odpowiedzialna · Termin'],
+        risks: ['Ryzyko lub zależność · Reakcja · Osoba odpowiedzialna'],
+        next: ['Działanie · Osoba odpowiedzialna · Termin'],
       },
     },
     'meeting-notes': {
@@ -171,14 +308,17 @@ const copy: Record<Locale, Record<StarterTemplateId, TemplateCopy>> = {
   },
 }
 
-const palette: Record<StarterTemplateId, { heading: string; title: string; body: string; align?: 'left' | 'center' }> =
-  {
-    cv: { heading: '#245764', title: '#173d49', body: 'Arimo' },
-    letter: { heading: '#52634a', title: '#394735', body: 'Carlito' },
-    report: { heading: '#68503c', title: '#493424', body: 'Arimo' },
-    'meeting-notes': { heading: '#3f5b73', title: '#2c4257', body: 'Carlito' },
-    essay: { heading: '#624755', title: '#49333f', body: 'Tinos', align: 'center' },
-  }
+const palette: Record<StarterTemplateId, { heading: string; title: string; body: string; align?: 'left' | 'center' }> = {
+  cv: { heading: '#245764', title: '#173d49', body: 'Arimo' },
+  'cv-modern': { heading: '#5b4b8a', title: '#3c315f', body: 'Arimo' },
+  'cv-academic': { heading: '#405d4a', title: '#2a4032', body: 'Carlito' },
+  'cover-letter': { heading: '#6a4b37', title: '#493424', body: 'Carlito' },
+  letter: { heading: '#52634a', title: '#394735', body: 'Carlito' },
+  report: { heading: '#68503c', title: '#493424', body: 'Arimo' },
+  'project-plan': { heading: '#3f5b73', title: '#2c4257', body: 'Arimo' },
+  'meeting-notes': { heading: '#3f5b73', title: '#2c4257', body: 'Carlito' },
+  essay: { heading: '#624755', title: '#49333f', body: 'Tinos', align: 'center' },
+}
 
 function styledDefinitions(id: StarterTemplateId): DocumentStyle[] {
   const theme = palette[id]
@@ -186,7 +326,7 @@ function styledDefinitions(id: StarterTemplateId): DocumentStyle[] {
     Normal: { fontFamily: theme.body, fontSize: id === 'essay' ? 12 : 11, spacingAfter: 8, lineSpacing: 1.45 },
     Title: {
       fontFamily: theme.body,
-      fontSize: id === 'cv' ? 28 : 26,
+      fontSize: id === 'cv' || id === 'cv-modern' ? 28 : 26,
       color: theme.title,
       bold: true,
       textAlign: theme.align,
@@ -269,6 +409,53 @@ function templateContent(id: StarterTemplateId, text: TemplateCopy): DraftNode[]
         heading(text.sections.skills),
         bulletList(text.lines.skills),
       ]
+    case 'cv-modern':
+      return [
+        paragraph(text.title, 'Title'),
+        paragraph(text.subtitle, 'Subtitle'),
+        heading(text.sections.profile),
+        ...p('profile'),
+        heading(text.sections.experience),
+        bulletList(text.lines.experience),
+        heading(text.sections.projects),
+        bulletList(text.lines.projects),
+        heading(text.sections.education),
+        ...p('education'),
+        heading(text.sections.skills),
+        ...p('skills'),
+      ]
+    case 'cv-academic':
+      return [
+        paragraph(text.title, 'Title'),
+        paragraph(text.subtitle, 'Subtitle'),
+        heading(text.sections.profile),
+        ...p('profile'),
+        heading(text.sections.education),
+        ...p('education'),
+        heading(text.sections.research),
+        bulletList(text.lines.research),
+        heading(text.sections.teaching),
+        ...p('teaching'),
+        heading(text.sections.publications),
+        ...p('publications'),
+        heading(text.sections.awards),
+        ...p('awards'),
+      ]
+    case 'cover-letter':
+      return [
+        paragraph(text.title, 'Title'),
+        paragraph(text.subtitle, 'Subtitle'),
+        ...p('date'),
+        heading(text.sections.recipient),
+        ...p('recipient'),
+        ...p('greeting'),
+        heading(text.sections.opening),
+        ...p('opening'),
+        heading(text.sections.fit),
+        ...p('fit'),
+        heading(text.sections.closing),
+        ...p('closing'),
+      ]
     case 'letter':
       return [
         paragraph(text.title, 'Title'),
@@ -292,6 +479,22 @@ function templateContent(id: StarterTemplateId, text: TemplateCopy): DraftNode[]
         bulletList(text.lines.findings),
         heading(text.sections.next),
         orderedList(text.lines.next),
+      ]
+    case 'project-plan':
+      return [
+        paragraph(text.title, 'Title'),
+        paragraph(text.subtitle, 'Subtitle'),
+        ...p('prepared'),
+        heading(text.sections.objective),
+        ...p('objective'),
+        heading(text.sections.scope),
+        bulletList(text.lines.scope),
+        heading(text.sections.milestones),
+        orderedList(text.lines.milestones),
+        heading(text.sections.risks),
+        ...p('risks'),
+        heading(text.sections.next),
+        ...p('next'),
       ]
     case 'meeting-notes':
       return [
@@ -323,10 +526,23 @@ function templateContent(id: StarterTemplateId, text: TemplateCopy): DraftNode[]
 
 export type StarterTemplate = {
   id: StarterTemplateId
+  category: StarterTemplateCategory
   label: string
   description: string
   fileName: string
   document: DraftDocument
+}
+
+const categoryById: Record<StarterTemplateId, StarterTemplateCategory> = {
+  cv: 'cv',
+  'cv-modern': 'cv',
+  'cv-academic': 'cv',
+  'cover-letter': 'work',
+  letter: 'work',
+  report: 'work',
+  'project-plan': 'work',
+  'meeting-notes': 'work',
+  essay: 'academic',
 }
 
 export function getStarterTemplates(locale: Locale): StarterTemplate[] {
@@ -334,6 +550,7 @@ export function getStarterTemplates(locale: Locale): StarterTemplate[] {
     const text = copy[locale][id]
     return {
       id,
+      category: categoryById[id],
       label: text.label,
       description: text.description,
       fileName: text.fileName,

@@ -1,5 +1,5 @@
 import type { Editor, JSONContent } from '@tiptap/core'
-import type { Transaction } from '@tiptap/pm/state'
+import { NodeSelection, type Transaction } from '@tiptap/pm/state'
 import { prepareImage, prepareImageHTML } from '../engine/image-processing'
 import type { ImageOptions } from '../engine/images'
 
@@ -27,11 +27,23 @@ export async function insertImageContent(
     }
     if (signal.aborted || editor.isDestroyed) return
     const selection = bookmark?.resolve(editor.state.doc)
+    const insertionStart = selection?.from ?? mappedPosition
     editor
       .chain()
       .focus()
       .insertContentAt(selection ? { from: selection.from, to: selection.to } : mappedPosition!, content)
       .run()
+
+    if (insertionStart !== undefined) {
+      const end = Math.min(editor.state.doc.content.size, Math.max(insertionStart + 1, editor.state.selection.to))
+      let imagePosition: number | undefined
+      editor.state.doc.nodesBetween(insertionStart, end, (node, position) => {
+        if (imagePosition === undefined && node.type.name === 'image') imagePosition = position
+      })
+      if (imagePosition !== undefined) {
+        editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, imagePosition)))
+      }
+    }
   } finally {
     editor.off('transaction', map)
   }
