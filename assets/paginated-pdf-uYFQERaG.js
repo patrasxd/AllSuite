@@ -1,4 +1,4 @@
-import{O as Vn}from"./index-DyfyYw7S.js";import{h as Xv}from"./DocumentWorkspace-CYUgp4uU.js";import"./draft-paste-sanitizer-DowdsyMd.js";/*! *****************************************************************************
+import{O as Vn}from"./index-4Bs0d7qa.js";import{j as Xv}from"./DocumentWorkspace-SxAj4oTb.js";import"./draft-paste-sanitizer-DowdsyMd.js";/*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 
 Permission to use, copy, modify, and/or distribute this software for any

@@ -11,7 +11,7 @@
     "dynamicImports": []
   },
   {
-    "file": "assets/index-DyfyYw7S.js",
+    "file": "assets/index-4Bs0d7qa.js",
     "entry": true,
     "bytes": 299743,
     "editor": false,
@@ -20,11 +20,11 @@
     "fonts": false,
     "imports": [],
     "dynamicImports": [
-      "assets/index-CvxP6ESD.js"
+      "assets/index-DzOyzAKu.js"
     ]
   },
   {
-    "file": "assets/index-CvxP6ESD.js",
+    "file": "assets/index-DzOyzAKu.js",
     "entry": false,
     "bytes": 441,
     "editor": false,
@@ -32,60 +32,61 @@
     "mammoth": false,
     "fonts": false,
     "imports": [
-      "assets/index-DyfyYw7S.js"
+      "assets/index-4Bs0d7qa.js"
     ],
     "dynamicImports": [
-      "assets/DocumentWorkspace-CYUgp4uU.js"
+      "assets/DocumentWorkspace-SxAj4oTb.js"
     ]
   },
   {
-    "file": "assets/DocumentWorkspace-CYUgp4uU.js",
+    "file": "assets/DocumentWorkspace-SxAj4oTb.js",
     "entry": false,
-    "bytes": 767525,
+    "bytes": 780212,
     "editor": true,
     "docx": false,
     "mammoth": false,
     "fonts": false,
     "imports": [
-      "assets/index-DyfyYw7S.js",
+      "assets/index-4Bs0d7qa.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": [
-      "assets/reference-layout-DubJoRG6.js",
+      "assets/reference-layout-olcVCNlU.js",
       "assets/carlito-DRsPRvRv.js",
       "assets/caladea-BFoHbI4T.js",
       "assets/arimo-OfVQoPeE.js",
       "assets/tinos-DABV4FGP.js",
       "assets/cousine-C2LY-noq.js",
-      "assets/index-quOsxCDj.js",
-      "assets/reference-layout-DubJoRG6.js",
-      "assets/index-CbY1Tvom.js",
-      "assets/export-D1E6ReAr.js",
-      "assets/index-cbPTnwom.js",
-      "assets/print-layout-DoXXBXWw.js",
-      "assets/paginated-pdf-0oYiIx5R.js",
-      "assets/index-cbPTnwom.js",
-      "assets/reference-layout-DubJoRG6.js",
-      "assets/export-D1E6ReAr.js"
+      "assets/index-BAbde7Yc.js",
+      "assets/reference-layout-olcVCNlU.js",
+      "assets/index-CErWVIFi.js",
+      "assets/export-Bi06tb5K.js",
+      "assets/index-Bs_tlU7-.js",
+      "assets/print-layout-C7LKb3Kq.js",
+      "assets/paginated-pdf-uYFQERaG.js",
+      "assets/index-Bs_tlU7-.js",
+      "assets/reference-layout-olcVCNlU.js",
+      "assets/export-Bi06tb5K.js"
     ]
   },
   {
-    "file": "assets/index-CbY1Tvom.js",
+    "file": "assets/index-CErWVIFi.js",
     "entry": false,
-    "bytes": 429918,
+    "bytes": 433114,
     "editor": false,
     "docx": true,
     "mammoth": false,
     "fonts": false,
     "imports": [
-      "assets/DocumentWorkspace-CYUgp4uU.js",
-      "assets/index-DyfyYw7S.js",
+      "assets/browser-EV1LHJOo.js",
+      "assets/DocumentWorkspace-SxAj4oTb.js",
+      "assets/index-4Bs0d7qa.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/export-D1E6ReAr.js",
+    "file": "assets/export-Bi06tb5K.js",
     "entry": false,
     "bytes": 37189,
     "editor": false,
@@ -93,45 +94,45 @@
     "mammoth": false,
     "fonts": true,
     "imports": [
-      "assets/DocumentWorkspace-CYUgp4uU.js",
-      "assets/index-DyfyYw7S.js",
+      "assets/DocumentWorkspace-SxAj4oTb.js",
+      "assets/index-4Bs0d7qa.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/index-cbPTnwom.js",
+    "file": "assets/index-Bs_tlU7-.js",
     "entry": false,
-    "bytes": 5575,
+    "bytes": 5565,
     "editor": false,
     "docx": false,
     "mammoth": false,
     "fonts": false,
     "imports": [
-      "assets/DocumentWorkspace-CYUgp4uU.js",
-      "assets/index-DyfyYw7S.js",
+      "assets/DocumentWorkspace-SxAj4oTb.js",
+      "assets/index-4Bs0d7qa.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/print-layout-DoXXBXWw.js",
+    "file": "assets/print-layout-C7LKb3Kq.js",
     "entry": false,
-    "bytes": 6578,
+    "bytes": 8467,
     "editor": false,
     "docx": false,
     "mammoth": false,
     "fonts": false,
     "imports": [
-      "assets/reference-layout-DubJoRG6.js",
-      "assets/DocumentWorkspace-CYUgp4uU.js",
-      "assets/index-DyfyYw7S.js",
+      "assets/reference-layout-olcVCNlU.js",
+      "assets/DocumentWorkspace-SxAj4oTb.js",
+      "assets/index-4Bs0d7qa.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/reference-layout-DubJoRG6.js",
+    "file": "assets/reference-layout-olcVCNlU.js",
     "entry": false,
     "bytes": 4114,
     "editor": false,
@@ -139,14 +140,14 @@
     "mammoth": false,
     "fonts": false,
     "imports": [
-      "assets/DocumentWorkspace-CYUgp4uU.js",
-      "assets/index-DyfyYw7S.js",
+      "assets/DocumentWorkspace-SxAj4oTb.js",
+      "assets/index-4Bs0d7qa.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/paginated-pdf-0oYiIx5R.js",
+    "file": "assets/paginated-pdf-uYFQERaG.js",
     "entry": false,
     "bytes": 796230,
     "editor": false,
@@ -154,8 +155,8 @@
     "mammoth": false,
     "fonts": false,
     "imports": [
-      "assets/index-DyfyYw7S.js",
-      "assets/DocumentWorkspace-CYUgp4uU.js",
+      "assets/index-4Bs0d7qa.js",
+      "assets/DocumentWorkspace-SxAj4oTb.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
@@ -216,18 +217,30 @@
     "dynamicImports": []
   },
   {
-    "file": "assets/index-quOsxCDj.js",
+    "file": "assets/index-BAbde7Yc.js",
     "entry": false,
-    "bytes": 36866,
+    "bytes": 33454,
     "editor": false,
     "docx": false,
     "mammoth": false,
     "fonts": false,
     "imports": [
-      "assets/DocumentWorkspace-CYUgp4uU.js",
-      "assets/index-DyfyYw7S.js",
+      "assets/browser-EV1LHJOo.js",
+      "assets/DocumentWorkspace-SxAj4oTb.js",
+      "assets/index-4Bs0d7qa.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
+    "dynamicImports": []
+  },
+  {
+    "file": "assets/browser-EV1LHJOo.js",
+    "entry": false,
+    "bytes": 12429,
+    "editor": false,
+    "docx": false,
+    "mammoth": false,
+    "fonts": false,
+    "imports": [],
     "dynamicImports": []
   }
 ]
