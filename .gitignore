@@ -37,6 +37,9 @@ playwright-report/
 /tmp/
 *.log
 /docs/
+!/docs/
+/docs/*
+!/docs/decisions.md
 
 # Archived editor and its browser test; outside the active workspaces
 /packages/tools/draft/

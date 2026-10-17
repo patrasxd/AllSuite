@@ -40,6 +40,7 @@ import {
   type IRunOptions,
 } from 'docx'
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate'
+import { DOMParser, type Element as XmlElement } from '@xmldom/xmldom'
 import type { DraftDocument, DraftNode } from '../../document-model'
 import { commentRangeBoundaries, readCommentThreads, type CommentThread } from '../../comments'
 import { lineSpacingToTwips, pointsToTwips } from '../../paragraph'
@@ -57,8 +58,46 @@ import {
 } from '../../references'
 import { readPageSetup } from '../../page-setup'
 import { storiesFor, formatPage, type StoryVariant } from '../../stories'
+import { latexToOmml } from '../../math'
 
 const word = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
+type RevisionExportContext = {
+  revisionNumbers: Map<string, number>
+  nextRevision: number
+  nextBookmark: number
+  trackedChanges: Map<
+    string,
+    { id: string; kind: 'insert' | 'delete' | 'format'; author: string; timestamp: string; before?: string }
+  >
+}
+
+function revisionNumber(id: string, context: RevisionExportContext) {
+  let number = context.revisionNumbers.get(id)
+  if (number === undefined) {
+    number = context.nextRevision++
+    context.revisionNumbers.set(id, number)
+  }
+  return number
+}
+
+function revisionRun(run: ParagraphChild, node: DraftNode, context: RevisionExportContext): ParagraphChild {
+  const mark = node.marks?.find((entry) => entry.type === 'suggestion')
+  const attrs = mark?.attrs
+  const id = typeof attrs?.id === 'string' ? attrs.id : ''
+  const kind = attrs?.kind
+  if (!attrs || !id || (kind !== 'insert' && kind !== 'delete' && kind !== 'format')) return run
+  const name = `draft-revision-${context.nextBookmark++}`
+  context.trackedChanges.set(name, {
+    id,
+    kind,
+    author: typeof attrs.author === 'string' ? attrs.author.slice(0, 200) : 'Guest',
+    timestamp: typeof attrs.timestamp === 'string' ? attrs.timestamp : '',
+    before: typeof attrs.before === 'string' ? attrs.before : undefined,
+  })
+  revisionNumber(id, context)
+  return new Bookmark({ id: name, children: [run] })
+}
 
 const highlightMap: Record<string, (typeof HighlightColor)[keyof typeof HighlightColor]> = {
   '#ffff00': HighlightColor.YELLOW,
@@ -144,10 +183,43 @@ function imageRun(node: DraftNode) {
   })
 }
 
+function mathComponent(xml: string): ImportedXmlComponent | undefined {
+  try {
+    const parsed = new DOMParser().parseFromString(xml, 'text/xml')
+    const build = (element: XmlElement): ImportedXmlComponent => {
+      const attributes = Object.fromEntries(
+        Array.from(element.attributes).map((attribute) => [attribute.name, attribute.value]),
+      )
+      const component = new ImportedXmlComponent(element.tagName, attributes)
+      for (const child of Array.from(element.childNodes)) {
+        if (child.nodeType === 1) component.push(build(child as XmlElement))
+        else if (child.nodeType === 3 && child.nodeValue) component.push(child.nodeValue)
+      }
+      return component
+    }
+    return parsed.documentElement ? build(parsed.documentElement) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function codeBlockChildren(node: DraftNode): ParagraphChild[] {
+  const language = /^[a-z0-9+#-]{1,24}$/i.test(String(node.attrs?.language || '')) ? String(node.attrs?.language) : ''
+  const text = `${language ? `[${language}]\n` : ''}${(node.content || []).map((child) => child.text || '').join('')}`
+  const lines = text.split('\n')
+  const result: ParagraphChild[] = []
+  lines.forEach((line, index) => {
+    if (line) result.push(new TextRun({ text: line, font: 'Consolas' }))
+    if (index < lines.length - 1) result.push(new TextRun({ break: 1, font: 'Consolas' }))
+  })
+  return result
+}
+
 function children(
   nodes: DraftNode[] | undefined,
   boundaries?: ReturnType<typeof commentRangeBoundaries>,
   commentNumbers?: Map<string, number>,
+  revisionExport?: RevisionExportContext,
 ) {
   const result: ParagraphChild[] = []
   for (const node of nodes || []) {
@@ -176,8 +248,13 @@ function children(
     }
     if (node.type === 'bookmark') {
       if (validTargetId(node.attrs?.id))
-        result.push(new Bookmark({ id: node.attrs.id, children: children(node.content, boundaries, commentNumbers) }))
-      else result.push(...children(node.content, boundaries, commentNumbers))
+        result.push(
+          new Bookmark({
+            id: node.attrs.id,
+            children: children(node.content, boundaries, commentNumbers, revisionExport),
+          }),
+        )
+      else result.push(...children(node.content, boundaries, commentNumbers, revisionExport))
       continue
     }
     if (node.type === 'crossReference') {
@@ -201,6 +278,13 @@ function children(
       result.push(imageRun(node))
       continue
     }
+    if (node.type === 'mathInline') {
+      const math = latexToOmml(String(node.attrs?.latex || ''), false)
+      const component = math && mathComponent(math)
+      if (component) result.push(component as ParagraphChild)
+      else result.push(new TextRun(String(node.attrs?.latex || '')))
+      continue
+    }
     if (node.type === 'hardBreak') {
       result.push(new TextRun({ break: 1 }))
       continue
@@ -219,13 +303,12 @@ function children(
     const run = new TextRun({ text: node.text || '', ...marksFor(node) })
     const link = node.marks?.find((mark) => mark.type === 'link')
     const href = safeLink(link?.attrs?.href)
-    result.push(
-      href
-        ? href.startsWith('#')
-          ? new InternalHyperlink({ anchor: href.slice(1), children: [run] })
-          : new ExternalHyperlink({ link: href, children: [run] })
-        : run,
-    )
+    const linkedRun = href
+      ? href.startsWith('#')
+        ? new InternalHyperlink({ anchor: href.slice(1), children: [run] })
+        : new ExternalHyperlink({ link: href, children: [run] })
+      : run
+    result.push(revisionExport ? revisionRun(linkedRun, node, revisionExport) : linkedRun)
     for (const id of boundary?.end || []) {
       const number = commentNumbers?.get(id)
       if (number !== undefined) {
@@ -273,6 +356,7 @@ function paragraph(
   list?: { type: 'bulletList' | 'orderedList'; level: number },
   boundaries?: ReturnType<typeof commentRangeBoundaries>,
   commentNumbers?: Map<string, number>,
+  revisionExport?: RevisionExportContext,
 ) {
   const numberedInline = (child: DraftNode): DraftNode => {
     const attrs =
@@ -305,10 +389,20 @@ function paragraph(
   const alignment = typeof textAlign === 'string' ? alignmentMap[textAlign as keyof typeof alignmentMap] : undefined
   return new Paragraph({
     children: validTargetId(node.attrs?.anchorId)
-      ? [new Bookmark({ id: node.attrs.anchorId, children: children(inline, boundaries, commentNumbers) })]
-      : children(inline, boundaries, commentNumbers),
+      ? [
+          new Bookmark({
+            id: node.attrs.anchorId,
+            children:
+              node.type === 'codeBlock'
+                ? codeBlockChildren(node)
+                : children(inline, boundaries, commentNumbers, revisionExport),
+          }),
+        ]
+      : node.type === 'codeBlock'
+        ? codeBlockChildren(node)
+        : children(inline, boundaries, commentNumbers, revisionExport),
     heading: node.attrs?.styleId ? undefined : headingLevels[heading],
-    style: paragraphStyleId(node),
+    style: node.type === 'codeBlock' ? 'DraftCodeBlock' : paragraphStyleId(node),
     alignment,
     spacing: spacing(node.attrs),
     pageBreakBefore: Boolean(node.attrs?.pageBreakBefore),
@@ -328,6 +422,7 @@ function exportTable(
   node: DraftNode,
   boundaries?: ReturnType<typeof commentRangeBoundaries>,
   commentNumbers?: Map<string, number>,
+  revisionExport?: RevisionExportContext,
 ): Table {
   const rows = node.content || []
   const widths: number[] = []
@@ -375,7 +470,7 @@ function exportTable(
             const padding = Number.parseFloat(String(attrs.padding ?? '6')) * 15
             const cellWidths = Array.isArray(attrs.colwidth) ? attrs.colwidth : undefined
             return new TableCell({
-              children: documentParagraphs(cell.content, undefined, 9360, boundaries, commentNumbers),
+              children: documentParagraphs(cell.content, undefined, 9360, boundaries, commentNumbers, revisionExport),
               columnSpan: Number(attrs.colspan) || 1,
               rowSpan: Number(attrs.rowspan) || 1,
               width: cellWidths ? { type: WidthType.DXA, size: cellWidths.reduce((a, b) => a + b, 0) * 15 } : undefined,
@@ -409,31 +504,56 @@ function documentParagraphs(
   bodyWidth = 9360,
   boundaries?: ReturnType<typeof commentRangeBoundaries>,
   commentNumbers?: Map<string, number>,
+  revisionExport?: RevisionExportContext,
 ): Array<Paragraph | Table> {
   const result: Array<Paragraph | Table> = []
   for (const node of nodes || []) {
     if (node.type === 'bulletList' || node.type === 'orderedList') {
       for (const item of node.content || []) {
-        const first = item.content?.find((child) => child.type === 'paragraph' || child.type === 'heading')
-        if (first)
-          result.push(
-            paragraph(first, { type: node.type, level: list ? list.level + 1 : 0 }, boundaries, commentNumbers),
-          )
-        for (const nested of item.content || [])
-          if (nested.type === 'bulletList' || nested.type === 'orderedList')
+        let firstParagraph = true
+        for (const child of item.content || []) {
+          if ((child.type === 'paragraph' || child.type === 'heading') && firstParagraph) {
+            result.push(
+              paragraph(
+                child,
+                { type: node.type, level: list ? list.level + 1 : 0 },
+                boundaries,
+                commentNumbers,
+                revisionExport,
+              ),
+            )
+            firstParagraph = false
+          } else if (child.type === 'bulletList' || child.type === 'orderedList')
             result.push(
               ...documentParagraphs(
-                [nested],
+                [child],
                 { type: node.type, level: list ? list.level + 1 : 0 },
                 bodyWidth,
                 boundaries,
                 commentNumbers,
+                revisionExport,
               ),
             )
+          else if (child.type === 'paragraph' || child.type === 'heading')
+            result.push(paragraph(child, undefined, boundaries, commentNumbers, revisionExport))
+          else
+            result.push(
+              ...documentParagraphs([child], undefined, bodyWidth, boundaries, commentNumbers, revisionExport),
+            )
+        }
       }
-    } else if (node.type === 'paragraph' || node.type === 'heading')
-      result.push(paragraph(node, list, boundaries, commentNumbers))
-    else if (node.type === 'table') result.push(exportTable(node, boundaries, commentNumbers))
+    } else if (node.type === 'mathBlock') {
+      const math = latexToOmml(String(node.attrs?.latex || ''), true)
+      const component = math && mathComponent(math)
+      result.push(
+        new Paragraph({
+          children: component ? [component as ParagraphChild] : [new TextRun(String(node.attrs?.latex || ''))],
+        }),
+      )
+    } else if (node.type === 'codeBlock') result.push(paragraph(node))
+    else if (node.type === 'paragraph' || node.type === 'heading')
+      result.push(paragraph(node, list, boundaries, commentNumbers, revisionExport))
+    else if (node.type === 'table') result.push(exportTable(node, boundaries, commentNumbers, revisionExport))
     else if (node.type === 'tableOfContents') result.push(...tocParagraphs(node, bodyWidth))
   }
   return result
@@ -482,6 +602,87 @@ function escapeXML(value: string) {
     /[&<>"']/g,
     (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[character]!,
   )
+}
+
+function previousRunProperties(before?: string) {
+  let marks: Array<{ type?: string; attrs?: Record<string, unknown> }> = []
+  try {
+    const parsed = JSON.parse(before || '[]')
+    if (Array.isArray(parsed)) marks = parsed
+  } catch {
+    /* Keep an empty prior run format for malformed external metadata. */
+  }
+  const byType = new Map(marks.map((mark) => [mark.type, mark]))
+  const xml: string[] = []
+  for (const [type, tag] of [
+    ['bold', 'b'],
+    ['italic', 'i'],
+    ['underline', 'u'],
+    ['strike', 'strike'],
+    ['subscript', 'vertAlign'],
+    ['superscript', 'vertAlign'],
+  ] as const) {
+    const mark = byType.get(type)
+    if (!mark) continue
+    if (type === 'underline') xml.push('<w:u w:val="single"/>')
+    else if (type === 'subscript' || type === 'superscript') xml.push(`<w:vertAlign w:val="${type}"/>`)
+    else xml.push(`<w:${tag}/>`)
+  }
+  const textStyle = byType.get('textStyle')?.attrs || {}
+  if (typeof textStyle.color === 'string' && /^#[\da-f]{6}$/i.test(textStyle.color))
+    xml.push(`<w:color w:val="${textStyle.color.slice(1)}"/>`)
+  if (typeof textStyle.fontSize === 'string') {
+    const size = Number.parseFloat(textStyle.fontSize) * 2
+    if (Number.isFinite(size) && size > 0) xml.push(`<w:sz w:val="${Math.round(size)}"/>`)
+  }
+  if (typeof textStyle.fontFamily === 'string')
+    xml.push(`<w:rFonts w:ascii="${escapeXML(textStyle.fontFamily.split(',')[0].trim())}"/>`)
+  const characterStyle = byType.get('characterStyle')?.attrs?.styleId
+  if (typeof characterStyle === 'string') xml.push(`<w:rStyle w:val="${escapeXML(characterStyle)}"/>`)
+  const highlight = byType.get('highlight')?.attrs?.color
+  const highlightValue = Object.entries(highlightMap).find(([color]) => color === highlight)?.[1]
+  if (typeof highlightValue === 'string') {
+    const token = Object.entries(HighlightColor).find(([, value]) => value === highlightValue)?.[0]
+    if (token) xml.push(`<w:highlight w:val="${token.toLowerCase()}"/>`)
+  }
+  return `<w:rPr>${xml.join('')}</w:rPr>`
+}
+
+function attachTrackedChanges(buffer: ArrayBuffer, context: RevisionExportContext) {
+  const files = unzipSync(new Uint8Array(buffer))
+  let xml = strFromU8(files['word/document.xml'])
+  xml = xml.replace(/<w:del\b[\s\S]*?<\/w:del>/g, (revision) =>
+    revision.replace(/<(\/?)w:t(?=[\s/>])/g, '<$1w:delText'),
+  )
+  for (const [name, revision] of context.trackedChanges) {
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const startMatch = new RegExp(`<w:bookmarkStart\\b(?=[^>]*w:name="${escapedName}")[^>]*/>`).exec(xml)
+    if (!startMatch) continue
+    const id = /\bw:id="([^"]+)"/.exec(startMatch[0])?.[1]
+    if (!id) continue
+    const endMatch = new RegExp(`<w:bookmarkEnd\\b(?=[^>]*w:id="${id}")[^>]*/>`).exec(
+      xml.slice(startMatch.index + startMatch[0].length),
+    )
+    if (!endMatch) continue
+    const endIndex = startMatch.index + startMatch[0].length + endMatch.index
+    let range = xml.slice(startMatch.index + startMatch[0].length, endIndex)
+    if (revision.kind === 'format') {
+      const attributes = `w:id="${revisionNumber(revision.id, context)}" w:author="${escapeXML(revision.author)}"${revision.timestamp ? ` w:date="${escapeXML(revision.timestamp)}"` : ''}`
+      const change = `<w:rPrChange ${attributes}>${previousRunProperties(revision.before)}</w:rPrChange>`
+      if (/<w:rPr\b/.test(range)) range = range.replace(/<\/w:rPr>/, `${change}</w:rPr>`)
+      else range = range.replace(/<w:r\b([^>]*)>/, `<w:r$1><w:rPr>${change}</w:rPr>`)
+    } else {
+      if (revision.kind === 'delete') range = range.replace(/<(\/?)w:t(?=[\s/>])/g, '<$1w:delText')
+      const attributes = `w:id="${revisionNumber(revision.id, context)}" w:author="${escapeXML(revision.author)}"${revision.timestamp ? ` w:date="${escapeXML(revision.timestamp)}"` : ''}`
+      const tag = revision.kind === 'insert' ? 'ins' : 'del'
+      range = `<w:${tag} ${attributes}>${range}</w:${tag}>`
+    }
+    const afterEnd = endIndex + endMatch[0].length
+    xml = `${xml.slice(0, startMatch.index)}${range}${xml.slice(afterEnd)}`
+  }
+  files['word/document.xml'] = strToU8(xml)
+  const zipped = zipSync(files, { level: 6 })
+  return zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength) as ArrayBuffer
 }
 
 function commentParts(threads: CommentThread[], commentNumbers: Map<string, number>) {
@@ -584,6 +785,12 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
   annotate(document)
   const commentThreads = readCommentThreads(document.attrs?.comments)
   const commentNumbers = new Map(commentThreads.map((thread, index) => [thread.id, index]))
+  const revisionExport: RevisionExportContext = {
+    revisionNumbers: new Map(),
+    nextRevision: 0,
+    nextBookmark: 0,
+    trackedChanges: new Map(),
+  }
   const boundaries = commentRangeBoundaries(
     document.content.filter((node) => node.type !== 'note'),
     new Set(commentNumbers.keys()),
@@ -612,8 +819,16 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
       (['default', 'first', 'even'] as StoryVariant[]).map((variant) => [
         variant,
         kind === 'header'
-          ? new Header({ children: stories[kind][variant].map((node) => paragraph(storyNode(node))) })
-          : new Footer({ children: stories[kind][variant].map((node) => paragraph(storyNode(node))) }),
+          ? new Header({
+              children: stories[kind][variant].map((node) =>
+                paragraph(storyNode(node), undefined, undefined, undefined, revisionExport),
+              ),
+            })
+          : new Footer({
+              children: stories[kind][variant].map((node) =>
+                paragraph(storyNode(node), undefined, undefined, undefined, revisionExport),
+              ),
+            }),
       ]),
     )
   const definitions = stylesForDocument(document)
@@ -634,7 +849,11 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
         .filter((node) => node.type === 'note' && node.attrs?.kind !== 'endnote')
         .map((node) => [
           String(node.attrs?.number),
-          { children: (node.content || []).map((child) => paragraph(child)) },
+          {
+            children: (node.content || []).map((child) =>
+              paragraph(child, undefined, undefined, undefined, revisionExport),
+            ),
+          },
         ]),
     ),
     endnotes: Object.fromEntries(
@@ -642,7 +861,11 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
         .filter((node) => node.type === 'note' && node.attrs?.kind === 'endnote')
         .map((node) => [
           String(node.attrs?.number),
-          { children: (node.content || []).map((child) => paragraph(child)) },
+          {
+            children: (node.content || []).map((child) =>
+              paragraph(child, undefined, undefined, undefined, revisionExport),
+            ),
+          },
         ]),
     ),
     features: { updateFields: false },
@@ -677,6 +900,7 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
           page.width - page.left - page.right,
           boundaries,
           commentNumbers,
+          revisionExport,
         ),
       },
     ],
@@ -695,25 +919,33 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
     },
     styles: {
       default: { document: { run: { language: language ? { value: language } : undefined } } },
-      paragraphStyles: definitions
-        .filter((style) => style.kind === 'paragraph')
-        .map((style) => ({
-          id: style.id,
-          name: style.name,
-          basedOn: style.basedOn,
-          next: style.next,
-          quickFormat: true,
-          run: styleRun(style.format),
-          paragraph: {
-            alignment: style.format.textAlign === 'justify' ? AlignmentType.JUSTIFIED : style.format.textAlign,
-            spacing: spacing(style.format),
-            keepNext: style.format.keepNext,
-            keepLines: style.format.keepLines,
-            widowControl: style.format.widowControl,
-            indent: indent(style.format),
-            outlineLevel: style.heading ? style.heading - 1 : undefined,
-          },
-        })),
+      paragraphStyles: [
+        ...definitions
+          .filter((style) => style.kind === 'paragraph')
+          .map((style) => ({
+            id: style.id,
+            name: style.name,
+            basedOn: style.basedOn,
+            next: style.next,
+            quickFormat: true,
+            run: styleRun(style.format),
+            paragraph: {
+              alignment: style.format.textAlign === 'justify' ? AlignmentType.JUSTIFIED : style.format.textAlign,
+              spacing: spacing(style.format),
+              keepNext: style.format.keepNext,
+              keepLines: style.format.keepLines,
+              widowControl: style.format.widowControl,
+              indent: indent(style.format),
+              outlineLevel: style.heading ? style.heading - 1 : undefined,
+            },
+          })),
+        {
+          id: 'DraftCodeBlock',
+          name: 'Draft Code Block',
+          run: { font: 'Consolas' },
+          paragraph: { spacing: { before: 80, after: 80 } },
+        },
+      ],
       characterStyles: definitions
         .filter((style) => style.kind === 'character')
         .map((style) => ({
@@ -726,7 +958,8 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
   }
   const file = new Document(options)
   const result = await Packer.toArrayBuffer(file)
-  return commentThreads.length ? attachCommentParts(result, commentThreads, commentNumbers) : result
+  const withRevisions = revisionExport.revisionNumbers.size ? attachTrackedChanges(result, revisionExport) : result
+  return commentThreads.length ? attachCommentParts(withRevisions, commentThreads, commentNumbers) : withRevisions
 }
 
 export async function exportDocx(document: DraftDocument, language?: string): Promise<Blob> {

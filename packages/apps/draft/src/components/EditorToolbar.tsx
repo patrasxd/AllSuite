@@ -15,6 +15,7 @@ import {
   Button,
   ControlsBar,
   CopyIcon,
+  CodeIcon,
   CutIcon,
   EraserIcon,
   FilePlusIcon,
@@ -68,7 +69,7 @@ import { pageViewLabels } from '../engine/page-view'
 interface Props {
   editor: Editor
   locale: Locale
-  onClipboard: (action: 'cut' | 'copy' | 'paste' | 'plain') => void
+  onClipboard: (action: 'cut' | 'copy' | 'paste' | 'plain' | 'pasteImage') => void
   zoom?: import('../engine/page-view').PageZoom
   onZoom?: (value: import('../engine/page-view').PageZoom) => void
   pageView?: import('../engine/page-view').PageView
@@ -102,10 +103,13 @@ interface Props {
   onSymbols?: () => void
   onEmoji?: () => void
   onImage?: () => void
+  onEquation?: () => void
+  onCodeBlock?: () => void
   onLink?: () => void
   onReferences?: () => void
   onNavigation?: () => void
   showNavigation?: boolean
+  onFocusMode?: () => void
   documentLanguage?: string
   onDocumentLanguage?: (value: string) => void
   commentsOpen?: boolean
@@ -114,6 +118,11 @@ interface Props {
   onAddComment?: () => void
   includeCommentsInPDF?: boolean
   onToggleCommentsInPDF?: () => void
+  trackChanges?: boolean
+  suggestionsOpen?: boolean
+  suggestionCount?: number
+  onToggleTracking?: (enabled: boolean) => void
+  onToggleSuggestions?: () => void
 }
 
 export function EditorToolbar({
@@ -153,10 +162,13 @@ export function EditorToolbar({
   onSymbols,
   onEmoji,
   onImage,
+  onEquation,
+  onCodeBlock,
   onLink,
   onReferences,
   onNavigation,
   showNavigation = false,
+  onFocusMode,
   documentLanguage,
   onDocumentLanguage,
   commentsOpen = false,
@@ -165,6 +177,11 @@ export function EditorToolbar({
   onAddComment,
   includeCommentsInPDF = false,
   onToggleCommentsInPDF,
+  trackChanges = false,
+  suggestionsOpen = false,
+  suggestionCount = 0,
+  onToggleTracking,
+  onToggleSuggestions,
 }: Props) {
   const t = translations[locale]
   const tabs = ['file', 'edit', 'insert', 'format', 'layout', 'view', 'review'] as const
@@ -328,6 +345,11 @@ export function EditorToolbar({
               <Button size="sm" variant="outline" icon={<SaveIcon />} disabled={saving} onClick={() => onSave?.()}>
                 {t.save}
               </Button>
+              <Button size="sm" variant="outline" icon={<SaveAsIcon />} disabled={saving} onClick={() => onSaveAs?.()}>
+                {t.saveAs}
+              </Button>
+            </ToolbarGroup>
+            <ToolbarGroup label={t.outputGroup} caption={t.outputGroup}>
               <ExportMenu
                 locale={locale}
                 busy={saving}
@@ -347,16 +369,13 @@ export function EditorToolbar({
               >
                 {printLabels[locale].preview}
               </Button>
-              <Button size="sm" variant="outline" icon={<SaveAsIcon />} disabled={saving} onClick={() => onSaveAs?.()}>
-                {t.saveAs}
-              </Button>
             </ToolbarGroup>
           </ControlsBar>
         )}
 
         {activeTab === 'insert' && (
           <ControlsBar className="draft-toolbar" role="toolbar" aria-label={t.insert}>
-            <ToolbarGroup label={t.insert} caption={t.insert}>
+            <ToolbarGroup label={t.pageElementsGroup} caption={t.pageElementsGroup}>
               <Button
                 size="sm"
                 variant="outline"
@@ -368,20 +387,36 @@ export function EditorToolbar({
               <Button
                 size="sm"
                 variant="outline"
+                icon={<DraftIcon name="pageBreak" />}
                 onClick={() => editor.chain().focus().insertContent({ type: 'pageBreak' }).run()}
               >
                 {pageLabels[locale].break}
               </Button>
+            </ToolbarGroup>
+            <ToolbarGroup label={t.textObjectsGroup} caption={t.textObjectsGroup}>
               <Button size="sm" variant="outline" icon={<DraftIcon name="symbols" />} onClick={() => onSymbols?.()}>
                 {t.specialCharacters}
               </Button>
               <Button size="sm" variant="outline" icon={<DraftIcon name="emoji" />} onClick={() => onEmoji?.()}>
                 {t.emoji}
               </Button>
+              <Button size="sm" variant="outline" icon={<DraftIcon name="equation" />} onClick={() => onEquation?.()}>
+                {t.equation}
+              </Button>
+              <Button size="sm" variant="outline" icon={<CodeIcon />} onClick={() => onCodeBlock?.()}>
+                {t.codeBlock}
+              </Button>
+            </ToolbarGroup>
+            <ToolbarGroup label={t.mediaGroup} caption={t.mediaGroup}>
               <InsertTable editor={editor} locale={locale} />
               <Button size="sm" variant="outline" icon={<PhotoIcon />} onClick={() => onImage?.()}>
-                {locale === 'pl' ? 'Wstaw obraz' : 'Insert image'}
+                {t.insertImage}
               </Button>
+              <Button size="sm" variant="outline" icon={<PasteIcon />} onClick={() => onClipboard('pasteImage')}>
+                {t.pasteImage}
+              </Button>
+            </ToolbarGroup>
+            <ToolbarGroup label={t.linksGroup} caption={t.linksGroup}>
               <Button size="sm" variant="outline" icon={<DraftIcon name="link" />} onClick={() => onLink?.()}>
                 Link
               </Button>
@@ -736,7 +771,10 @@ export function EditorToolbar({
                 aria-pressed={showNavigation}
                 onClick={() => onNavigation?.()}
               >
-                {locale === 'pl' ? 'Nawigacja' : 'Navigation'}
+                {locale === 'pl' ? 'Konspekt' : 'Outline'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onFocusMode?.()}>
+                {locale === 'pl' ? 'Tryb skupienia' : 'Focus mode'}
               </Button>
               <Button
                 size="sm"
@@ -788,7 +826,7 @@ export function EditorToolbar({
                 variant="outline"
                 icon={<DraftIcon name="comments" />}
                 disabled={!state.selection}
-                title="Ctrl+Alt+M"
+                title={`${t.addComment} (Ctrl+Alt+M)`}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={onAddComment}
               >
@@ -799,18 +837,42 @@ export function EditorToolbar({
                 variant={commentsOpen ? 'primary' : 'outline'}
                 icon={<DraftIcon name="comments" />}
                 aria-pressed={commentsOpen}
+                title={`${t.comments} (Ctrl+Alt+Shift+M)`}
                 onClick={onToggleComments}
               >
                 {t.comments}
                 {commentCount ? ` (${commentCount})` : ''}
               </Button>
-              <Text as="span" variant="caption">
-                Ctrl+Alt+M: {t.addComment}; Ctrl+Alt+Shift+M: {t.comments}
-              </Text>
-              <label className="draft-toolbar-checkbox">
-                <input type="checkbox" checked={includeCommentsInPDF} onChange={onToggleCommentsInPDF} />
+              <Button
+                size="sm"
+                variant={includeCommentsInPDF ? 'primary' : 'outline'}
+                icon={<DraftIcon name="comments" />}
+                aria-pressed={includeCommentsInPDF}
+                onClick={onToggleCommentsInPDF}
+              >
                 {t.includeCommentsInPDF}
-              </label>
+              </Button>
+            </ToolbarGroup>
+            <ToolbarGroup label={t.suggestions} caption={t.suggestions}>
+              <Button
+                size="sm"
+                variant={trackChanges ? 'primary' : 'outline'}
+                icon={<DraftIcon name="trackChanges" />}
+                aria-pressed={trackChanges}
+                onClick={() => onToggleTracking?.(!trackChanges)}
+              >
+                {t.trackChanges}
+              </Button>
+              <Button
+                size="sm"
+                variant={suggestionsOpen ? 'primary' : 'outline'}
+                icon={<ListIcon />}
+                aria-pressed={suggestionsOpen}
+                onClick={onToggleSuggestions}
+              >
+                {t.suggestionCount}
+                {suggestionCount ? ` (${suggestionCount})` : ''}
+              </Button>
             </ToolbarGroup>
           </ControlsBar>
         )}

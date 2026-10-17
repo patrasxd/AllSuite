@@ -3,6 +3,8 @@ import { DOMSerializer } from '@tiptap/pm/model'
 import { plainTextParagraphs } from '../engine/formatting'
 import { sanitizeClipboardHTML } from './paste'
 
+const SUPPORTED_IMAGE_TYPE = /^image\/(png|jpeg|gif|webp|svg\+xml)$/
+
 export async function copySelection(editor: Editor, cut = false): Promise<void> {
   const { doc, selection } = editor.state
   if (selection.empty) return
@@ -39,11 +41,9 @@ export async function pasteFromClipboard(
   let content: string | ReturnType<typeof plainTextParagraphs>
   if (!plain && navigator.clipboard?.read) {
     const items = await navigator.clipboard.read()
-    const imageItem = items.find((item) =>
-      item.types.some((type) => /^image\/(png|jpeg|gif|webp|svg\+xml)$/.test(type)),
-    )
+    const imageItem = items.find((item) => item.types.some((type) => SUPPORTED_IMAGE_TYPE.test(type)))
     if (imageItem && onImages) {
-      const type = imageItem.types.find((type) => /^image\/(png|jpeg|gif|webp|svg\+xml)$/.test(type))!
+      const type = imageItem.types.find((type) => SUPPORTED_IMAGE_TYPE.test(type))!
       const blob = await imageItem.getType(type)
       if (editor.isDestroyed || editor.state.doc !== doc || !editor.state.selection.eq(selection))
         throw new Error('Document changed during paste')
@@ -72,4 +72,23 @@ export async function pasteFromClipboard(
   }
   editor.view.dispatch(editor.state.tr.setSelection(bookmark.resolve(doc)))
   editor.chain().focus().insertContent(content).run()
+}
+
+export async function pasteImageFromClipboard(
+  editor: Editor,
+  onImages: (source: Blob[] | string) => Promise<void>,
+): Promise<boolean> {
+  if (!navigator.clipboard?.read) throw new Error('Clipboard read unavailable')
+  const selection = editor.state.selection
+  const doc = editor.state.doc
+  const items = await navigator.clipboard.read()
+  const imageItem = items.find((item) => item.types.some((type) => SUPPORTED_IMAGE_TYPE.test(type)))
+  if (!imageItem) return false
+  const type = imageItem.types.find((itemType) => SUPPORTED_IMAGE_TYPE.test(itemType))!
+  const blob = await imageItem.getType(type)
+  if (editor.isDestroyed || editor.state.doc !== doc || !editor.state.selection.eq(selection)) {
+    throw new Error('Document changed during image paste')
+  }
+  await onImages([blob])
+  return true
 }

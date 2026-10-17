@@ -1,6 +1,6 @@
 import { strFromU8, unzipSync } from 'fflate'
 import { parseChart, renderChart } from './charts'
-import { DOMParser } from '@xmldom/xmldom'
+import { DOMParser, type Element as XmlElement } from '@xmldom/xmldom'
 import type { DraftDocument, DraftMark, DraftNode, ImportResult, UnsupportedContent } from '../../document-model'
 import { twipsToLineSpacing, twipsToPoints } from '../../paragraph'
 import { bytesToDataURL, imageMime, sanitizeSVG } from '../../images'
@@ -9,6 +9,7 @@ import { normalizeReferences, safeLink, validTargetId, nodeText, validCaptionLab
 import { DEFAULT_PAGE_SETUP, validatePageSetup, type PageSetup } from '../../page-setup'
 import { emptyStories, emptyStory, validateStories, type Stories, type StoryVariant } from '../../stories'
 import { serializeCommentThreads, type CommentReply, type CommentThread } from '../../comments'
+import { ommlElementToLatex } from '../../math'
 
 class DocxRelationships extends Map<string, string> {
   story = false
@@ -393,38 +394,61 @@ function numberingMap(numbering?: XMLDocument): Numbering {
   return result
 }
 
-function marks(run: Element): DraftMark[] | undefined {
-  const properties = children(run, 'rPr')[0]
-  if (!properties) return undefined
+function marksFromProperties(properties?: Element): DraftMark[] {
+  if (!properties) return []
+  const current = properties.cloneNode(false) as Element
+  for (const child of children(properties)) if (name(child) !== 'rPrChange') current.appendChild(child.cloneNode(true))
   const result: DraftMark[] = []
   const textStyle: Record<string, string | boolean> = {}
   for (const [tag, type, override] of [
     ['b', 'bold', 'styleBold'],
     ['i', 'italic', 'styleItalic'],
   ] as const) {
-    const property = first(properties, tag)
+    const property = first(current, tag)
     if (property) {
       if (['0', 'false', 'off'].includes(attr(property, 'val') || '')) textStyle[override] = false
       else result.push({ type })
     }
   }
-  const characterStyle = attr(first(properties, 'rStyle'), 'val')
+  const characterStyle = attr(first(current, 'rStyle'), 'val')
   if (characterStyle) result.push({ type: 'characterStyle', attrs: { styleId: characterStyle } })
-  const underline = attr(first(properties, 'u'), 'val')
+  const underline = attr(first(current, 'u'), 'val')
   if (underline && underline !== 'none') result.push({ type: 'underline' })
-  if (first(properties, 'strike') || first(properties, 'dstrike')) result.push({ type: 'strike' })
-  const color = hex(attr(first(properties, 'color'), 'val'))
+  if (first(current, 'strike') || first(current, 'dstrike')) result.push({ type: 'strike' })
+  const color = hex(attr(first(current, 'color'), 'val'))
   if (color && color !== '#auto') textStyle.color = color
-  const highlight = attr(first(properties, 'highlight'), 'val')
+  const highlight = attr(first(current, 'highlight'), 'val')
   if (highlight && highlightColors[highlight])
     result.push({ type: 'highlight', attrs: { color: highlightColors[highlight] } })
-  const size = int(attr(first(properties, 'sz'), 'val'))
+  const size = int(attr(first(current, 'sz'), 'val'))
   if (size) textStyle.fontSize = `${size / 2}pt`
-  const family = attr(first(properties, 'rFonts'), 'ascii') || attr(first(properties, 'rFonts'), 'hAnsi')
+  const family = attr(first(current, 'rFonts'), 'ascii') || attr(first(current, 'rFonts'), 'hAnsi')
   if (family) textStyle.fontFamily = family
-  const vertical = attr(first(properties, 'vertAlign'), 'val')
+  const vertical = attr(first(current, 'vertAlign'), 'val')
   if (vertical === 'subscript' || vertical === 'superscript') result.push({ type: vertical })
   if (Object.keys(textStyle).length) result.push({ type: 'textStyle', attrs: textStyle })
+  return result
+}
+
+let revisionSequence = 0
+function marks(run: Element): DraftMark[] | undefined {
+  const properties = children(run, 'rPr')[0]
+  if (!properties) return undefined
+  const result = marksFromProperties(properties)
+  const change = children(properties, 'rPrChange')[0]
+  const previous = children(change || properties, 'rPr')[0]
+  if (change && previous) {
+    result.push({
+      type: 'suggestion',
+      attrs: {
+        id: `docx-format-${attr(change, 'id') || ++revisionSequence}`,
+        kind: 'format',
+        author: attr(change, 'author') || 'Guest',
+        timestamp: attr(change, 'date') || '',
+        before: JSON.stringify(marksFromProperties(previous)),
+      },
+    })
+  }
   return result.length ? result : undefined
 }
 
@@ -445,7 +469,7 @@ function runContent(run: Element, rels: DocxRelationships, inherited?: DraftMark
       const image = drawingImage(child, rels)
       if (image) content.push(image)
     }
-    if (name(child) === 't')
+    if (name(child) === 't' || name(child) === 'delText')
       content.push({ type: 'text', text: child.textContent || '', marks: runMarks.length ? runMarks : undefined })
     if (name(child) === 'tab') content.push({ type: 'text', text: '\t', marks: runMarks.length ? runMarks : undefined })
     if (name(child) === 'br' || name(child) === 'cr')
@@ -489,13 +513,36 @@ function knownReferenceField(instruction: string, cached: DraftNode[], target: D
     }
   }
 }
-function paragraphContent(paragraph: Element, rels: DocxRelationships) {
+function paragraphContent(paragraph: Element, rels: DocxRelationships, inherited?: DraftMark[]) {
   const content: DraftNode[] = []
   let target = content
   const bookmarks: Array<{ id: string; parent: DraftNode[] }> = []
   const elements = children(paragraph)
   for (let index = 0; index < elements.length; index++) {
     const child = elements[index]
+    if (name(child) === 'oMath' || name(child) === 'oMathPara') {
+      const math = name(child) === 'oMathPara' ? descendant(child, 'oMath') : child
+      const latex = math && ommlElementToLatex(math as unknown as XmlElement)
+      if (latex !== null && latex !== undefined)
+        target.push({ type: name(child) === 'oMathPara' ? 'mathBlock' : 'mathInline', attrs: { latex } })
+      else rels.unsupportedFields.add('equation (unsupported OMML structure)')
+      continue
+    }
+    if (name(child) === 'ins' || name(child) === 'del') {
+      const kind = name(child) === 'ins' ? 'insert' : 'delete'
+      const revision: DraftMark = {
+        type: 'suggestion',
+        attrs: {
+          id: `docx-${kind}-${attr(child, 'id') || ++revisionSequence}`,
+          kind,
+          author: attr(child, 'author') || 'Guest',
+          timestamp: attr(child, 'date') || '',
+        },
+      }
+      const marks = [...(inherited || []), revision]
+      for (const part of children(child)) target.push(...paragraphContentWrapper(part, rels, marks))
+      continue
+    }
     if (name(child) === 'commentRangeStart') {
       const id = attr(child, 'id')
       const threadId = id && rels.commentIds.get(id)
@@ -521,7 +568,7 @@ function paragraphContent(paragraph: Element, rels: DocxRelationships) {
     if (name(child) === 'bookmarkEnd' && bookmarks.at(-1)?.id === attr(child, 'id')) target = bookmarks.pop()!.parent
     const instruction = name(child) === 'fldSimple' ? attr(child, 'instr') : undefined
     if (instruction !== undefined) {
-      const cached = paragraphContent(child, rels)
+      const cached = paragraphContent(child, rels, inherited)
       const storyField = rels.story && /^\s*(PAGE|NUMPAGES|TITLE)(?:\s+\\\*\s+MERGEFORMAT)?\s*$/i.exec(instruction)
       if (storyField) {
         target.push({ type: 'storyField', attrs: { field: storyField[1].toUpperCase() }, marks: cached[0]?.marks })
@@ -554,7 +601,7 @@ function paragraphContent(paragraph: Element, rels: DocxRelationships) {
         if (field === 'end' && --depth === 0) break
         if (!separated) instruction += first(part, 'instrText')?.textContent || ''
         if (field === 'separate') separated = true
-        else if (separated) cached.push(...paragraphContentWrapper(part, rels))
+        else if (separated) cached.push(...paragraphContentWrapper(part, rels, inherited))
       }
       const match = /^\s*REF\s+([A-Za-z_][\w-]{0,159})(?:\s+\\h)?\s*$/i.exec(instruction)
       const storyField = rels.story && /^\s*(PAGE|NUMPAGES|TITLE)(?:\s+\\\*\s+MERGEFORMAT)?\s*$/i.exec(instruction)
@@ -571,7 +618,7 @@ function paragraphContent(paragraph: Element, rels: DocxRelationships) {
       index = end
       continue
     }
-    if (name(child) === 'r') target.push(...runContent(child, rels))
+    if (name(child) === 'r') target.push(...runContent(child, rels, inherited))
     if (name(child) === 'hyperlink') {
       const href = safeLink(
         attr(child, 'anchor')
@@ -588,18 +635,19 @@ function paragraphContent(paragraph: Element, rels: DocxRelationships) {
             },
           ]
         : undefined
-      for (const run of children(child, 'r')) target.push(...runContent(run, rels, link))
+      for (const part of children(child))
+        target.push(...paragraphContentWrapper(part, rels, [...(inherited || []), ...(link || [])]))
     }
   }
   if (bookmarks.length) rels.unsupportedFields.add('bookmark across paragraphs (partial range)')
   return content
 }
 
-function paragraphContentWrapper(element: Element, rels: DocxRelationships): DraftNode[] {
-  if (name(element) === 'r') return runContent(element, rels)
+function paragraphContentWrapper(element: Element, rels: DocxRelationships, inherited?: DraftMark[]): DraftNode[] {
+  if (name(element) === 'r') return runContent(element, rels, inherited)
   const wrapper = element.ownerDocument.createElementNS(word, 'w:p')
   wrapper.appendChild(element.cloneNode(true))
-  return paragraphContent(wrapper, rels)
+  return paragraphContent(wrapper, rels, inherited)
 }
 
 function listInfo(paragraph: Element, numbering: Numbering) {
@@ -636,6 +684,20 @@ function paragraphNode(paragraph: Element, rels: DocxRelationships, styles: Docx
           ],
     )
   const content = flatten(paragraphContent(paragraph, rels))
+  if (style === 'DraftCodeBlock') {
+    const text = content
+      .map((node) => (node.type === 'hardBreak' ? '\n' : node.type === 'text' ? node.text || '' : ''))
+      .join('')
+    const language = /^\[([a-z0-9+#-]{1,24})\]\n/i.exec(text)
+    const code = language ? text.slice(language[0].length) : text
+    return {
+      type: 'codeBlock',
+      attrs: language ? { language: language[1].toLowerCase() } : {},
+      content: code ? [{ type: 'text', text: code }] : [],
+    } satisfies DraftNode
+  }
+  if (content.length === 1 && content[0].type === 'mathBlock') return content[0]
+  for (const node of content) if (node.type === 'mathBlock') node.type = 'mathInline'
   const sequence = (nodes: DraftNode[]): DraftNode | undefined =>
     nodes.find((node) => node.type === 'captionNumber') ||
     nodes
@@ -787,7 +849,7 @@ function scanUnsupported(xml: string): UnsupportedContent[] {
     [/<(?:\w+:)?shape\b|<v:shape/i, 'shape'],
     [/<(?:\w+:)?txbxContent\b/i, 'text box'],
     [/<(?:\w+:)?object\b|<o:OLEObject/i, 'embedded object'],
-    [/<(?:\w+:)?(?:ins|del)\b/i, 'tracked change'],
+    [/<(?:\w+:)?(?:moveFrom|moveTo|customXmlInsRangeStart|customXmlDelRangeStart)\b/i, 'tracked change'],
     [/<(?:\w+:)?macros?\b/i, 'macro'],
   ]
   return rules.filter(([pattern]) => pattern.test(xml)).map(([, kind]) => ({ kind }))

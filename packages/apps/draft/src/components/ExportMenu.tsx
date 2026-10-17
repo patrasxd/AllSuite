@@ -13,6 +13,7 @@ export const exportLabels = {
     html: 'HTML',
     text: 'Plain text',
     pdf: 'PDF',
+    odt: 'OpenDocument text (.odt)',
     preparing: 'Preparing export…',
     error: 'The document could not be exported. Please try again.',
     blocked: 'Allow a print window to open, then choose Print again.',
@@ -23,12 +24,13 @@ export const exportLabels = {
     html: 'HTML',
     text: 'Zwykły tekst',
     pdf: 'PDF',
+    odt: 'OpenDocument text (.odt)',
     preparing: 'Przygotowywanie eksportu…',
     error: 'Nie udało się wyeksportować dokumentu. Spróbuj ponownie.',
     blocked: 'Zezwól na otwarcie okna drukowania, a następnie wybierz ponownie Drukuj.',
   },
 }
-const formats: ExportFormat[] = ['markdown', 'html', 'text', 'pdf']
+const formats: ExportFormat[] = ['markdown', 'html', 'text', 'odt', 'pdf']
 export function ExportMenu({
   locale,
   busy = false,
@@ -59,7 +61,7 @@ export function ExportMenu({
     const locate = () => {
       const rect = trigger.current!.getBoundingClientRect()
       const width = menu.current?.offsetWidth || 220
-      const height = menu.current?.offsetHeight || 192
+      const height = menu.current?.offsetHeight || 232
       setPosition({
         left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
         top: Math.max(8, Math.min(rect.bottom + 4, window.innerHeight - height - 8)),
@@ -166,7 +168,7 @@ export function ExportMenu({
                 tabIndex={-1}
                 size="sm"
                 variant="ghost"
-                icon={<DraftIcon name={format} />}
+                icon={<DraftIcon name={format === 'odt' ? 'export' : format} />}
                 onClick={() => {
                   close(true)
                   onExport(format)

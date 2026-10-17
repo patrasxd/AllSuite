@@ -12,7 +12,7 @@ import {
 import { substituteFontFamily, type DocumentFontFamily } from '../fonts'
 import { readPageSetup } from '../page-setup'
 
-export type ExportFormat = 'markdown' | 'html' | 'text' | 'pdf'
+export type ExportFormat = 'markdown' | 'html' | 'text' | 'pdf' | 'odt'
 export type ExportFont = {
   family: DocumentFontFamily
   weight: 400 | 700
@@ -98,7 +98,7 @@ export function tableGrid(table: DraftNode): Array<Array<DraftNode | null>> {
   return grid.map((row) => Array.from({ length: width }, (_, index) => row[index] || null))
 }
 export function exportFileName(name: string, format: ExportFormat) {
-  const clean = name.replace(/\.(docx|txt|md|html|pdf)$/i, '').replace(/[<>:"/\\|?*]/g, '_')
+  const clean = name.replace(/\.(docx|odt|txt|md|html|pdf)$/i, '').replace(/[<>:"/\\|?*]/g, '_')
   const base =
     Array.from(clean, (character) => (character.charCodeAt(0) < 32 ? '_' : character))
       .join('')

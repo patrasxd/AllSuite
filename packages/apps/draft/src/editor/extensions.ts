@@ -14,6 +14,9 @@ import { renderFontFamily } from '../engine/fonts'
 import { FormattingMarks } from './formatting-marks'
 import { SearchHighlights } from './search-highlights'
 import { CommentCleanup, CommentMark } from './comments'
+import { SuggestionMark, SuggestionTracking } from './suggestions'
+import { DraftCodeBlock } from './code-block'
+import { BlockMath, InlineMath } from './math-nodes'
 import { DocumentPageSetup, PageBreak } from './page-setup'
 import { Pagination } from './pagination'
 import { CharacterStyle, DocumentStyles } from './styles'
@@ -24,6 +27,7 @@ interface ShortcutOptions {
   requestImageEdit?: () => void
   requestComment?: () => void
   toggleComments?: () => void
+  getSuggestionAuthor?: () => string
   getLocale?: () => string
   onPages?: (pages: number) => void
   measurement?: boolean
@@ -35,6 +39,7 @@ export function editorExtensions({
   requestImageEdit,
   requestComment,
   toggleComments,
+  getSuggestionAuthor,
   getLocale,
   onPages,
   measurement,
@@ -183,6 +188,9 @@ export function editorExtensions({
       gapcursor: false,
       trailingNode: false,
     }),
+    DraftCodeBlock,
+    InlineMath,
+    BlockMath,
     ...tableExtensions,
     (measurement
       ? DraftImage.extend({
@@ -209,6 +217,8 @@ export function editorExtensions({
     CharacterStyle,
     CommentMark,
     CommentCleanup,
+    SuggestionMark,
+    SuggestionTracking.configure({ getAuthor: getSuggestionAuthor || (() => 'Guest') }),
     FormattingMarks,
     SearchHighlights,
     Shortcuts,

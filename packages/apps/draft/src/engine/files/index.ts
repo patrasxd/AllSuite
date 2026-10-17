@@ -34,6 +34,7 @@ const types = [
     description: 'Draft documents',
     accept: {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/vnd.oasis.opendocument.text': ['.odt'],
       'text/plain': ['.txt', '.md'],
     },
   },
@@ -43,7 +44,7 @@ function fallbackInput(): Promise<File | undefined> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.docx,.txt,.md'
+    input.accept = '.docx,.odt,.txt,.md'
     input.hidden = true
     input.addEventListener(
       'change',
@@ -93,9 +94,15 @@ export async function readDocument(
     await prepareImportedImages(result.document, result.unsupported)
     return { ...result, name: file.name, handle }
   }
+  if (extension === 'odt') {
+    const { importOdtInWorker } = await import('../odt/worker-client')
+    const result = await importOdtInWorker(await file.arrayBuffer(), onProgress)
+    await prepareImportedImages(result.document, result.unsupported)
+    return { ...result, name: file.name, handle }
+  }
   if (extension === 'txt' || extension === 'md')
     return { document: textDocument(await file.text()), name: file.name, handle, unsupported: [] }
-  throw new Error('Choose a .docx, .txt or .md file.')
+  throw new Error('Choose a .docx, .odt, .txt or .md file.')
 }
 
 export async function chooseSaveHandle(suggestedName: string): Promise<FileHandle | undefined> {
@@ -128,6 +135,6 @@ export function download(blob: Blob, name: string) {
 }
 
 export function docxName(name?: string) {
-  const base = (name || 'Untitled').replace(/\.(docx|txt|md)$/i, '') || 'Untitled'
+  const base = (name || 'Untitled').replace(/\.(docx|odt|txt|md)$/i, '') || 'Untitled'
   return `${base}.docx`
 }

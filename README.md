@@ -52,10 +52,12 @@ Opening and editing a document should not require an account or uploading it to 
 
 ## Key Features
 
-- **Local document workflows**: Open DOCX, Markdown and plain text; save DOCX or export PDF, HTML, Markdown and text.
+- **Local document workflows**: Open DOCX, ODT, Markdown and plain text; save DOCX or ODT, or export PDF, HTML, Markdown and text.
 - **Rich-text editing**: Formatting, paragraph styles, nested lists, find/replace, tables, images and safe rich-text paste.
+- **Equations and code**: Inline and block equations rendered locally with KaTeX, plus monospace code blocks with optional language labels and syntax highlighting.
 - **Physical pages**: Page setup, margins, page breaks, rich headers/footers, page numbering and single-column print preview.
 - **Document references**: Headings, bookmarks, tables of contents, captions, cross-references, footnotes and endnotes.
+- **Review and focus**: Track insertions and deletions, review suggestions, reorder sections in the collapsible outline, or hide the workspace controls in Focus mode.
 - **Offline PWA**: Static app assets and bundled fonts are cached for offline use; documents stay in memory.
 - **Four themes**: Dark, Light, E-Ink Light and E-Ink Dark, with reduced-motion support.
 - **English and Polish**: Runtime language switching across the catalog and editor.
@@ -71,7 +73,13 @@ Opening and editing a document should not require an account or uploading it to 
 
 ### Draft Compatibility & Limitations
 
-DOCX round trips preserve supported document semantics, including formatting, styles, lists, tables, embedded images, references and single-section page setup. The importer reports unsupported or flattened content before replacing the current document. Exact source layout, arbitrary fields, tracked changes, comments, macros, shapes and multiple-section layouts are not preserved. Supported charts are converted to static images.
+DOCX round trips preserve supported document semantics, including formatting, styles, lists, tables, embedded images, references and single-section page setup. The DOCX and ODT importers use the same report before replacing the current document when they find unsupported content. Exact source layout, arbitrary fields, comments, macros, shapes and multiple-section layouts are not preserved. Supported charts are converted to static images.
+
+ODT uses Draft's bundled `fflate` ZIP handling and XML reader/writer. It preserves common paragraphs and headings, inline formatting and links, lists, basic tables, embedded images and page setup. Complex ODF styles, tracked changes, annotations, embedded objects, advanced table merges and other unsupported elements are listed in the import report. Focus mode hides the editor controls and status panels while keeping the page canvas, with Escape and a visible exit button. The outline shows collapsible heading levels; sections can be reordered by dragging or with the accessible Move up and Move down buttons. Moves stay within the same document container, so headings inside a table cell or list item cannot be moved into another container.
+
+Draft suggestion mode imports and exports Word insertions, deletions and supported character-format revisions as reviewable suggestions. Unsupported revision structures are reported during import.
+
+Inline and block equations use locally bundled KaTeX fonts, and common equation structures (fractions, scripts, roots, delimiters and matrices) export as WordprocessingML Office Math Markup Language (OMML) and import back as editable equations. The DOCX importer reports OMML structures outside this supported set. Code blocks export as styled monospace paragraphs; editor syntax colors are not included in DOCX.
 
 Single-column editing, preview, Print and direct PDF share physical-page geometry. Multi-column exact preview/PDF and page-bottom footnotes are not implemented; notes appear at the document end. Direct PDF supports the bundled Latin/Latin Extended font coverage and produces selectable, untagged PDFs. Browser printer settings can change printed output.
 

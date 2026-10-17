@@ -92,6 +92,13 @@ DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
+KaTeX fonts
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+KaTeX fonts distributed by KaTeX 0.19.0 are licensed under the SIL Open Font License 1.1.
+The complete OFL 1.1 text above applies to these fonts.
+Source: https://github.com/KaTeX/KaTeX/tree/v0.19.0/fonts
+
 
 --------------------
 

@@ -64,6 +64,14 @@ export default defineConfig({
         manualChunks(id) {
           // A lazy editor-only dependency: keep it separate from both shell and editor engine.
           if (id.replaceAll('\\', '/').includes('/node_modules/dompurify/')) return 'draft-paste-sanitizer'
+          // Shared math rendering/conversion code must not pull the editor chunk into DOCX exports.
+          const normalizedId = id.replaceAll('\\', '/')
+          if (normalizedId.includes('/node_modules/@xmldom/xmldom/')) return 'draft-xml-runtime'
+          if (
+            normalizedId.includes('/node_modules/katex/') ||
+            normalizedId.endsWith('/draft/src/engine/math-safety.ts')
+          )
+            return 'draft-math-runtime'
         },
       },
     },

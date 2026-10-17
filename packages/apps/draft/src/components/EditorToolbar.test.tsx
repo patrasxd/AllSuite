@@ -12,7 +12,11 @@ afterEach(() => {
   for (const editor of instances.splice(0)) editor.destroy()
 })
 
-function setup(content = '<p>Hello</p>') {
+function setup(
+  content = '<p>Hello</p>',
+  onClipboard = vi.fn(),
+  toolbarProps: Partial<Parameters<typeof EditorToolbar>[0]> = {},
+) {
   const editor = new Editor({
     content,
     extensions: editorExtensions({ requestPlainPaste: vi.fn(), requestLink: vi.fn() }),
@@ -20,7 +24,7 @@ function setup(content = '<p>Hello</p>') {
   instances.push(editor)
   render(
     <>
-      <EditorToolbar editor={editor} locale="en" onClipboard={vi.fn()} />
+      <EditorToolbar editor={editor} locale="en" onClipboard={onClipboard} {...toolbarProps} />
       <EditorContent editor={editor} />
     </>,
   )
@@ -54,7 +58,14 @@ describe('toolbar commands and selection state', () => {
     expect(screen.getByRole('button', { name: 'Horizontal rule' })).toHaveClass('all-btn--outline')
     expect(screen.getByRole('button', { name: 'Special characters' })).toHaveClass('all-btn--outline')
     expect(screen.getByRole('button', { name: 'Emoji' })).toHaveClass('all-btn--outline')
-    for (const name of ['Horizontal rule', 'Special characters', 'Emoji', 'Insert table', 'Insert image']) {
+    for (const name of [
+      'Horizontal rule',
+      'Special characters',
+      'Emoji',
+      'Insert table',
+      'Insert image',
+      'Paste image',
+    ]) {
       expect(screen.getByRole('button', { name, exact: true }).querySelector('.all-btn__icon svg')).toBeInTheDocument()
     }
 
@@ -83,6 +94,31 @@ describe('toolbar commands and selection state', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Format', exact: true }))
     expect(screen.getByRole('button', { name: 'Bold', exact: true })).toHaveAttribute('aria-pressed', 'true')
     expect(editor.getHTML()).toContain('<strong>Hello</strong>')
+  })
+  it('routes the Insert tab image paste action to the image clipboard flow', () => {
+    const onClipboard = vi.fn()
+    setup('<p>Hello</p>', onClipboard)
+    fireEvent.click(screen.getByRole('tab', { name: 'Insert', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Paste image', exact: true }))
+    expect(onClipboard).toHaveBeenCalledWith('pasteImage')
+  })
+  it('uses the View tab AllUI pressed button style for Review switches', () => {
+    const onToggleTracking = vi.fn()
+    const onToggleCommentsInPDF = vi.fn()
+    setup('<p>Hello</p>', vi.fn(), { onToggleTracking, onToggleCommentsInPDF })
+    fireEvent.click(screen.getByRole('tab', { name: 'Review', exact: true }))
+
+    const trackChanges = screen.getByRole('button', { name: 'Track changes', exact: true })
+    const includeComments = screen.getByRole('button', { name: 'Include comments in PDF', exact: true })
+    for (const button of [trackChanges, includeComments]) {
+      expect(button).toHaveClass('all-btn', 'all-btn--sm', 'all-btn--outline')
+      expect(button).toHaveAttribute('aria-pressed', 'false')
+    }
+
+    fireEvent.click(trackChanges)
+    fireEvent.click(includeComments)
+    expect(onToggleTracking).toHaveBeenCalledWith(true)
+    expect(onToggleCommentsInPDF).toHaveBeenCalledTimes(1)
   })
   it('toggles bold on actual selected text and reflects selection changes', () => {
     const editor = setup('<p>Hello world</p>')

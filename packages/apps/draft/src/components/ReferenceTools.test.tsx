@@ -87,7 +87,7 @@ it('collapses nested headings, highlights the selection section and jumps withou
   const editor = editorSetup()
   const before = editor.getJSON()
   render(<NavigationPanel editor={editor} locale="en" open onClose={vi.fn()} />)
-  const panel = screen.getByRole('navigation', { name: 'Navigation' })
+  const panel = screen.getByRole('navigation', { name: 'Outline' })
   expect(within(panel).getByRole('button', { name: 'First section', exact: true })).toHaveAttribute(
     'aria-current',
     'location',

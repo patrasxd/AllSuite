@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { ExportMenu } from './ExportMenu'
 
 afterEach(cleanup)
-it('offers four localized formats through AllUI buttons, with keyboard navigation and Escape focus restoration', () => {
+it('offers five localized formats through AllUI buttons, with keyboard navigation and Escape focus restoration', () => {
   const exportDocument = vi.fn()
   const toggleComments = vi.fn()
   render(<ExportMenu locale="pl" onExport={exportDocument} onToggleCommentsInPDF={toggleComments} />)
@@ -11,7 +11,7 @@ it('offers four localized formats through AllUI buttons, with keyboard navigatio
   expect(trigger).toHaveClass('all-btn')
   fireEvent.keyDown(trigger, { key: 'ArrowDown' })
   const items = Array.from(screen.getByRole('menu').querySelectorAll('button'))
-  expect(screen.getAllByRole('menuitem')).toHaveLength(4)
+  expect(screen.getAllByRole('menuitem')).toHaveLength(5)
   expect(screen.getByRole('menuitemcheckbox', { name: 'Dołącz komentarze do PDF' })).toHaveAttribute(
     'aria-checked',
     'false',
@@ -22,7 +22,9 @@ it('offers four localized formats through AllUI buttons, with keyboard navigatio
   fireEvent.keyDown(items[0], { key: 'ArrowDown' })
   expect(items[1]).toHaveFocus()
   fireEvent.keyDown(items[1], { key: 'End' })
-  expect(items[4]).toHaveFocus()
+  expect(items[5]).toHaveFocus()
+  fireEvent.keyDown(items[5], { key: 'ArrowUp' })
+  expect(items[4]).toHaveTextContent('OpenDocument text (.odt)')
   fireEvent.keyDown(items[4], { key: 'ArrowUp' })
   expect(items[3]).toHaveTextContent('Zwykły tekst')
   expect(items[3]).toHaveFocus()
@@ -36,6 +38,9 @@ it('offers four localized formats through AllUI buttons, with keyboard navigatio
   fireEvent.click(screen.getByRole('menuitem', { name: 'HTML', exact: true }))
   expect(exportDocument).toHaveBeenCalledWith('html')
   expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  fireEvent.click(trigger)
+  fireEvent.click(screen.getByRole('menuitem', { name: 'OpenDocument text (.odt)' }))
+  expect(exportDocument).toHaveBeenCalledWith('odt')
 })
 it('closes on outside interaction and disables the trigger while exporting', () => {
   const { rerender } = render(<ExportMenu locale="en" onExport={vi.fn()} />)

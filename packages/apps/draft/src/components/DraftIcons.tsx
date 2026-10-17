@@ -126,6 +126,12 @@ const drawings = {
       <path d="M14 21V3h5M18 3v18M14 3H9a5 5 0 0 0 0 10h5" />
     </>
   ),
+  equation: <path d="M18 4H7l6 8-6 8h11M9 12h7" />,
+  pageBreak: (
+    <>
+      <path d="M5 4h14M5 20h14M8 8l4 4 4-4M12 12v4" />
+    </>
+  ),
   autoformat: (
     <>
       <path d="m3 20 9-9M9 19l-6-6M16 3v6M13 6h6M19 14v6M16 17h6" />
@@ -150,6 +156,12 @@ const drawings = {
     <>
       <path d="M4 4h16v12H9l-5 4z" />
       <path d="M8 8h8M8 12h5" />
+    </>
+  ),
+  trackChanges: (
+    <>
+      <path d="M5 3h9l5 5v13H5zM14 3v5h5" />
+      <path d="M8 13h8M8 17h5" />
     </>
   ),
   navigation: (
