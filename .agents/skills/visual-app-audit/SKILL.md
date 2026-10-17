@@ -1,26 +1,14 @@
 ---
 name: visual-app-audit
-description: Audit an AllSuite app for viewport usage, four-theme rendering, accessibility and visible-toolbar/internal-document scrolling defects.
+description: Audit an AllSuite app when the user asks for a visual or responsive review.
 ---
 
-# Visual App Audit Skill
+# Visual app audit
 
-Use to inspect an app screen or verify a requested visual change. Read the [theme](../../rules/02-themes-motion.md), [layout](../../rules/03-responsive-layout.md) and [testing](../../rules/04-testing-gating.md) rules. An audit alone does not authorize unrelated features.
+Use only for a requested audit or visual change. Read the matching [theme](../../rules/02-themes-motion.md), [layout](../../rules/03-responsive-layout.md) and [testing](../../rules/04-testing-gating.md) rules. Do not add unrelated features.
 
-## 1. Viewport utilization
+For a full audit, inspect 390×844, 844×390, 820×1180, 1280×800 and 1920×1080 in all four themes: `dark`, `light`, `e-ink-light`, `e-ink-dark`. Check space use, internal scrolling, toolbar visibility, long documents, dialogs, focus, keyboard reachability, 44px touch targets, reduced motion and EN/PL labels. Verify normal text contrast is at least 4.5:1; e-ink has crisp monochrome surfaces, 2px outlined controls, no shadows/blur/animation, and respects reduced motion.
 
-Test mobile portrait **390×844**, mobile landscape **844×390**, tablet **820×1180**, desktop **1280×800** and large desktop **1920×1080**.
+For a focused visual change, check only affected viewports and themes. This repository does not maintain screenshot baselines; use a focused browser check when behavior needs it.
 
-Verify workspace use around intentional paper width, no outer scroll in the editor, internal document/outline scrolling, visible toolbar and 44×44px touch hit areas. Exercise long documents, zoom, panels and dialogs; retain usable height on short screens. Preserve the requested bottom status bar; do not replace the catalog with a promotional page or add a library/product footer.
-
-## 2. Themes and motion
-
-Check `dark`, `light`, `e-ink-light`, `e-ink-dark` at every viewport. Verify readable muted text and at least 4.5:1 normal-text contrast. E-ink uses monochrome surfaces, crisp contrasting borders (at least 2px for outlined controls/surfaces), zero shadows, blur, animation or smooth scrolling. Theme changes preserve document data.
-
-Emulate reduced motion; updates are instant. Verify keyboard navigation, visible focus, icon labels, overflow-region reachability and unsaved indication. Test toolbar/dialogs in EN/PL, including longer labels.
-
-## 3. Evidence and regression checks
-
-Retain pre-change screenshots. Capture Playwright comparison baselines for all four themes at 390px/1280px, plus other audited sizes. Inspect differences instead of blindly updating snapshots. Existing `docs/` screenshots and screenshot-only tests are evidence, not automated comparison gates.
-
-Report defects with route, theme, viewport, reproduction and image paths; distinguish existing defects from regressions. If fixes were requested, verify them and required gates. If audit-only, deliver findings without features. Use synthetic documents, not real user content, in persisted test artifacts.
+Use synthetic document content. Report any defect with route, theme, viewport and reproduction. Distinguish existing defects from regressions.

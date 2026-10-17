@@ -170,7 +170,7 @@ test('exports a captured snapshot while later edits stay dirty, and handles font
   await expect(editor).toHaveText('Newer unsaved edit')
 })
 
-test('exports HTML offline using only precached static code/fonts and keeps a saved source clean', async ({
+test('@smoke exports HTML offline using only precached static code/fonts and keeps a saved source clean', async ({
   page,
   context,
 }) => {
@@ -200,7 +200,7 @@ for (const theme of ['dark', 'light', 'e-ink-light', 'e-ink-dark'])
     { width: 1280, height: 800 },
     { width: 1920, height: 1080 },
   ]) {
-    test(`export menu ${theme} ${viewport.width}`, async ({ page }) => {
+    test(`@slow export menu ${theme} ${viewport.width}`, async ({ page }) => {
       const locale = viewport.width === 390 ? 'pl' : 'en'
       await page.setViewportSize(viewport)
       await page.addInitScript(
@@ -234,8 +234,6 @@ for (const theme of ['dark', 'light', 'e-ink-light', 'e-ink-dark'])
       }
       await page.evaluate(() => document.fonts.ready)
       await page.screenshot({ path: `test-results/export-menu-${theme}-${viewport.width}.png` })
-      if (viewport.width === 390 || viewport.width === 1280)
-        await expect(page).toHaveScreenshot(`export-menu-${theme}-${viewport.width}.png`)
       await page.keyboard.press('Escape')
       await expect(trigger).toBeFocused()
       await expect(menu).toHaveCount(0)

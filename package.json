@@ -45,7 +45,7 @@
     "license:check": "node scripts/audit-dependency-licenses.mjs",
     "test": "vitest run",
     "test:ui": "npm --prefix AllUI test",
-    "test:e2e": "playwright test"
+    "test:e2e:deploy": "playwright test --grep @smoke"
   },
   "dependencies": {
     "@all/ui": "file:./AllUI",

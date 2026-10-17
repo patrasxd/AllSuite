@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test('editing commands, history, headings, alignment and dirty navigation', async ({ page }) => {
+test('@smoke editing commands, history, headings, alignment and dirty navigation', async ({ page }) => {
   await page.goto('./#/draft')
   const editor = page.getByRole('textbox', { name: 'Document editor', exact: true })
   await editor.fill('Hello document')
@@ -51,7 +51,7 @@ test('list commands create nested items and can outdent them', async ({ page }) 
   await expect(editor.locator('ul ul')).toHaveCount(0)
 })
 
-test('native rich/plain paste sanitizes HTML and never starts remote requests', async ({ page }) => {
+test('@smoke native rich/plain paste sanitizes HTML and never starts remote requests', async ({ page }) => {
   const remote: string[] = []
   page.on('request', (request) => {
     if (request.url().includes('unsafe.test')) remote.push(request.url())

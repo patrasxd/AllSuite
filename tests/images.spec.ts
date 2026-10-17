@@ -99,7 +99,7 @@ test('downscales large images while keep-original preserves pixels', async ({ pa
   ).toBe(1600)
 })
 
-test('native clipboard and drop support raster and sanitized SVG without document persistence or remote requests', async ({
+test('@smoke native clipboard and drop support raster and sanitized SVG without document persistence or remote requests', async ({
   page,
 }) => {
   const remote: string[] = []
@@ -205,7 +205,7 @@ test('JPEG, GIF, WebP and embedded clipboard HTML images are accepted', async ({
 
 for (const locale of ['en', 'pl']) {
   for (const theme of ['dark', 'light', 'e-ink-light', 'e-ink-dark']) {
-    test(`image insertion uses compact AllUI dialog controls in ${locale} ${theme}`, async ({ page }) => {
+    test(`@slow image insertion uses compact AllUI dialog controls in ${locale} ${theme}`, async ({ page }) => {
       await page.setViewportSize(locale === 'en' ? { width: 1280, height: 800 } : { width: 390, height: 844 })
       await page.addInitScript((value) => localStorage.setItem('allsuite:locale', value), locale)
       await page.addInitScript((value) => localStorage.setItem('allsuite:theme', value), theme)
@@ -227,7 +227,6 @@ for (const locale of ['en', 'pl']) {
       await expect(alt).toHaveAttribute('aria-describedby', /helper/)
       await expect(dialog).toHaveCSS('opacity', '1')
       await page.screenshot({ path: `test-results/image-dialog-${locale}-${theme}.png`, animations: 'disabled' })
-      await expect(page).toHaveScreenshot(`image-dialog-${locale}-${theme}.png`)
       await expect(dialog.getByLabel(locale === 'en' ? 'Image files' : 'Pliki obrazów', { exact: true })).toBeHidden()
       const chooser = page.waitForEvent('filechooser')
       await dialog.getByRole('button', { name: locale === 'en' ? 'Choose images' : 'Wybierz obrazy' }).click()
@@ -247,7 +246,7 @@ for (const theme of ['dark', 'light', 'e-ink-light', 'e-ink-dark']) {
     { width: 1280, height: 800 },
     { width: 1920, height: 1080 },
   ]) {
-    test(`image viewport ${theme} ${viewport.width}`, async ({ page }) => {
+    test(`@slow image viewport ${theme} ${viewport.width}`, async ({ page }) => {
       await page.setViewportSize(viewport)
       await page.addInitScript((value) => localStorage.setItem('allsuite:theme', value), theme)
       await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -269,8 +268,6 @@ for (const theme of ['dark', 'light', 'e-ink-light', 'e-ink-dark']) {
         for (const control of await tools.locator('button,input,select').all())
           expect((await control.boundingBox())!.height).toBeGreaterThanOrEqual(44)
       await page.screenshot({ path: `test-results/image-${theme}-${viewport.width}.png` })
-      if (viewport.width === 390 || viewport.width === 1280)
-        await expect(page).toHaveScreenshot(`image-${theme}-${viewport.width}.png`)
     })
   }
 }

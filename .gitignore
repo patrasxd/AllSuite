@@ -33,7 +33,7 @@ workbox-*.js
 test-results/
 playwright-report/
 
-# Local scratch work and generated audit evidence (CI uploads these as artifacts)
+# Local scratch work and generated audit evidence
 /tmp/
 *.log
 /docs/

@@ -1,38 +1,16 @@
 ---
 name: add-new-app
-description: Create and register an AllSuite office app with isolated module graphs, memory-only documents, responsive layout and attached tests.
+description: Add and register an AllSuite office app with lazy module boundaries and responsive behavior.
 ---
 
-# Add New App Skill
+# Add a new app
 
-Use when asked to add an office app. Read [AGENTS.md](../../../AGENTS.md) and its architecture, boundaries, privacy, license and testing rules first. This skill does not authorize apps during an instruction-only task.
+Read [architecture](../../rules/00-architecture.md), [boundaries](../../rules/01-app-boundaries.md), [privacy](../../rules/05-privacy-storage.md), [licenses](../../rules/06-licenses-branding.md) and [testing](../../rules/04-testing-gating.md). Inspect existing registry patterns and actual AllUI APIs.
 
-## 1. Inspect and choose the workspace
+Create `packages/apps/<slug>` with lightweight localized `metadata.ts`, `types.ts`, EN/PL strings, focused pure engines and a React entry. Export `.` and `./metadata` separately. Add the workspace dependency and register static metadata plus a dynamic runtime loader in the shell. Keep heavy engines and conversions out of metadata and shell imports.
 
-Inspect manifests, routing, exports and AllUI APIs. Choose a document workspace, split input/preview or full canvas for the actual app. Identify file/browser APIs, heavy engines and cleanup. Verify every dependency's exact license (each Tiptap extension separately) and record evidence in `THIRD_PARTY_LICENSES.md` before adding it.
+Use AllUI primitives and responsive templates. Check each new dependency's exact license and record it in `THIRD_PARTY_LICENSES.md`. Preserve accessible names, keyboard/focus behavior, 44px touch targets, offline operation and memory-only documents. Implement import sanitization, explicit save/export, unsaved-change guards and cleanup as relevant to the app.
 
-Target `packages/apps/<slug>`. Active Draft has an editor core there; preserved `packages/tools/draft` is outside active workspaces. Do not reactivate legacy editor features incidentally. Add `packages/ui` only for real local helpers.
+Add focused tests for the app's pure logic, component behavior and critical browser workflow. Protect privacy, external-request, offline, locale and lazy-loading contracts where applicable. For a new app, check affected responsive layouts and run the deployment smoke set. Verify heavy dependencies stay in the app's lazy graph.
 
-## 2. Package and module graphs
-
-Create a private `@allsuite/<slug>` package with separate exports for `.` and `./metadata`:
-
-- `src/metadata.ts`: localized name, description, category, tags, slug and lightweight icon; zero component/heavy-library imports.
-- `src/types.ts`: `AppComponentProps` from the boundaries rule and document types.
-- `src/i18n.ts`: English and Polish strings.
-- Pure engines in focused modules or `src/utils/`; browser adapters separate from pure logic.
-- Main React component and `src/index.tsx`, exporting `AppComponent`.
-
-Declare `@all/ui` as `file:../../../AllUI`; consume shared controls, dialogs, `StatsHeader`, templates and tokens directly. Add `@allsuite/ui` only for a real local helper. Keep metadata/runtime out of a common barrel. Heavy engines and conversions load only inside the app's lazy graph.
-
-## 3. Register with the shell
-
-Follow AllTools' pattern: import `@allsuite/<slug>/metadata` into `APPS_METADATA`, add `'<slug>': () => import('@allsuite/<slug>')` to loaders and resolve through `loadAppComponent`. If no registry exists, introduce it coherently with the Draft loader, preserving hash routes, hosting base and existing export compatibility. Add the shell workspace dependency; update actual TypeScript/Vite resolution only where needed.
-
-Wire locale, e-ink, header and dirty props. Keep toolbar visible and document scrolling internal. Documents/handles stay in memory; implement unsaved indication, replacement/navigation guards, `beforeunload`, feature-detected pickers and input/download fallback. Clean up on unmount.
-
-## 4. Attached tests and bundle verification
-
-Use existing Vitest/React Testing Library and Playwright. Test pure logic, components, dirty/save failures, sanitization and absence of document persistence. Inspect four-theme comparison baselines at 390px and 1280px; also audit landscape/tablet.
-
-Run all five standard gates and relevant browser workflows. Inspect production modules and transitive static imports: zero mixed dynamic/static warnings; heavy dependencies stay in the app's lazy graph without initial-shell regressions. Record material decisions in the task or pull request notes and report evidence; do not create a repository Markdown file just to log an update.
+Run the checks required by the testing rule for this change. Report what ran and any remaining risk. Do not create extra reports or unrelated features.
