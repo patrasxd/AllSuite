@@ -8,6 +8,7 @@ import { readStyles, type DocumentStyle, type StyleFormat } from '../../styles'
 import { normalizeReferences, safeLink, validTargetId, nodeText, validCaptionLabel } from '../../references'
 import { DEFAULT_PAGE_SETUP, validatePageSetup, type PageSetup } from '../../page-setup'
 import { emptyStories, emptyStory, validateStories, type Stories, type StoryVariant } from '../../stories'
+import { serializeCommentThreads, type CommentReply, type CommentThread } from '../../comments'
 
 class DocxRelationships extends Map<string, string> {
   story = false
@@ -16,6 +17,8 @@ class DocxRelationships extends Map<string, string> {
   chartReports: UnsupportedContent[] = []
   unsupportedImages = new Set<string>()
   unsupportedFields = new Set<string>()
+  commentIds = new Map<string, string>()
+  activeComments = new Set<string>()
 }
 
 function loadChart(item: Element, files: Record<string, Uint8Array>, rels: DocxRelationships) {
@@ -142,6 +145,86 @@ function parseXml(xml: string, label: string): XMLDocument {
 
 function name(element: Element) {
   return element.localName || element.tagName.split(':').pop() || ''
+}
+
+function parseComments(files: Record<string, Uint8Array>) {
+  const threads: CommentThread[] = []
+  const commentIds = new Map<string, string>()
+  if (!files['word/comments.xml']) return { threads, commentIds }
+  let comments: XMLDocument
+  try {
+    comments = parseXml(strFromU8(files['word/comments.xml']), 'comments')
+  } catch {
+    return { threads, commentIds }
+  }
+  const extended = new Map<string, { parent?: string; done: boolean }>()
+  if (files['word/commentsExtended.xml'])
+    try {
+      const xml = parseXml(strFromU8(files['word/commentsExtended.xml']), 'extended comments')
+      for (const entry of Array.from(xml.getElementsByTagName('*')).filter((node) => name(node) === 'commentEx')) {
+        const paraId = entry.getAttribute('w15:paraId') || entry.getAttribute('paraId') || ''
+        if (!paraId) continue
+        extended.set(paraId, {
+          parent: entry.getAttribute('w15:paraIdParent') || entry.getAttribute('paraIdParent') || undefined,
+          done: ['1', 'true'].includes(entry.getAttribute('w15:done') || entry.getAttribute('done') || ''),
+        })
+      }
+    } catch {
+      /* Basic comment text and anchors remain importable. */
+    }
+  const records = Array.from(comments.getElementsByTagNameNS(word, 'comment')).map((comment) => {
+    const numericId = attr(comment, 'id') || ''
+    const paragraphs = children(comment, 'p')
+    const paraId = paragraphs[0]?.getAttribute('w14:paraId') || paragraphs[0]?.getAttribute('paraId') || ''
+    const text = paragraphs
+      .map((paragraph) =>
+        Array.from(paragraph.getElementsByTagNameNS(word, 't'))
+          .map((run) => run.textContent || '')
+          .join(''),
+      )
+      .join('\n')
+      .trim()
+    return {
+      numericId,
+      id: `docx-${numericId}`,
+      author: attr(comment, 'author') || 'Guest',
+      text,
+      paraId,
+      parent: extended.get(paraId)?.parent,
+      resolved: extended.get(paraId)?.done || false,
+    }
+  })
+  const byParaId = new Map(records.filter((record) => record.paraId).map((record) => [record.paraId, record]))
+  const threadByRecord = new Map<string, CommentThread>()
+  for (const record of records) {
+    if (!record.text || !/^\d+$/.test(record.numericId)) continue
+    if (record.parent) {
+      const parent = byParaId.get(record.parent)
+      const root = parent && threadByRecord.get(parent.numericId)
+      if (root) {
+        const reply: CommentReply = {
+          id: `docx-reply-${record.numericId}`,
+          author: record.author || 'Guest',
+          text: record.text,
+        }
+        root.replies.push(reply)
+        threadByRecord.set(record.numericId, root)
+        commentIds.set(record.numericId, root.id)
+        continue
+      }
+    }
+    const thread: CommentThread = {
+      id: record.id,
+      author: record.author || 'Guest',
+      text: record.text,
+      resolved: record.resolved,
+      replies: [],
+    }
+    threads.push(thread)
+    threadByRecord.set(record.numericId, thread)
+    commentIds.set(record.numericId, thread.id)
+  }
+  return { threads, commentIds }
 }
 
 function children(element: Element, localName?: string) {
@@ -347,7 +430,11 @@ function marks(run: Element): DraftMark[] | undefined {
 
 function runContent(run: Element, rels: DocxRelationships, inherited?: DraftMark[]) {
   const content: DraftNode[] = []
-  const runMarks = [...(marks(run) || []), ...(inherited || [])]
+  const runMarks = [
+    ...(marks(run) || []),
+    ...(inherited || []),
+    ...Array.from(rels.activeComments, (id) => ({ type: 'comment', attrs: { id } })),
+  ]
   for (const child of children(run)) {
     if (['fldChar', 'instrText'].includes(name(child))) rels.unsupportedFields.add('field')
     if (name(child) === 'footnoteReference' || name(child) === 'endnoteReference') {
@@ -409,6 +496,18 @@ function paragraphContent(paragraph: Element, rels: DocxRelationships) {
   const elements = children(paragraph)
   for (let index = 0; index < elements.length; index++) {
     const child = elements[index]
+    if (name(child) === 'commentRangeStart') {
+      const id = attr(child, 'id')
+      const threadId = id && rels.commentIds.get(id)
+      if (threadId) rels.activeComments.add(threadId)
+      continue
+    }
+    if (name(child) === 'commentRangeEnd') {
+      const id = attr(child, 'id')
+      const threadId = id && rels.commentIds.get(id)
+      if (threadId) rels.activeComments.delete(threadId)
+      continue
+    }
     if (name(child) === 'bookmarkStart' && validTargetId(attr(child, 'name'))) {
       const bookmark: DraftNode = {
         type: 'bookmark',
@@ -688,7 +787,6 @@ function scanUnsupported(xml: string): UnsupportedContent[] {
     [/<(?:\w+:)?shape\b|<v:shape/i, 'shape'],
     [/<(?:\w+:)?txbxContent\b/i, 'text box'],
     [/<(?:\w+:)?object\b|<o:OLEObject/i, 'embedded object'],
-    [/<(?:\w+:)?comment(?:RangeStart|RangeEnd|Reference)?\b/i, 'comment'],
     [/<(?:\w+:)?(?:ins|del)\b/i, 'tracked change'],
     [/<(?:\w+:)?macros?\b/i, 'macro'],
   ]
@@ -987,10 +1085,12 @@ export function importDocx(bytes: ArrayBuffer | Uint8Array): ImportResult {
   const doc = parseXml(documentXml, 'document')
   const stylesDoc = files['word/styles.xml'] ? parseXml(strFromU8(files['word/styles.xml']), 'styles') : undefined
   const styles = styleMap(stylesDoc)
+  const parsedComments = parseComments(files)
   const numbering = files['word/numbering.xml']
     ? numberingMap(parseXml(strFromU8(files['word/numbering.xml']), 'numbering'))
     : new Map()
   const rels = new DocxRelationships()
+  rels.commentIds = parsedComments.commentIds
   if (files['word/_rels/document.xml.rels']) {
     const relationshipsDoc = parseXml(strFromU8(files['word/_rels/document.xml.rels']), 'relationships')
     for (const item of Array.from(relationshipsDoc.getElementsByTagName('Relationship'))) {
@@ -1074,12 +1174,12 @@ export function importDocx(bytes: ArrayBuffer | Uint8Array): ImportResult {
   const unsupported = scanUnsupported(documentXml).filter(
     (item) => !item.kind.startsWith('chart') || !rels.chartReports.length,
   )
+  if (!parsedComments.threads.length && /<(?:\w+:)?comment(?:RangeStart|RangeEnd|Reference)\b/i.test(documentXml))
+    unsupported.push({ kind: 'comment' })
   unsupported.push(...rels.chartReports)
   unsupported.push(...Array.from(rels.unsupportedImages, (kind) => ({ kind })))
   unsupported.push(...Array.from(rels.unsupportedFields, (kind) => ({ kind })))
   if (Object.keys(files).some((file) => /(?:vbaProject\.bin|macros)/i.test(file))) unsupported.push({ kind: 'macro' })
-  if (Object.keys(files).some((file) => /word\/comments(?:Extended)?\.xml/i.test(file)))
-    unsupported.push({ kind: 'comment' })
   if (Object.keys(files).some((file) => /word\/embeddings\//i.test(file))) unsupported.push({ kind: 'embedded object' })
   const columns = Math.max(1, Math.min(3, int(attr(first(doc, 'cols'), 'num')) || 1))
   const pageSetup = importPageSetup(doc, files, unsupported, styles)
@@ -1134,6 +1234,7 @@ export function importDocx(bytes: ArrayBuffer | Uint8Array): ImportResult {
         columns,
         pageSetup,
         styleDefinitions: JSON.stringify([...styles.values()]),
+        ...(parsedComments.threads.length ? { comments: serializeCommentThreads(parsedComments.threads) } : {}),
         ...(captionLabelSetting ? { captionLabels: captionLabelSetting } : {}),
       },
       content: result.length ? result : [{ type: 'paragraph' }],

@@ -10,7 +10,7 @@ import {
   TabStopType,
   UnderlineType,
 } from 'docx'
-import { zipSync, strToU8 } from 'fflate'
+import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate'
 import { describe, expect, it } from 'vitest'
 import { exportDocxArrayBuffer } from './export'
 import { importDocx } from './import'
@@ -129,6 +129,63 @@ describe('DOCX reader and writer', () => {
       indentRight: 18,
       tabStops: [72, 144],
     })
+  })
+
+  it('round-trips comment ranges, replies and resolved state through DOCX comments parts', async () => {
+    const id = 'comment-roundtrip'
+    const before = {
+      type: 'doc' as const,
+      attrs: {
+        comments: JSON.stringify([
+          {
+            id,
+            author: 'Avery & Co',
+            text: 'Please clarify this point.',
+            resolved: true,
+            replies: [{ id: 'reply-one', author: 'Sam', text: 'I added more detail.' }],
+          },
+        ]),
+      },
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: 'Commented', marks: [{ type: 'comment', attrs: { id } }] }],
+        },
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: ' range', marks: [{ type: 'comment', attrs: { id } }, { type: 'bold' }] }],
+        },
+      ],
+    }
+    const bytes = await exportDocxArrayBuffer(before)
+    const files = unzipSync(new Uint8Array(bytes))
+    const documentXml = strFromU8(files['word/document.xml'])
+    expect(documentXml).toContain('<w:commentRangeStart')
+    expect(documentXml).toContain('<w:commentRangeEnd')
+    expect(documentXml).toContain('<w:commentReference')
+    expect(strFromU8(files['word/comments.xml'])).toContain('Avery &amp; Co')
+    expect(strFromU8(files['word/commentsExtended.xml'])).toContain('paraIdParent')
+    const imported = importDocx(bytes)
+    const after = imported.document
+    expect(imported.unsupported).not.toContainEqual({ kind: 'comment' })
+    expect(JSON.parse(String(after.attrs?.comments))).toEqual([
+      {
+        id: 'docx-0',
+        author: 'Avery & Co',
+        text: 'Please clarify this point.',
+        resolved: true,
+        replies: [{ id: 'docx-reply-1', author: 'Sam', text: 'I added more detail.' }],
+      },
+    ])
+    expect(
+      after.content
+        .slice(0, 2)
+        .flatMap((paragraph) => paragraph.content || [])
+        .map((node) => node.marks),
+    ).toEqual([
+      [{ type: 'comment', attrs: { id: 'docx-0' } }],
+      expect.arrayContaining([{ type: 'comment', attrs: { id: 'docx-0' } }, { type: 'bold' }]),
+    ])
   })
 
   it('reports unsupported OOXML and handles corrupted or empty archives', () => {

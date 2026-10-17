@@ -13,6 +13,7 @@ import { HEADING_LEVELS } from '../engine/formatting'
 import { renderFontFamily } from '../engine/fonts'
 import { FormattingMarks } from './formatting-marks'
 import { SearchHighlights } from './search-highlights'
+import { CommentCleanup, CommentMark } from './comments'
 import { DocumentPageSetup, PageBreak } from './page-setup'
 import { Pagination } from './pagination'
 import { CharacterStyle, DocumentStyles } from './styles'
@@ -21,6 +22,8 @@ interface ShortcutOptions {
   requestPlainPaste: () => void
   requestLink: () => void
   requestImageEdit?: () => void
+  requestComment?: () => void
+  toggleComments?: () => void
   getLocale?: () => string
   onPages?: (pages: number) => void
   measurement?: boolean
@@ -30,6 +33,8 @@ export function editorExtensions({
   requestPlainPaste,
   requestLink,
   requestImageEdit,
+  requestComment,
+  toggleComments,
   getLocale,
   onPages,
   measurement,
@@ -117,7 +122,7 @@ export function editorExtensions({
         },
         {
           types: ['doc'],
-          attributes: { columns: { default: 1 } },
+          attributes: { columns: { default: 1 }, comments: { default: null } },
         },
       ]
     },
@@ -134,6 +139,14 @@ export function editorExtensions({
         'Mod-k': () => {
           requestLink()
           return true
+        },
+        'Mod-Alt-m': () => {
+          requestComment?.()
+          return Boolean(requestComment)
+        },
+        'Mod-Alt-Shift-m': () => {
+          toggleComments?.()
+          return Boolean(toggleComments)
         },
         // Let the browser deliver its trusted clipboard event, then strip formatting.
         'Mod-Shift-v': () => {
@@ -194,6 +207,8 @@ export function editorExtensions({
     PageBreak.configure({ label: () => (getLocale?.() === 'pl' ? 'Podział strony' : 'Page break') }),
     DocumentStyles,
     CharacterStyle,
+    CommentMark,
+    CommentCleanup,
     FormattingMarks,
     SearchHighlights,
     Shortcuts,

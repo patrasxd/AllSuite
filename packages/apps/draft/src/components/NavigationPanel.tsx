@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
-import { Button, CloseIcon, Dialog, IconButton, Text } from '@all/ui'
+import { Button, Dialog, Heading, IconButton, SidePanel, Text } from '@all/ui'
 import type { Locale } from '../types'
 import type { DraftDocument } from '../engine/document-model'
 import { referenceTargets } from '../engine/references'
@@ -139,12 +139,14 @@ export function NavigationPanel({
       </Dialog>
     )
   return open ? (
-    <aside className="draft-navigation-panel">
-      <div className="draft-navigation-header">
-        <Text>{t.title}</Text>
-        <IconButton size="sm" variant="ghost" icon={<CloseIcon />} aria-label={t.close} onClick={onClose} />
-      </div>
+    <SidePanel
+      className="draft-navigation-panel"
+      label={t.title}
+      title={<Heading level={2}>{t.title}</Heading>}
+      closeLabel={t.close}
+      onClose={onClose}
+    >
       {content}
-    </aside>
+    </SidePanel>
   ) : null
 }

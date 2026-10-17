@@ -84,24 +84,164 @@
 }
 
 .draft-content-region {
+  position: relative;
   display: flex;
   flex: 1;
   min-height: 0;
   min-width: 0;
 }
-.draft-navigation-panel {
-  width: 250px;
-  flex-shrink: 0;
-  min-height: 0;
-  overflow: auto;
-  border-right: var(--all-border-width) solid var(--all-border);
-  background: var(--all-surface);
+.draft-comments-panel {
+  flex: 0 0 clamp(280px, 28vw, 360px);
+  border-left: var(--all-border-width) solid var(--all-border);
 }
-.draft-navigation-header {
+.draft-comments-panel .all-side-panel__title h2,
+.draft-navigation-panel .all-side-panel__title h2 {
+  margin: 0;
+}
+.draft-comments-panel .all-side-panel__content {
+  display: flex;
+  flex-direction: column;
+}
+.draft-comment-compose,
+.draft-comment-list {
+  display: grid;
+  gap: var(--all-space-2);
+  padding: var(--all-space-2);
+}
+.draft-comment-compose label {
+  font-size: var(--all-font-size-sm);
+  font-weight: 600;
+}
+.draft-comment-input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--all-space-2);
+  border: var(--all-border-width) solid var(--all-border);
+  border-radius: var(--all-radius-sm);
+  background: var(--all-bg);
+  color: var(--all-text);
+  font: inherit;
+  resize: vertical;
+}
+.draft-comment-input:focus-visible {
+  outline: 2px solid var(--all-accent);
+  outline-offset: 2px;
+}
+.draft-comment-thread {
+  display: grid;
+  gap: var(--all-space-2);
+  min-width: 0;
+  padding: var(--all-space-2);
+  border: var(--all-border-width) solid var(--all-border);
+  border-radius: var(--all-radius-sm);
+  background: var(--all-surface-elevated, var(--all-surface));
+  overflow-wrap: anywhere;
+}
+.draft-comment-thread.is-resolved {
+  opacity: 0.76;
+}
+.draft-comment-anchor-link {
+  display: grid;
+  gap: var(--all-space-1);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.draft-comment-author {
+  font-weight: 700;
+}
+.draft-comment-resolved {
+  color: var(--all-text-muted);
+  font-size: var(--all-font-size-sm);
+}
+.draft-comment-reply {
+  display: grid;
+  gap: var(--all-space-1);
+  margin-left: var(--all-space-3);
+  padding-left: var(--all-space-2);
+  border-left: 2px solid var(--all-border);
+  overflow-wrap: anywhere;
+}
+.draft-comment-reply-form {
+  display: grid;
+  gap: var(--all-space-2);
+  padding-top: var(--all-space-1);
+}
+.draft-comment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--all-space-2);
+}
+.draft-comment-pin {
+  position: absolute;
+  right: calc(var(--draft-margin-right, 20mm) / 2 - 22px);
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--all-accent);
+  border-radius: 50%;
+  background: var(--all-accent);
+  color: var(--all-surface);
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.draft-comments-panel button {
+  min-height: 44px;
+}
+.draft-comment-anchor {
+  background: color-mix(in srgb, var(--all-warning) 24%, transparent);
+  border-bottom: 1px solid var(--all-warning);
+}
+.draft-toolbar-checkbox,
+.draft-pdf-comments-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--all-space-2);
+  min-height: 44px;
+  padding-inline: var(--all-space-2);
+  color: var(--all-text);
+  font-size: var(--all-font-size-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.draft-toolbar-checkbox input,
+.draft-pdf-comments-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--all-accent);
+}
+.draft-export-menu [role='menuitemcheckbox'] {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--all-space-2);
+  gap: var(--all-space-2);
+  min-height: 44px;
+  text-align: left;
+}
+@media (max-width: 900px) {
+  .draft-comments-panel {
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 6;
+    width: min(90vw, 360px);
+    max-width: calc(100% - 8px);
+    border-left-width: calc(var(--all-border-width) * 2);
+  }
+}
+.draft-navigation-panel {
+  flex: 0 0 250px;
+  border-right: var(--all-border-width) solid var(--all-border);
 }
 .draft-navigation-list {
   padding: var(--all-space-2);

@@ -39,7 +39,9 @@ import {
   type IPropertiesOptions,
   type IRunOptions,
 } from 'docx'
+import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate'
 import type { DraftDocument, DraftNode } from '../../document-model'
+import { commentRangeBoundaries, readCommentThreads, type CommentThread } from '../../comments'
 import { lineSpacingToTwips, pointsToTwips } from '../../paragraph'
 import { normalizeHexColor } from '../../formatting'
 import { readImageDataURL } from '../../images'
@@ -55,6 +57,8 @@ import {
 } from '../../references'
 import { readPageSetup } from '../../page-setup'
 import { storiesFor, formatPage, type StoryVariant } from '../../stories'
+
+const word = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 
 const highlightMap: Record<string, (typeof HighlightColor)[keyof typeof HighlightColor]> = {
   '#ffff00': HighlightColor.YELLOW,
@@ -140,7 +144,11 @@ function imageRun(node: DraftNode) {
   })
 }
 
-function children(nodes: DraftNode[] | undefined) {
+function children(
+  nodes: DraftNode[] | undefined,
+  boundaries?: ReturnType<typeof commentRangeBoundaries>,
+  commentNumbers?: Map<string, number>,
+) {
   const result: ParagraphChild[] = []
   for (const node of nodes || []) {
     if (node.type === 'captionNumber' && validCaptionLabel(node.attrs?.label)) {
@@ -168,8 +176,8 @@ function children(nodes: DraftNode[] | undefined) {
     }
     if (node.type === 'bookmark') {
       if (validTargetId(node.attrs?.id))
-        result.push(new Bookmark({ id: node.attrs.id, children: children(node.content) }))
-      else result.push(...children(node.content))
+        result.push(new Bookmark({ id: node.attrs.id, children: children(node.content, boundaries, commentNumbers) }))
+      else result.push(...children(node.content, boundaries, commentNumbers))
       continue
     }
     if (node.type === 'crossReference') {
@@ -202,6 +210,12 @@ function children(nodes: DraftNode[] | undefined) {
       continue
     }
     if (node.type !== 'text') continue
+    const boundary = boundaries?.get(node)
+    for (const id of boundary?.start || []) {
+      const number = commentNumbers?.get(id)
+      if (number !== undefined)
+        result.push(new ImportedXmlComponent('w:commentRangeStart', { 'w:id': String(number) }) as ParagraphChild)
+    }
     const run = new TextRun({ text: node.text || '', ...marksFor(node) })
     const link = node.marks?.find((mark) => mark.type === 'link')
     const href = safeLink(link?.attrs?.href)
@@ -212,6 +226,15 @@ function children(nodes: DraftNode[] | undefined) {
           : new ExternalHyperlink({ link: href, children: [run] })
         : run,
     )
+    for (const id of boundary?.end || []) {
+      const number = commentNumbers?.get(id)
+      if (number !== undefined) {
+        result.push(new ImportedXmlComponent('w:commentRangeEnd', { 'w:id': String(number) }) as ParagraphChild)
+        result.push(
+          new TextRun({ children: [new ImportedXmlComponent('w:commentReference', { 'w:id': String(number) })] }),
+        )
+      }
+    }
   }
   return result
 }
@@ -245,14 +268,21 @@ function indent(attrs: DraftNode['attrs']) {
     : undefined
 }
 
-function paragraph(node: DraftNode, list?: { type: 'bulletList' | 'orderedList'; level: number }) {
-  const numberedInline = (child: DraftNode): DraftNode => ({
-    ...child,
-    ...(child.type === 'captionNumber' && validTargetId(node.attrs?.anchorId)
-      ? { attrs: { ...child.attrs, numberId: `${node.attrs.anchorId}_number` } }
-      : {}),
-    ...(child.content ? { content: child.content.map(numberedInline) } : {}),
-  })
+function paragraph(
+  node: DraftNode,
+  list?: { type: 'bulletList' | 'orderedList'; level: number },
+  boundaries?: ReturnType<typeof commentRangeBoundaries>,
+  commentNumbers?: Map<string, number>,
+) {
+  const numberedInline = (child: DraftNode): DraftNode => {
+    const attrs =
+      child.type === 'captionNumber' && validTargetId(node.attrs?.anchorId)
+        ? { ...child.attrs, numberId: `${node.attrs.anchorId}_number` }
+        : child.attrs
+    const content = child.content?.map(numberedInline)
+    if (attrs === child.attrs && content === child.content) return child
+    return { ...child, ...(attrs ? { attrs } : {}), ...(content ? { content } : {}) }
+  }
   const inline = node.content?.map(numberedInline)
   const heading = node.type === 'heading' ? Number(node.attrs?.level) : 0
   const headingLevels = [
@@ -275,8 +305,8 @@ function paragraph(node: DraftNode, list?: { type: 'bulletList' | 'orderedList';
   const alignment = typeof textAlign === 'string' ? alignmentMap[textAlign as keyof typeof alignmentMap] : undefined
   return new Paragraph({
     children: validTargetId(node.attrs?.anchorId)
-      ? [new Bookmark({ id: node.attrs.anchorId, children: children(inline) })]
-      : children(inline),
+      ? [new Bookmark({ id: node.attrs.anchorId, children: children(inline, boundaries, commentNumbers) })]
+      : children(inline, boundaries, commentNumbers),
     heading: node.attrs?.styleId ? undefined : headingLevels[heading],
     style: paragraphStyleId(node),
     alignment,
@@ -294,7 +324,11 @@ function paragraph(node: DraftNode, list?: { type: 'bulletList' | 'orderedList';
   } satisfies IParagraphOptions)
 }
 
-function exportTable(node: DraftNode): Table {
+function exportTable(
+  node: DraftNode,
+  boundaries?: ReturnType<typeof commentRangeBoundaries>,
+  commentNumbers?: Map<string, number>,
+): Table {
   const rows = node.content || []
   const widths: number[] = []
   const occupied: number[] = []
@@ -341,7 +375,7 @@ function exportTable(node: DraftNode): Table {
             const padding = Number.parseFloat(String(attrs.padding ?? '6')) * 15
             const cellWidths = Array.isArray(attrs.colwidth) ? attrs.colwidth : undefined
             return new TableCell({
-              children: documentParagraphs(cell.content),
+              children: documentParagraphs(cell.content, undefined, 9360, boundaries, commentNumbers),
               columnSpan: Number(attrs.colspan) || 1,
               rowSpan: Number(attrs.rowspan) || 1,
               width: cellWidths ? { type: WidthType.DXA, size: cellWidths.reduce((a, b) => a + b, 0) * 15 } : undefined,
@@ -373,19 +407,33 @@ function documentParagraphs(
   nodes: DraftNode[] | undefined,
   list?: { type: 'bulletList' | 'orderedList'; level: number },
   bodyWidth = 9360,
+  boundaries?: ReturnType<typeof commentRangeBoundaries>,
+  commentNumbers?: Map<string, number>,
 ): Array<Paragraph | Table> {
   const result: Array<Paragraph | Table> = []
   for (const node of nodes || []) {
     if (node.type === 'bulletList' || node.type === 'orderedList') {
       for (const item of node.content || []) {
         const first = item.content?.find((child) => child.type === 'paragraph' || child.type === 'heading')
-        if (first) result.push(paragraph(first, { type: node.type, level: list ? list.level + 1 : 0 }))
+        if (first)
+          result.push(
+            paragraph(first, { type: node.type, level: list ? list.level + 1 : 0 }, boundaries, commentNumbers),
+          )
         for (const nested of item.content || [])
           if (nested.type === 'bulletList' || nested.type === 'orderedList')
-            result.push(...documentParagraphs([nested], { type: node.type, level: list ? list.level + 1 : 0 }))
+            result.push(
+              ...documentParagraphs(
+                [nested],
+                { type: node.type, level: list ? list.level + 1 : 0 },
+                bodyWidth,
+                boundaries,
+                commentNumbers,
+              ),
+            )
       }
-    } else if (node.type === 'paragraph' || node.type === 'heading') result.push(paragraph(node, list))
-    else if (node.type === 'table') result.push(exportTable(node))
+    } else if (node.type === 'paragraph' || node.type === 'heading')
+      result.push(paragraph(node, list, boundaries, commentNumbers))
+    else if (node.type === 'table') result.push(exportTable(node, boundaries, commentNumbers))
     else if (node.type === 'tableOfContents') result.push(...tocParagraphs(node, bodyWidth))
   }
   return result
@@ -428,6 +476,99 @@ function tocParagraphs(node: DraftNode, bodyWidth: number): Paragraph[] {
       }),
   )
 }
+
+function escapeXML(value: string) {
+  return value.replace(
+    /[&<>"']/g,
+    (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[character]!,
+  )
+}
+
+function commentParts(threads: CommentThread[], commentNumbers: Map<string, number>) {
+  const records: Array<{
+    id: number
+    author: string
+    text: string
+    paraId: string
+    parent?: string
+    done: boolean
+  }> = []
+  const paraId = (index: number) => (0x44520000 + index).toString(16).toUpperCase().slice(-8)
+  let nextNumber = threads.length
+  threads.forEach((thread, index) => {
+    const parentPara = paraId(index + 1)
+    records.push({
+      id: index,
+      author: thread.author,
+      text: thread.text,
+      paraId: parentPara,
+      done: thread.resolved,
+    })
+    for (const reply of thread.replies)
+      records.push({
+        id: nextNumber++,
+        author: reply.author,
+        text: reply.text,
+        paraId: paraId(nextNumber + 1),
+        parent: parentPara,
+        done: false,
+      })
+  })
+  for (const record of records) {
+    if (record.parent) continue
+    const thread = threads.find((item) => commentNumbers.get(item.id) === record.id)
+    if (thread) record.done = thread.resolved
+  }
+  const comments =
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+    `<w:comments xmlns:w="${word}" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">` +
+    records
+      .map(
+        (record) =>
+          `<w:comment w:id="${record.id}" w:author="${escapeXML(record.author)}"><w:p w14:paraId="${record.paraId}"><w:r><w:t xml:space="preserve">${escapeXML(record.text)}</w:t></w:r></w:p></w:comment>`,
+      )
+      .join('') +
+    '</w:comments>'
+  const extended =
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+    `<w15:commentsEx xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml">` +
+    records
+      .map(
+        (record) =>
+          `<w15:commentEx w15:paraId="${record.paraId}"${record.parent ? ` w15:paraIdParent="${record.parent}"` : ''}${record.done ? ' w15:done="1"' : ''}/>`,
+      )
+      .join('') +
+    '</w15:commentsEx>'
+  return { comments, extended }
+}
+
+function attachCommentParts(buffer: ArrayBuffer, threads: CommentThread[], commentNumbers: Map<string, number>) {
+  const files = unzipSync(new Uint8Array(buffer))
+  const parts = commentParts(threads, commentNumbers)
+  files['word/comments.xml'] = strToU8(parts.comments)
+  files['word/commentsExtended.xml'] = strToU8(parts.extended)
+  const relsPath = 'word/_rels/document.xml.rels'
+  const relationships = files[relsPath]
+    ? strFromU8(files[relsPath])
+    : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>'
+  files[relsPath] = strToU8(
+    relationships.replace(
+      '</Relationships>',
+      '<Relationship Id="rIdDraftComments" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments" Target="comments.xml"/><Relationship Id="rIdDraftCommentsExtended" Type="http://schemas.microsoft.com/office/word/2018/wordml/commentsExtended" Target="commentsExtended.xml"/></Relationships>',
+    ),
+  )
+  const contentTypesPath = '[Content_Types].xml'
+  const contentTypes = strFromU8(files[contentTypesPath])
+  files[contentTypesPath] = strToU8(
+    contentTypes.replace(
+      '</Types>',
+      '<Override PartName="/word/comments.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml"/><Override PartName="/word/commentsExtended.xml" ContentType="application/vnd.ms-word.commentsExt+xml"/></Types>',
+    ),
+  )
+  const zipped = zipSync(files, { level: 6 })
+  return zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength) as ArrayBuffer
+}
+
 export async function exportDocxArrayBuffer(input: DraftDocument, language?: string): Promise<ArrayBuffer> {
   const document = updateReferenceFields(input)
   const targets = referenceTargets(document)
@@ -441,6 +582,12 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
     node.content?.forEach(annotate)
   }
   annotate(document)
+  const commentThreads = readCommentThreads(document.attrs?.comments)
+  const commentNumbers = new Map(commentThreads.map((thread, index) => [thread.id, index]))
+  const boundaries = commentRangeBoundaries(
+    document.content.filter((node) => node.type !== 'note'),
+    new Set(commentNumbers.keys()),
+  )
   const page = readPageSetup(document)
   const stories = storiesFor(page)
   const storyNode = (node: DraftNode): DraftNode => ({
@@ -524,7 +671,13 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
         },
         headers: storyParts('header'),
         footers: storyParts('footer'),
-        children: documentParagraphs(document.content, undefined, page.width - page.left - page.right),
+        children: documentParagraphs(
+          document.content.filter((node) => node.type !== 'note'),
+          undefined,
+          page.width - page.left - page.right,
+          boundaries,
+          commentNumbers,
+        ),
       },
     ],
     numbering: {
@@ -572,7 +725,8 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
     },
   }
   const file = new Document(options)
-  return Packer.toArrayBuffer(file)
+  const result = await Packer.toArrayBuffer(file)
+  return commentThreads.length ? attachCommentParts(result, commentThreads, commentNumbers) : result
 }
 
 export async function exportDocx(document: DraftDocument, language?: string): Promise<Blob> {

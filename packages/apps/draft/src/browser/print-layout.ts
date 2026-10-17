@@ -6,6 +6,7 @@ import { renderHTMLBody } from '../engine/export/html'
 import { referenceTargets, safeLink } from '../engine/references'
 import { exportFontFamily } from '../engine/export/model'
 import { PAGE_GAP } from '../engine/pagination'
+import { readCommentThreads } from '../engine/comments'
 import type { Box, PrintItem, PrintLayout } from '../engine/print-layout'
 
 export async function capturePrintLayout(
@@ -13,7 +14,11 @@ export async function capturePrintLayout(
   title: string,
   language: string,
   signal?: AbortSignal,
-  options: { hyphenation?: boolean; onResolved?: (document: DraftDocument) => void } = {},
+  options: {
+    hyphenation?: boolean
+    includeComments?: boolean
+    onResolved?: (document: DraftDocument) => void
+  } = {},
 ): Promise<PrintLayout> {
   let output!: PrintLayout
   await prepareReferenceExport(
@@ -240,6 +245,92 @@ export async function capturePrintLayout(
       }
       editor.view.dom.style.visibility = 'visible'
       capture(editor.view.dom)
+      if (options.includeComments) {
+        const threads = new Map(readCommentThreads(resolved.attrs?.comments).map((thread) => [thread.id, thread]))
+        const anchors = new Map<string, DOMRect>()
+        for (const element of Array.from(editor.view.dom.querySelectorAll<HTMLElement>('[data-comment-id]'))) {
+          const id = element.dataset.commentId
+          if (id && threads.has(id) && !anchors.has(id)) anchors.set(id, element.getBoundingClientRect())
+        }
+        const occupied: number[] = Array(count).fill(0)
+        const notes = [...anchors].flatMap(([id, box]) => {
+          const thread = threads.get(id)
+          if (!thread) return []
+          const pageIndex = Math.max(0, Math.min(count - 1, Math.floor((box.top - origin.top) / pitch)))
+          const anchorY = Math.max(8, box.top - origin.top - pageIndex * pitch)
+          const noteWidth = Math.max(58, Math.min(108, width - body.x - body.width - 8))
+          const x = width - noteWidth - 4
+          ctx.font = '8px Arimo'
+          const wrap = (value: string) => {
+            const lines: string[] = []
+            for (const paragraph of value.split(/\r?\n/)) {
+              let line = ''
+              for (const word of paragraph.split(/\s+/)) {
+                const candidate = line ? `${line} ${word}` : word
+                if (line && ctx.measureText(candidate).width > noteWidth - 8) {
+                  lines.push(line)
+                  line = word
+                } else line = candidate
+                while (ctx.measureText(line).width > noteWidth - 8 && line.length > 1) {
+                  let split = line.length - 1
+                  while (split > 1 && ctx.measureText(line.slice(0, split)).width > noteWidth - 8) split--
+                  lines.push(line.slice(0, split))
+                  line = line.slice(split)
+                }
+              }
+              if (line) lines.push(line)
+              else if (!paragraph) lines.push('')
+            }
+            return lines
+          }
+          const allText = [thread.text, ...thread.replies.map((reply) => `${reply.author}: ${reply.text}`)]
+            .join('\n')
+            .slice(0, 1200)
+          const lines = [thread.author, ...wrap(allText)]
+          if (allText.length === 1200) lines.push('…')
+          const cardHeight = lines.length * 10 + 8
+          const y = Math.min(Math.max(anchorY, occupied[pageIndex] + 4), height - cardHeight - 4)
+          occupied[pageIndex] = y + cardHeight
+          return [{ id, author: thread.author, lines, pageIndex, x, y, width: noteWidth, height: cardHeight }]
+        })
+        for (const note of notes) {
+          add(
+            { kind: 'rect', x: note.x, y: note.y, width: note.width, height: note.height, color: '#fff8dc' },
+            note.pageIndex,
+          )
+          add({ kind: 'rect', x: note.x, y: note.y, width: note.width, height: 1, color: '#8b7740' }, note.pageIndex)
+          add(
+            { kind: 'rect', x: note.x, y: note.y + note.height - 1, width: note.width, height: 1, color: '#8b7740' },
+            note.pageIndex,
+          )
+          add({ kind: 'rect', x: note.x, y: note.y, width: 1, height: note.height, color: '#8b7740' }, note.pageIndex)
+          add(
+            { kind: 'rect', x: note.x + note.width - 1, y: note.y, width: 1, height: note.height, color: '#8b7740' },
+            note.pageIndex,
+          )
+          note.lines.forEach((line, index) => {
+            ctx.font = index === 0 ? 'bold 8px Arimo' : '8px Arimo'
+            const width = Math.min(note.width - 8, ctx.measureText(line).width)
+            add(
+              {
+                kind: 'text',
+                x: note.x + 4,
+                y: note.y + 4 + index * 10,
+                width,
+                height: 10,
+                text: line,
+                baseline: note.y + 4 + index * 10 + 7,
+                family: 'Arimo',
+                size: 8,
+                bold: index === 0,
+                italic: false,
+                color: '#222222',
+              },
+              note.pageIndex,
+            )
+          })
+        }
+      }
       const targets = referenceTargets(resolved)
       for (const element of Array.from(editor.view.dom.querySelectorAll<HTMLElement>('[id]'))) {
         const box = element.getBoundingClientRect(),

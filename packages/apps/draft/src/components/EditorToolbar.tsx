@@ -108,6 +108,12 @@ interface Props {
   showNavigation?: boolean
   documentLanguage?: string
   onDocumentLanguage?: (value: string) => void
+  commentsOpen?: boolean
+  commentCount?: number
+  onToggleComments?: () => void
+  onAddComment?: () => void
+  includeCommentsInPDF?: boolean
+  onToggleCommentsInPDF?: () => void
 }
 
 export function EditorToolbar({
@@ -153,9 +159,15 @@ export function EditorToolbar({
   showNavigation = false,
   documentLanguage,
   onDocumentLanguage,
+  commentsOpen = false,
+  commentCount = 0,
+  onToggleComments,
+  onAddComment,
+  includeCommentsInPDF = false,
+  onToggleCommentsInPDF,
 }: Props) {
   const t = translations[locale]
-  const tabs = ['file', 'edit', 'insert', 'format', 'layout', 'view'] as const
+  const tabs = ['file', 'edit', 'insert', 'format', 'layout', 'view', 'review'] as const
   type ToolbarTab = (typeof tabs)[number]
   const [activeTab, setActiveTab] = useState<ToolbarTab>('format')
   const [painter, setPainter] = useState<{
@@ -316,7 +328,13 @@ export function EditorToolbar({
               <Button size="sm" variant="outline" icon={<SaveIcon />} disabled={saving} onClick={() => onSave?.()}>
                 {t.save}
               </Button>
-              <ExportMenu locale={locale} busy={saving} onExport={(format) => onExport?.(format)} />
+              <ExportMenu
+                locale={locale}
+                busy={saving}
+                onExport={(format) => onExport?.(format)}
+                includeCommentsInPDF={includeCommentsInPDF}
+                onToggleCommentsInPDF={onToggleCommentsInPDF}
+              />
               <Button size="sm" variant="outline" icon={<DraftIcon name="print" />} disabled={saving} onClick={onPrint}>
                 {printLabels[locale].print}
               </Button>
@@ -758,6 +776,41 @@ export function EditorToolbar({
               >
                 {t.hyphenation}
               </Button>
+            </ToolbarGroup>
+          </ControlsBar>
+        )}
+
+        {activeTab === 'review' && (
+          <ControlsBar className="draft-toolbar" role="toolbar" aria-label={t.review}>
+            <ToolbarGroup label={t.comments} caption={t.comments}>
+              <Button
+                size="sm"
+                variant="outline"
+                icon={<DraftIcon name="comments" />}
+                disabled={!state.selection}
+                title="Ctrl+Alt+M"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={onAddComment}
+              >
+                {t.addComment}
+              </Button>
+              <Button
+                size="sm"
+                variant={commentsOpen ? 'primary' : 'outline'}
+                icon={<DraftIcon name="comments" />}
+                aria-pressed={commentsOpen}
+                onClick={onToggleComments}
+              >
+                {t.comments}
+                {commentCount ? ` (${commentCount})` : ''}
+              </Button>
+              <Text as="span" variant="caption">
+                Ctrl+Alt+M: {t.addComment}; Ctrl+Alt+Shift+M: {t.comments}
+              </Text>
+              <label className="draft-toolbar-checkbox">
+                <input type="checkbox" checked={includeCommentsInPDF} onChange={onToggleCommentsInPDF} />
+                {t.includeCommentsInPDF}
+              </label>
             </ToolbarGroup>
           </ControlsBar>
         )}

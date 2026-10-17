@@ -13,6 +13,7 @@ import { clampZoom, type PageView, type PageZoom } from '../engine/page-view'
 import { storiesFor, storyVariant, resolveStory, storyLayout, type StoryKind } from '../engine/stories'
 import { renderHTMLBody } from '../engine/export/html'
 import { storyLabels } from './StoryEditor'
+import type { CommentThread } from '../engine/comments'
 
 export function PageCanvas({
   editor,
@@ -28,6 +29,8 @@ export function PageCanvas({
   onZoom,
   onCurrentPage,
   onEditStories,
+  comments,
+  onSelectComment,
 }: {
   editor: Editor
   page: PageSetup
@@ -42,11 +45,16 @@ export function PageCanvas({
   ruler: boolean
   hyphenation: boolean
   columns: number
+  comments: CommentThread[]
+  onSelectComment: (id: string) => void
 }) {
   const pane = useRef<HTMLElement>(null)
   const paged = view === 'print' && columns === 1
   const measurements = useRef<HTMLDivElement>(null)
   const [storyHeights, setStoryHeights] = useState({ header: 0, footer: 0 })
+  const [commentPins, setCommentPins] = useState<
+    Array<{ id: string; page: number; top: number; label: number; title: string }>
+  >([])
   const stories = useMemo(() => storiesFor(page), [page])
   const styleDefinitions = editor.state.doc.attrs.styleDefinitions
   const sheetHTML = useMemo(
@@ -131,6 +139,58 @@ export function PageCanvas({
   }
   const height = page.height / 15,
     width = page.width / 15
+  useLayoutEffect(() => {
+    let frame = 0
+    const update = () => {
+      if (frame) cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        const paper = pane.current?.querySelector<HTMLElement>('.draft-paper')
+        if (!paper || !paged) {
+          setCommentPins([])
+          return
+        }
+        const origin = paper.getBoundingClientRect().top
+        const pitch = height + PAGE_GAP
+        const threadMap = new Map(comments.map((thread, index) => [thread.id, { thread, label: index + 1 }]))
+        const byId = new Map<string, { y: number; thread: CommentThread; label: number }>()
+        editor.state.doc.descendants((node, position) => {
+          if (!node.isText) return true
+          for (const mark of node.marks) {
+            const match = mark.type.name === 'comment' ? threadMap.get(mark.attrs.id) : undefined
+            if (match && !byId.has(mark.attrs.id))
+              byId.set(mark.attrs.id, {
+                y: (editor.view.coordsAtPos(position).top - origin) / scale,
+                thread: match.thread,
+                label: match.label,
+              })
+          }
+          return false
+        })
+        const occupied: number[] = Array(pages).fill(-44)
+        const pins = [...byId].flatMap(([id, value]) => {
+          const pageIndex = Math.max(0, Math.min(pages - 1, Math.floor(value.y / pitch)))
+          const top = Math.min(height - 44, Math.max(value.y - pageIndex * pitch - 22, occupied[pageIndex] + 46))
+          occupied[pageIndex] = top + 44
+          return [
+            { id, page: pageIndex, top, label: value.label, title: `${value.thread.author}: ${value.thread.text}` },
+          ]
+        })
+        setCommentPins(pins)
+      })
+    }
+    editor.on('transaction', update)
+    const paneNode = pane.current
+    paneNode?.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    update()
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      editor.off('transaction', update)
+      paneNode?.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [editor, comments, pages, height, scale, paged])
   useLayoutEffect(() => {
     const element = pane.current!
     const resize = () => {
@@ -399,6 +459,21 @@ export function PageCanvas({
                   {index < pages - 1 && (
                     <div className="draft-page-gutter" style={{ top: height - 1, height: PAGE_GAP + 2 }} />
                   )}
+                  {commentPins
+                    .filter((pin) => pin.page === index)
+                    .map((pin) => (
+                      <button
+                        type="button"
+                        className="draft-comment-pin"
+                        key={pin.id}
+                        style={{ top: pin.top }}
+                        title={pin.title}
+                        aria-label={`${translations[locale].goToComment}: ${pin.title}`}
+                        onClick={() => onSelectComment(pin.id)}
+                      >
+                        {pin.label}
+                      </button>
+                    ))}
                 </div>
               ))}
             </div>

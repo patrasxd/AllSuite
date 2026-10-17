@@ -4,6 +4,7 @@ import { Button } from '@all/ui'
 import type { ExportFormat } from '../engine/export/model'
 import type { Locale } from '../types'
 import { DraftIcon } from './DraftIcons'
+import { translations } from '../i18n'
 
 export const exportLabels = {
   en: {
@@ -32,12 +33,17 @@ export function ExportMenu({
   locale,
   busy = false,
   onExport,
+  includeCommentsInPDF = false,
+  onToggleCommentsInPDF,
 }: {
   locale: Locale
   busy?: boolean
   onExport: (format: ExportFormat) => void
+  includeCommentsInPDF?: boolean
+  onToggleCommentsInPDF?: () => void
 }) {
   const t = exportLabels[locale]
+  const appText = translations[locale]
   const id = useId()
   const trigger = useRef<HTMLButtonElement>(null)
   const menu = useRef<HTMLDivElement>(null)
@@ -60,7 +66,7 @@ export function ExportMenu({
       })
     }
     locate()
-    menu.current?.querySelectorAll<HTMLButtonElement>('button')[first.current]?.focus()
+    menu.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')[first.current]?.focus()
     const outside = (event: PointerEvent) => {
       if (!menu.current?.contains(event.target as Node) && !trigger.current?.contains(event.target as Node))
         setOpen(false)
@@ -142,6 +148,17 @@ export function ExportMenu({
                   ?.focus()
             }}
           >
+            <Button
+              role="menuitemcheckbox"
+              aria-checked={includeCommentsInPDF}
+              tabIndex={-1}
+              size="sm"
+              variant="ghost"
+              onClick={onToggleCommentsInPDF}
+            >
+              <span aria-hidden="true">{includeCommentsInPDF ? '☑' : '☐'}</span>
+              {appText.includeCommentsInPDF}
+            </Button>
             {formats.map((format) => (
               <Button
                 key={format}

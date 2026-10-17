@@ -146,6 +146,12 @@ const drawings = {
       <path d="M9 8h6M9 12h6M9 16h3M2 6h3M2 10h3" />
     </>
   ),
+  comments: (
+    <>
+      <path d="M4 4h16v12H9l-5 4z" />
+      <path d="M8 8h8M8 12h5" />
+    </>
+  ),
   navigation: (
     <>
       <rect x="3" y="4" width="18" height="16" rx="1" />

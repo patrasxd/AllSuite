@@ -5,6 +5,7 @@ import type { PrintLayout } from '../engine/print-layout'
 import type { ExportFont } from '../engine/export/model'
 import { printLayoutHTML } from '../engine/print-layout'
 import { DraftIcon } from './DraftIcons'
+import { translations } from '../i18n'
 
 export const printLabels = {
   en: {
@@ -35,6 +36,8 @@ export function PrintPreview({
   onClose,
   onPrint,
   onPDF,
+  includeCommentsInPDF,
+  onToggleCommentsInPDF,
 }: {
   value: PreviewDocument
   locale: Locale
@@ -43,6 +46,8 @@ export function PrintPreview({
   onClose: () => void
   onPrint: () => void
   onPDF: () => void
+  includeCommentsInPDF: boolean
+  onToggleCommentsInPDF: () => void
 }) {
   const t = printLabels[locale],
     pane = useRef<HTMLDivElement>(null),
@@ -83,6 +88,10 @@ export function PrintPreview({
         <Button size="sm" variant="outline" icon={<DraftIcon name="export" />} onClick={onPDF} disabled={busy}>
           {t.pdf}
         </Button>
+        <label className="draft-pdf-comments-toggle">
+          <input type="checkbox" checked={includeCommentsInPDF} onChange={onToggleCommentsInPDF} />
+          {translations[locale].includeCommentsInPDF}
+        </label>
         <Select
           density="compact"
           label={t.zoom}

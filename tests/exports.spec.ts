@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { inflateSync } from 'node:zlib'
+import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { generatedPNG } from './fixtures/png'
 import type { Editor } from '@tiptap/core'
 
@@ -130,6 +131,65 @@ test('PDF print document embeds open fonts, images and A4 pages; never reports t
   await print.evaluate(() => window.dispatchEvent(new Event('afterprint')))
   await expect.poll(() => print.isClosed()).toBe(true)
   await expect(page.getByRole('status')).toContainText('Unsaved changes')
+})
+
+test('adds an anchored comment and renders it in the print margin while PDF inclusion stays off by default', async ({
+  page,
+}) => {
+  await page.goto('./#/draft')
+  const editor = page.locator('.tiptap')
+  await editor.evaluate((element) => {
+    const instance = (element as HTMLElement & { editor: Editor }).editor
+    instance.commands.setContent('<p>Commented words stay in the document.</p>')
+    instance.commands.setTextSelection({ from: 1, to: 16 })
+  })
+  await page.getByRole('tab', { name: 'Review', exact: true }).click()
+  await editor.focus()
+  await editor.press('Control+Alt+m')
+  await expect(page.locator('.draft-comments-panel')).toBeVisible()
+  await editor.press('Control+Alt+Shift+m')
+  await expect(page.locator('.draft-comments-panel')).toHaveCount(0)
+  await editor.press('Control+Alt+Shift+m')
+  await expect(page.locator('.draft-comments-panel')).toBeVisible()
+  await page.getByLabel('Your name for this session').fill('Avery')
+  await page.getByLabel('New comment').fill('Please clarify this section.')
+  await page.locator('.draft-comment-compose').getByRole('button', { name: 'Add comment' }).click()
+  await expect(editor.locator('[data-comment-id]')).toHaveText('Commented words')
+  await expect(page.locator('.draft-comment-pin')).toBeVisible()
+  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await page.getByRole('button', { name: 'Print preview', exact: true }).click()
+  const print = page.frameLocator('iframe[title="Print preview"]')
+  await expect(print.locator('.print-sheet')).toContainText('Avery')
+  await expect(print.locator('.print-sheet')).toContainText('Please')
+  await expect(print.locator('.print-sheet')).toContainText('section.')
+  const includeComments = page.locator('.draft-pdf-comments-toggle input')
+  await expect(includeComments).not.toBeChecked()
+  const readPDFText = async () => {
+    const downloading = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Download PDF', exact: true }).click()
+    const chunks: Buffer[] = []
+    for await (const chunk of await (await downloading).createReadStream()) chunks.push(Buffer.from(chunk))
+    const loading = getDocument({ data: new Uint8Array(Buffer.concat(chunks)), disableFontFace: true })
+    const pdf = await loading.promise
+    try {
+      const pages = await Promise.all(
+        Array.from({ length: pdf.numPages }, async (_, index) => {
+          const page = await pdf.getPage(index + 1)
+          return (await page.getTextContent()).items.map((item) => ('str' in item ? item.str : '')).join(' ')
+        }),
+      )
+      return pages.join('\n')
+    } finally {
+      await loading.destroy()
+    }
+  }
+  expect(await readPDFText()).not.toContain('Please clarify this section.')
+  await includeComments.check()
+  const includedPDF = await readPDFText()
+  expect(includedPDF).toContain('Please')
+  expect(includedPDF).toContain('section.')
+  expect(await page.evaluate(() => JSON.stringify(localStorage))).not.toMatch(/Avery|Please clarify this section/)
+  expect(await page.evaluate(() => Object.keys(sessionStorage))).toEqual([])
 })
 
 test('exports a captured snapshot while later edits stay dirty, and handles font/popup failures', async ({ page }) => {

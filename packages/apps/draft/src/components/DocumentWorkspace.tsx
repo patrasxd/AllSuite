@@ -63,8 +63,10 @@ import { applyReferenceSnapshot } from '../editor/references'
 import { ParagraphDialog } from './ParagraphDialog'
 import { FindReplacePanel } from './FindReplacePanel'
 import { SymbolDialog } from './SymbolDialog'
+import { CommentsPanel } from './CommentsPanel'
 import { translations } from '../i18n'
 import type { AppComponentProps } from '../types'
+import { readCommentThreads, serializeCommentThreads, type CommentThread } from '../engine/comments'
 
 export default function DocumentWorkspace({
   locale,
@@ -97,6 +99,10 @@ export default function DocumentWorkspace({
   const [linkDialog, setLinkDialog] = useState(false)
   const [referencesDialog, setReferencesDialog] = useState(false)
   const [navigation, setNavigation] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
+  const [commentAuthor, setCommentAuthor] = useState('')
+  const [includeCommentsInPDF, setIncludeCommentsInPDF] = useState(false)
+  const [currentComments, setCurrentComments] = useState<CommentThread[]>([])
   const [findMode, setFindMode] = useState<'find' | 'replace' | null>(null)
   const [symbolDialog, setSymbolDialog] = useState<'symbols' | 'emoji' | null>(null)
   const [imageDialog, setImageDialog] = useState(false)
@@ -132,6 +138,9 @@ export default function DocumentWorkspace({
   const autoformatEnabled = useRef(preferences.autoformat)
   const currentLocale = useRef(locale)
   const countCache = useRef<{ doc: Editor['state']['doc']; value: ReturnType<typeof countText> }>()
+  const editorRef = useRef<Editor | null>(null)
+  const commentSelection = useRef<{ from: number; to: number } | null>(null)
+  const commentData = useRef('')
   autoformatEnabled.current = preferences.autoformat
   currentLocale.current = locale
   const dirtyCallback = useRef(setIsDirty)
@@ -150,8 +159,21 @@ export default function DocumentWorkspace({
     if (countCache.current?.doc !== current.state.doc)
       countCache.current = { doc: current.state.doc, value: countText(current.getText({ blockSeparator: '\n' })) }
     const { from, to } = current.state.selection
+    rememberCommentSelection(current)
     const selectionText = from === to ? '' : current.state.doc.textBetween(from, to, '\n')
     setCounts({ document: countCache.current.value, selection: selectionText ? countText(selectionText) : undefined })
+  }
+  function rememberCommentSelection(current: Editor) {
+    const selection = current.state.selection
+    const text = selection.empty ? '' : current.state.doc.textBetween(selection.from, selection.to)
+    commentSelection.current = text.trim() ? { from: selection.from, to: selection.to } : null
+  }
+  function syncComments(current: Editor, force = false) {
+    const value = current.state.doc.attrs.comments
+    const signature = typeof value === 'string' ? value : JSON.stringify(value ?? null)
+    if (!force && commentData.current === signature) return
+    commentData.current = signature
+    setCurrentComments(readCommentThreads(value))
   }
   const editor = useEditor({
     extensions: editorExtensions({
@@ -160,6 +182,14 @@ export default function DocumentWorkspace({
       },
       requestLink: () => setLinkDialog(true),
       requestImageEdit: () => setImageAltDialog(true),
+      requestComment: () => {
+        if (editorRef.current) rememberCommentSelection(editorRef.current)
+        setCommentsOpen(true)
+      },
+      toggleComments: () => {
+        if (editorRef.current) rememberCommentSelection(editorRef.current)
+        setCommentsOpen((current) => !current)
+      },
       getLocale: () => currentLocale.current,
       onPages: setPages,
     }),
@@ -241,6 +271,7 @@ export default function DocumentWorkspace({
       dirtyCallback.current?.(true)
       updateCounts(current)
       setColumns(Number(current.state.doc.attrs.columns) || 1)
+      syncComments(current)
       const page = readPageSetup({ attrs: current.state.doc.attrs })
       updatePageSetup((previous) => (JSON.stringify(previous) === JSON.stringify(page) ? previous : page))
       const changed = textBlockChange(transaction.before, transaction.doc)
@@ -255,6 +286,69 @@ export default function DocumentWorkspace({
     },
     onSelectionUpdate: ({ editor: current }) => updateCounts(current),
   })
+  editorRef.current = editor
+  function updateComments(transform: (current: CommentThread[]) => CommentThread[]) {
+    if (!editor) return
+    const next = transform(readCommentThreads(editor.state.doc.attrs.comments))
+    editor.view.dispatch(editor.state.tr.setDocAttribute('comments', serializeCommentThreads(next)))
+  }
+  function addComment(text: string) {
+    if (!editor) return
+    const range = commentSelection.current
+    const mark = editor.schema.marks.comment
+    if (!range || !mark || range.to > editor.state.doc.content.size) return
+    const id = `comment-${globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)}`
+    const author = commentAuthor.trim().slice(0, 200) || 'Guest'
+    const thread: CommentThread = { id, author, text: text.trim().slice(0, 20_000), resolved: false, replies: [] }
+    const comments = readCommentThreads(editor.state.doc.attrs.comments)
+    const transaction = editor.state.tr
+      .addMark(range.from, range.to, mark.create({ id }))
+      .setDocAttribute('comments', serializeCommentThreads([...comments, thread]))
+    editor.view.dispatch(transaction)
+    commentSelection.current = null
+    setCommentsOpen(true)
+  }
+  function focusComment(id: string) {
+    if (!editor) return
+    let from: number | undefined
+    let to: number | undefined
+    editor.state.doc.descendants((node, position) => {
+      if (!node.isText || !node.marks.some((mark) => mark.type.name === 'comment' && mark.attrs.id === id)) return true
+      from ??= position
+      to = position + node.nodeSize
+      return false
+    })
+    if (from !== undefined && to !== undefined) {
+      editor.commands.setTextSelection({ from, to })
+      editor.commands.focus()
+      editor.commands.scrollIntoView()
+    }
+  }
+  function addReply(id: string, text: string) {
+    const author = commentAuthor.trim().slice(0, 200) || 'Guest'
+    updateComments((comments) =>
+      comments.map((thread) =>
+        thread.id === id
+          ? {
+              ...thread,
+              replies: [
+                ...thread.replies,
+                {
+                  id: `reply-${globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)}`,
+                  author,
+                  text: text.trim().slice(0, 20_000),
+                },
+              ],
+            }
+          : thread,
+      ),
+    )
+  }
+  function toggleCommentResolved(id: string) {
+    updateComments((comments) =>
+      comments.map((thread) => (thread.id === id ? { ...thread, resolved: !thread.resolved } : thread)),
+    )
+  }
   async function addImages(source: Blob[] | string, alt = '', position?: number) {
     const signal = imageAbort.current.signal
     imageJobs.current++
@@ -325,6 +419,8 @@ export default function DocumentWorkspace({
     setImageAltDialog(false)
     setLinkDialog(false)
     setReferencesDialog(false)
+    setCommentsOpen(false)
+    commentSelection.current = null
     setPageSetupDialog(false)
     // A replacement recreates pagination's plugin view, whose initial count is one.
     // Reset the React chrome too: an empty document does not emit a count change.
@@ -339,6 +435,7 @@ export default function DocumentWorkspace({
         plugins: editor.state.plugins,
       }),
     )
+    syncComments(editor, true)
     setFormattingMarks(editor, preferences.showFormattingMarks)
     editor.commands.setTextSelection(1)
     updateCounts(editor)
@@ -444,17 +541,22 @@ export default function DocumentWorkspace({
           return
         }
         const { capturePrintLayout } = await import('../browser/print-layout')
-        const value = preview || {
-          layout: await capturePrintLayout(snapshot, options.title, options.language, signal, {
-            hyphenation: preferences.hyphenation,
-            onResolved: (resolved) => {
-              if (!signal.aborted && !editor.isDestroyed && editor.state.doc === sourceDocument)
-                applyReferenceSnapshot(editor, resolved)
-            },
-          }),
-          fonts: await browser.loadExportFonts(snapshot, signal),
-          license: browser.fontLicense,
-        }
+        const includeComments = format === 'preview' || format === 'print' || (format === 'pdf' && includeCommentsInPDF)
+        const value =
+          preview && (format !== 'pdf' || includeCommentsInPDF)
+            ? preview
+            : {
+                layout: await capturePrintLayout(snapshot, options.title, options.language, signal, {
+                  hyphenation: preferences.hyphenation,
+                  includeComments,
+                  onResolved: (resolved) => {
+                    if (!signal.aborted && !editor.isDestroyed && editor.state.doc === sourceDocument)
+                      applyReferenceSnapshot(editor, resolved)
+                  },
+                }),
+                fonts: await browser.loadExportFonts(snapshot, signal),
+                license: browser.fontLicense,
+              }
         if (signal.aborted || target?.closed) {
           close()
           return
@@ -562,6 +664,8 @@ export default function DocumentWorkspace({
           onPDF={() => {
             void exportDocument('pdf')
           }}
+          includeCommentsInPDF={includeCommentsInPDF}
+          onToggleCommentsInPDF={() => setIncludeCommentsInPDF((current) => !current)}
         />
       )}
       <FullBleedLayout
@@ -661,6 +765,15 @@ export default function DocumentWorkspace({
           showNavigation={navigation}
           documentLanguage={documentLanguage || locale}
           onDocumentLanguage={changeDocumentLanguage}
+          commentsOpen={commentsOpen}
+          commentCount={currentComments.length}
+          onToggleCommentsInPDF={() => setIncludeCommentsInPDF((current) => !current)}
+          includeCommentsInPDF={includeCommentsInPDF}
+          onToggleComments={() => setCommentsOpen((current) => !current)}
+          onAddComment={() => {
+            rememberCommentSelection(editor)
+            setCommentsOpen(true)
+          }}
           onClipboard={(action) => {
             void clipboard(action)
           }}
@@ -731,7 +844,23 @@ export default function DocumentWorkspace({
             ruler={preferences.showRuler}
             hyphenation={preferences.hyphenation}
             columns={columns}
+            comments={currentComments}
+            onSelectComment={focusComment}
           />
+          {commentsOpen && (
+            <CommentsPanel
+              editor={editor}
+              locale={locale}
+              threads={currentComments}
+              author={commentAuthor}
+              onAuthorChange={setCommentAuthor}
+              canComment={Boolean(commentSelection.current)}
+              onAdd={addComment}
+              onReply={addReply}
+              onToggleResolved={toggleCommentResolved}
+              onClose={() => setCommentsOpen(false)}
+            />
+          )}
         </div>
         <ParagraphDialog
           editor={editor}
