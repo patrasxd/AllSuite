@@ -268,7 +268,7 @@ const descriptions: Record<Locale, Record<string, string>> = {
 }
 
 export function getDraftButtonTooltip(locale: Locale, label: string): string | undefined {
-  return stripTerminalPeriod(resolveDraftButtonTooltip(locale, label))
+  return normalizeButtonTooltip(resolveDraftButtonTooltip(locale, label))
 }
 
 function resolveDraftButtonTooltip(locale: Locale, label: string): string | undefined {
@@ -311,7 +311,7 @@ function resolveDraftButtonTooltip(locale: Locale, label: string): string | unde
 }
 
 export function getDraftTabTooltip(locale: Locale, tab: string): string | undefined {
-  return stripTerminalPeriod(resolveDraftTabTooltip(locale, tab))
+  return normalizeButtonTooltip(resolveDraftTabTooltip(locale, tab))
 }
 
 function resolveDraftTabTooltip(locale: Locale, tab: string): string | undefined {
@@ -337,4 +337,3 @@ function resolveDraftTabTooltip(locale: Locale, tab: string): string | undefined
         }
   return descriptions[tab as keyof typeof descriptions]
 }
-

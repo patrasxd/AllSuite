@@ -372,6 +372,15 @@
   flex: 1 1 auto;
 }
 
+.grid-name-box {
+  flex: 0 0 8.5rem;
+  min-width: 5rem;
+}
+
+.grid-name-box .all-input-container {
+  width: 100%;
+}
+
 .grid-formula-input > label {
   flex: 0 0 auto;
 }
@@ -678,6 +687,10 @@
     gap: var(--all-space-2);
   }
 
+  .grid-name-box {
+    flex-basis: 6rem;
+  }
+
   .grid-import-progress {
     flex-wrap: wrap;
     padding-right: var(--all-space-2);
@@ -743,6 +756,26 @@
   .grid-format-color input {
     min-width: 44px;
     min-height: 44px;
+  }
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .all-workspace-sheet-tabs--footer .all-workspace-sheet-tab.all-btn {
+    min-width: 44px;
+    min-height: 44px;
+    height: 44px;
+  }
+
+  .all-workspace-sheet-tabs--footer .all-workspace-sheet-tabs__add.all-icon-btn,
+  .all-workspace-sheet-tabs--footer .all-workspace-sheet-tabs__rename.all-icon-btn {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .grid-workspace .all-workspace-status__start {
+    flex: 0 0 auto;
   }
 }
 

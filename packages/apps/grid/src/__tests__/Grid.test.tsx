@@ -80,15 +80,15 @@ describe('Grid workspace', () => {
 
     expect(screen.getByRole('button', { name: 'Pogrubienie' })).toHaveAttribute(
       'title',
-      'Pogrub tekst zaznaczonych komórek.',
+      'Pogrub tekst zaznaczonych komórek',
     )
     expect(screen.getByRole('tab', { name: 'Plik', exact: true })).toHaveAttribute(
       'title',
-      'Pokaż polecenia plików skoroszytu.',
+      'Pokaż polecenia plików skoroszytu',
     )
     expect(screen.getByRole('tab', { name: 'Sheet1', exact: true })).toHaveAttribute(
       'title',
-      'Przejdź do arkusza „Sheet1”. Dwuklik zmienia jego nazwę.',
+      'Przejdź do arkusza „Sheet1”. Dwuklik zmienia jego nazwę',
     )
   })
 
@@ -646,7 +646,7 @@ describe('Grid workspace', () => {
     const editor = screen.getByRole('textbox', { name: 'Edit cell A1' })
     fireEvent.change(editor, { target: { value: 'kept on Sheet1' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add sheet' }))
-    expect(screen.getByRole('button', { name: 'Sheet2' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('tab', { name: 'Sheet2' })).toHaveAttribute('aria-selected', 'true')
     expect(setIsDirty).toHaveBeenLastCalledWith(true)
 
     fireEvent.click(screen.getByRole('tab', { name: 'Sheet1' }))
@@ -743,7 +743,7 @@ describe('Grid workspace', () => {
     render(<Grid locale="en" />)
     const grid = screen.getByRole('grid', { name: 'Spreadsheet grid' })
     fireEvent.click(screen.getByRole('button', { name: 'Add sheet' }))
-    expect(screen.getByRole('button', { name: 'Sheet2' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('tab', { name: 'Sheet2' })).toHaveAttribute('aria-selected', 'true')
     expect(document.activeElement).toBe(grid)
 
     fireEvent.click(screen.getByRole('tab', { name: 'Sheet1' }))

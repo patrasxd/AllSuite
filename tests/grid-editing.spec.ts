@@ -65,6 +65,7 @@ test('@smoke Grid mobile editing retains literal input through sheet changes and
     await page.getByRole('button', { name: 'New', exact: true }).tap()
     await expect(page.getByRole('gridcell', { name: 'A1, empty' })).toBeVisible()
     await expect(page.getByRole('grid')).toBeFocused()
+    await page.getByRole('tab', { name: 'Format', exact: true }).tap()
     await expect(page.getByRole('button', { name: 'Undo (Ctrl+Z or ⌘Z)' })).toBeDisabled()
   } finally {
     await context.close()

@@ -520,7 +520,7 @@ test('@smoke Grid preflights XLSX parts before replacing the in-memory workbook'
   const confirm = page.waitForEvent('dialog').then((dialog) => dialog.accept())
   await preflight.getByRole('button', { name: 'Open workbook' }).click()
   await confirm
-  await expect(page.getByRole('button', { name: 'Imported' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Imported' })).toBeVisible()
   await expect(page.getByRole('gridcell', { name: 'A1, opened from xlsx' })).toBeVisible()
   const nameBox = page.getByRole('textbox', { name: 'Name box' })
   await nameBox.fill('A2')
@@ -736,7 +736,7 @@ test('@smoke Grid resizes rows and columns and retains grid focus after sheet ch
   await expect(rowResize).toHaveAttribute('aria-valuenow', '52')
 
   await page.getByRole('button', { name: 'Add sheet' }).click()
-  await expect(page.getByRole('button', { name: 'Sheet2' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('tab', { name: 'Sheet2' })).toHaveAttribute('aria-selected', 'true')
   await page.getByRole('tab', { name: 'Sheet1' }).click()
   await expect(grid).toBeFocused()
   await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-A1')
@@ -768,8 +768,8 @@ test('@smoke Grid number formatting uses the shared select and compact decimal a
   await expect(numberFormat.locator('xpath=../..')).toHaveClass(/all-select-container--compact/)
 
   for (const [name, title] of [
-    ['Decrease decimal places', 'Show fewer decimal places.'],
-    ['Increase decimal places', 'Show more decimal places.'],
+    ['Decrease decimal places', 'Show fewer decimal places'],
+    ['Increase decimal places', 'Show more decimal places'],
   ]) {
     const action = page.getByRole('button', { name })
     await expect(action).toHaveAttribute('title', title)

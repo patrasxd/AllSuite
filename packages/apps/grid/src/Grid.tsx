@@ -44,7 +44,15 @@ import {
 import type { AppComponentProps } from './types'
 import { GRID_COPY } from './i18n'
 import { getGridButtonTooltip, getGridSheetTabTooltip } from './button-tooltips'
-import { cellAddressKey, columnNumberToName, formatCellAddress, parseCellAddress } from './engine/workbook/address'
+import {
+  AddressError,
+  cellAddressKey,
+  columnNumberToName,
+  formatCellAddress,
+  formatRangeAddress,
+  parseCellAddress,
+  parseRangeAddress,
+} from './engine/workbook/address'
 import {
   WorkbookSession,
   createWorkbook,
@@ -117,17 +125,8 @@ const SAVE_CATEGORY_ORDER: XlsxSaveDiffCategory[] = [
   'preserved',
 ]
 
-function DecimalPlacesIcon({
-  direction,
-  separator,
-}: {
-  direction: 'increase' | 'decrease'
-  separator: '.' | ','
-}) {
-  const arrow =
-    direction === 'increase'
-      ? 'M22 9h7m0 0-3-3m3 3-3 3'
-      : 'M29 9h-7m0 0 3-3m-3 3 3 3'
+function DecimalPlacesIcon({ direction, separator }: { direction: 'increase' | 'decrease'; separator: '.' | ',' }) {
+  const arrow = direction === 'increase' ? 'M22 9h7m0 0-3-3m3 3-3 3' : 'M29 9h-7m0 0 3-3m-3 3 3 3'
 
   return (
     <svg className="grid-decimal-icon" viewBox="0 0 30 18" aria-hidden="true" focusable="false">
@@ -385,6 +384,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   const [session] = useState(() => new WorkbookSession(createWorkbook({ firstSheetName: 'Sheet1' })))
   const [activeSheetId, setActiveSheetId] = useState(session.workbook.activeSheetId)
   const [selection, setSelection] = useState<GridSelection>(() => createSelection({ row: 1, column: 1 }))
+  const [nameBoxValue, setNameBoxValue] = useState('A1')
   const [viewportSize, setViewportSize] = useState<ViewportSize>({
     rows: INITIAL_VIEWPORT_ROWS,
     columns: INITIAL_VIEWPORT_COLUMNS,
@@ -398,7 +398,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   const [editDraft, setEditDraftState] = useState<EditDraft | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [commandTab, setCommandTab] = useState<'file' | 'format'>('format')
-  const [notice, setNotice] = useState(copy.ready)
+  const [notice, setNotice] = useState(copy.initialStatus)
   const [pendingImport, setPendingImport] = useState<XlsxImportPreflight | null>(null)
   const [importProgress, setImportProgress] = useState<XlsxImportProgress | null>(null)
   const [pendingSave, setPendingSave] = useState<XlsxExportResult | null>(null)
@@ -440,6 +440,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   const sheet =
     session.workbook.sheetsById.get(activeSheetId) ?? session.workbook.sheetsById.get(session.workbook.activeSheetId)!
   const activeAddress = formatCellAddress(selection.active)
+  const selectedRange = formatRangeAddress(selection.ranges[selection.ranges.length - 1])
   const activeCell = session.getCell(activeSheetId, selection.active)
   const currentEditDraft =
     editDraft?.sheetId === activeSheetId &&
@@ -454,7 +455,9 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
 
   useEffect(() => session.subscribe(() => setRevision((current) => current + 1)), [session])
 
-  useEffect(() => setNotice(copy.ready), [copy.ready])
+  useEffect(() => setNotice(copy.initialStatus), [copy.initialStatus])
+
+  useEffect(() => setNameBoxValue(selectedRange), [selectedRange])
 
   useEffect(() => {
     const calculation = new FormulaCalculationClient(session)
@@ -828,6 +831,20 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     setNotice(copy.ready)
   }
 
+  const handleNameBoxKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    try {
+      const range = parseRangeAddress(nameBoxValue)
+      updateSelection({ anchor: range.start, active: range.end, ranges: [range] })
+      focusGrid()
+    } catch (error) {
+      if (!(error instanceof AddressError)) throw error
+      setNameBoxValue(selectedRange)
+      setNotice(copy.invalidAddress)
+    }
+  }
+
   const focusGrid = useCallback(() => {
     gridElement.current?.focus({ preventScroll: true })
   }, [])
@@ -1188,10 +1205,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   }
 
   const handleFormulaBarBlur = (event: FocusEvent<HTMLTextAreaElement>) => {
-    if (
-      event.relatedTarget instanceof HTMLElement &&
-      event.relatedTarget.closest('.grid-formula-functions-trigger')
-    ) {
+    if (event.relatedTarget instanceof HTMLElement && event.relatedTarget.closest('.grid-formula-functions-trigger')) {
       formulaFunctionCursor.current = event.currentTarget.selectionStart
     }
     const current = editDraftRef.current
@@ -2053,18 +2067,9 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
             onZoom={setZoom}
             locale={locale}
             zoomLabel={copy.zoom}
-            end={
-              <WorkspaceStatusItem
-                mono
-                title={`${copy.selectedCell}: ${activeAddress}`}
-                aria-label={`${copy.selectedCell}: ${activeAddress}`}
-              >
-                {activeAddress}
-              </WorkspaceStatusItem>
-            }
           >
-            <WorkspaceStatusItem role="status" aria-live="polite">
-              {notice || copy.ready}
+            <WorkspaceStatusItem role="status" aria-live="polite" aria-label={`${copy.selectedCell}: ${selectedRange}`}>
+              {notice || copy.ready} — {selectedRange}
             </WorkspaceStatusItem>
           </WorkspaceStatusBar>
         }
@@ -2225,12 +2230,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
                 size="sm"
                 aria-label={copy.decreaseDecimals}
                 title={copy.decreaseDecimals}
-                icon={
-                  <DecimalPlacesIcon
-                    direction="decrease"
-                    separator={locale === 'pl' ? ',' : '.'}
-                  />
-                }
+                icon={<DecimalPlacesIcon direction="decrease" separator={locale === 'pl' ? ',' : '.'} />}
                 disabled={isDateNumberFormat(activeCell?.style?.numberFormat)}
                 onClick={() => adjustSelectedDecimals(-1)}
               />
@@ -2239,12 +2239,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
                 size="sm"
                 aria-label={copy.increaseDecimals}
                 title={copy.increaseDecimals}
-                icon={
-                  <DecimalPlacesIcon
-                    direction="increase"
-                    separator={locale === 'pl' ? ',' : '.'}
-                  />
-                }
+                icon={<DecimalPlacesIcon direction="increase" separator={locale === 'pl' ? ',' : '.'} />}
                 disabled={isDateNumberFormat(activeCell?.style?.numberFormat)}
                 onClick={() => adjustSelectedDecimals(1)}
               />
@@ -2525,6 +2520,19 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
         )}
 
         <div className="grid-formula-bar">
+          <div className="grid-name-box">
+            <Input
+              label={copy.nameBox}
+              density="compact"
+              fullWidth
+              value={nameBoxValue}
+              onChange={(event) => setNameBoxValue(event.currentTarget.value)}
+              onKeyDown={handleNameBoxKeyDown}
+              onBlur={() => setNameBoxValue(selectedRange)}
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </div>
           <div className="grid-formula-input">
             <label htmlFor="grid-formula-field">{copy.formulaBar}</label>
             <TextArea

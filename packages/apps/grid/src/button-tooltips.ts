@@ -77,7 +77,7 @@ const descriptions: Record<Locale, Record<string, string>> = {
 }
 
 export function getGridButtonTooltip(locale: Locale, label: string): string | undefined {
-  return stripTerminalPeriod(resolveGridButtonTooltip(locale, label))
+  return normalizeButtonTooltip(resolveGridButtonTooltip(locale, label))
 }
 
 function resolveGridButtonTooltip(locale: Locale, label: string): string | undefined {
@@ -117,7 +117,7 @@ function rowOrColumnCount(count: string, singular: string, plural: string) {
 }
 
 export function getGridSheetTabTooltip(locale: Locale, sheetName: string): string {
-  return stripTerminalPeriod(resolveGridSheetTabTooltip(locale, sheetName))!
+  return normalizeButtonTooltip(resolveGridSheetTabTooltip(locale, sheetName))!
 }
 
 function resolveGridSheetTabTooltip(locale: Locale, sheetName: string): string {
@@ -125,4 +125,3 @@ function resolveGridSheetTabTooltip(locale: Locale, sheetName: string): string {
     ? `Przejdź do arkusza „${sheetName}”. Dwuklik zmienia jego nazwę.`
     : `Switch to the ${sheetName} worksheet. Double-click to rename it.`
 }
-

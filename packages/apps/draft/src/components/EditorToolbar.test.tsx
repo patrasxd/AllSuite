@@ -37,7 +37,7 @@ describe('toolbar commands and selection state', () => {
 
     for (const item of screen.getAllByRole('tab')) expect(item).toHaveClass('all-btn', 'all-btn--ghost')
     const bold = screen.getByRole('button', { name: 'Bold', exact: true })
-    expect(bold).toHaveAttribute('title', 'Make selected text bold.')
+    expect(bold).toHaveAttribute('title', 'Make selected text bold')
     expect(bold).toHaveClass('all-btn', 'all-icon-btn', 'all-btn--outline')
     expect(screen.getByRole('combobox', { name: 'Font family' })).toHaveClass('all-select-field')
     expect(screen.getByRole('combobox', { name: 'Font family' }).closest('.all-select-container')).toHaveClass(
