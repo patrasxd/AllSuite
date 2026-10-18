@@ -9,6 +9,8 @@
     "preview": "vite preview --port 4176"
   },
   "dependencies": {
-    "@allsuite/draft": "*"
+    "@allsuite/draft": "*",
+    "@allsuite/grid": "*",
+    "react-router-dom": "7.18.4"
   }
 }

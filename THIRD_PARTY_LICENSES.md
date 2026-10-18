@@ -19,6 +19,10 @@ Offline direct PDF now precaches the already-distributed local WOFF fonts as wel
 | [motion-utils](https://registry.npmjs.org/motion-utils/11.18.1)                               | 11.18.1 | MIT     | Shared UI motion dependency      |
 | [react](https://registry.npmjs.org/react/18.3.1)                                              | 18.3.1  | MIT     | Shell and Draft runtime          |
 | [react-dom](https://registry.npmjs.org/react-dom/18.3.1)                                      | 18.3.1  | MIT     | Shell and Draft runtime          |
+| [react-router](https://registry.npmjs.org/react-router/7.18.4)                                | 7.18.4  | MIT     | Shell browser-history routing    |
+| [react-router-dom](https://registry.npmjs.org/react-router-dom/7.18.4)                        | 7.18.4  | MIT     | Shell browser-history routing    |
+| [cookie](https://registry.npmjs.org/cookie/1.1.1)                                             | 1.1.1   | MIT     | React Router runtime dependency  |
+| [set-cookie-parser](https://registry.npmjs.org/set-cookie-parser/2.7.2)                       | 2.7.2   | MIT     | React Router runtime dependency  |
 | [scheduler](https://registry.npmjs.org/scheduler/0.23.2)                                      | 0.23.2  | MIT     | React runtime dependency         |
 | [tslib](https://registry.npmjs.org/tslib/2.8.1)                                               | 2.8.1   | 0BSD    | Shared runtime helpers           |
 
@@ -71,10 +75,10 @@ The MVP 2 audit added supplementary MIT notices for hash.js 1.1.7 and isarray 1.
 | [@tiptap/pm](https://registry.npmjs.org/%40tiptap%2Fpm/3.32.0)                                               | 3.32.0  | MIT                                     | Draft editor runtime / extension dependency  |
 | [@tiptap/react](https://registry.npmjs.org/%40tiptap%2Freact/3.32.0)                                         | 3.32.0  | MIT                                     | Draft editor runtime / extension dependency  |
 | [@tiptap/starter-kit](https://registry.npmjs.org/%40tiptap%2Fstarter-kit/3.32.0)                             | 3.32.0  | MIT                                     | Draft editor runtime / extension dependency  |
-| [@xmldom/xmldom](https://registry.npmjs.org/%40xmldom%2Fxmldom/0.9.12)                                       | 0.9.12  | MIT                                     | Draft DOCX XML DOM parser in worker          |
+| [@xmldom/xmldom](https://registry.npmjs.org/%40xmldom%2Fxmldom/0.9.12)                                       | 0.9.12  | MIT                                     | Draft DOCX and Grid XLSX XML parsing         |
 | [commander](https://registry.npmjs.org/commander/15.0.0)                                                     | 15.0.0  | MIT                                     | KaTeX command-line dependency                |
 | [docx](https://registry.npmjs.org/docx/9.11.0)                                                               | 9.11.0  | MIT                                     | Draft DOCX exporter                          |
-| [fflate](https://registry.npmjs.org/fflate/0.8.3)                                                            | 0.8.3   | MIT                                     | Draft DOCX reader and worker                 |
+| [fflate](https://registry.npmjs.org/fflate/0.8.3)                                                            | 0.8.3   | MIT                                     | Draft DOCX and Grid XLSX ZIP reading         |
 | [pako](https://registry.npmjs.org/pako/1.0.4)                                                                | 1.0.4   | MIT                                     | Pinned DOCX export transitive dependency     |
 | [prismjs](https://registry.npmjs.org/prismjs/1.30.0)                                                         | 1.30.0  | MIT                                     | Draft lazy code syntax highlighting          |
 | [sax](https://registry.npmjs.org/sax/1.2.4)                                                                  | 1.2.4   | ISC                                     | Pinned DOCX export transitive dependency     |
@@ -132,6 +136,17 @@ Exact npm manifests were checked individually before installation. Linked versio
 
 Table support: @tiptap/extension-table 3.32.0 (Table, TableRow, TableCell and TableHeader exports), MIT, Copyright (c) 2025 Tiptap GmbH. Verified exact-version upstream manifest and LICENSE.md at https://github.com/ueberdosis/tiptap/tree/v3.32.0/packages/extension-table . Only peer dependencies are the already audited @tiptap/core and @tiptap/pm 3.32.0; ProseMirror tables is already included by @tiptap/pm. MIT notice retained in `licenses/editor-license-notices.txt`.
 
+## Grid runtime virtualization
+
+The Grid renderer uses the headless DOM virtualizer selected in the Grid architecture decision. The exact installed package manifests and MIT license files were checked from the locked npm archives; React and React DOM are existing shell peers. These packages add no fonts, icons or other redistributed assets. Their notice is retained in `licenses/editor-license-notices.txt`, which is included in the production `third-party-licenses.txt` asset.
+
+| name                                                                                                        | version | license | where used                                      |
+| ----------------------------------------------------------------------------------------------------------- | ------- | ------- | ----------------------------------------------- |
+| [@tanstack/react-virtual](https://registry.npmjs.org/%40tanstack/react-virtual/-/react-virtual-3.14.21.tgz) | 3.14.21 | MIT     | Grid lazy row and column windowing              |
+| [@tanstack/virtual-core](https://registry.npmjs.org/%40tanstack/virtual-core/-/virtual-core-3.19.6.tgz)     | 3.19.6  | MIT     | Runtime dependency of `@tanstack/react-virtual` |
+
+The React adapter accepts React 18 and React DOM 18 as peers. The exact resolved versions and integrity hashes are recorded in `package-lock.json`. The runtime closure contains only `@tanstack/virtual-core` beyond the adapter itself. Exact installed manifests and `LICENSE` files were inspected before inclusion.
+
 ## Print/PDF layout dependencies (2026-10-16)
 
 Exact archives were inspected in `tmp/print-pdf/licenses` and the isolated `tmp/print-pdf/review` installation before adding product dependencies. All choices below are on rule 06's allowlist. Distributed notices are appended to `licenses/editor-license-notices.txt`; supplementary PDF audit notices are retained in CI artifacts.
@@ -155,9 +170,17 @@ Exact archives were inspected in `tmp/print-pdf/licenses` and the isolated `tmp/
 | pako 0.2.9                    | MIT                              | unicode-trie nested dependency; exact package LICENSE, retained in PDF/editor notices         |
 | tslib 2.8.1                   | 0BSD                             | exact package LICENSE.txt and CopyrightNotice.txt                                             |
 
-Fontkit/dfa/brotli do not ship a separate LICENSE file; their exact README and package.json explicitly declare MIT, and the upstream fontkit release README agrees. Retain those declarations and every supplied decoder copyright/header rather than inventing a missing copyright notice. The older @pdf-lib/fontkit archive was inspected but not adopted. Override pdf-lib's pako to the already-reviewed MIT 1.0.4 used by this product; reject the temporary review install's pako 1.0.11 (MIT AND Zlib, outside this allowlist). Fonts remain the existing local OFL assets. PDF generation is lazy, offline and memory-only.
+Fontkit/dfa/brotli do not ship a separate LICENSE file; their exact README and package.json explicitly declare MIT, and the upstream fontkit release README agrees. Retain those declarations and every supplied decoder copyright/header rather than inventing a missing copyright notice. The older @pdf-lib/fontkit archive was inspected but not adopted. Override pdf-lib's pako to the already-reviewed MIT 1.0.4 used by this product; reject the temporary review install's pako 1.0.11 (MIT AND Zlib, outside the allowlist at that review; Zlib was approved on 2026-10-18). Fonts remain the existing local OFL assets. PDF generation is lazy, offline and memory-only.
 PDF verification only: pdfjs-dist 6.3.289 (Apache-2.0), @napi-rs/canvas 1.0.8 (MIT). Exact installed licenses inspected in the sibling tooling installation before adding test dependencies. These packages are not imported by product code or shipped in browser assets. Sources: https://github.com/mozilla/pdf.js and https://github.com/Brooooooklyn/canvas. Native canvas uses Skia (BSD-3-Clause); retained upstream package license for local verification.
 
 ## Equations and code blocks (2026-10-17)
 
 KaTeX 0.19.0 is MIT licensed and PrismJS 1.30.0 is MIT licensed. The exact release manifests and notices were checked at the upstream [KaTeX 0.19.0 release](https://github.com/KaTeX/KaTeX/releases/tag/v0.19.0), [PrismJS v1.30.0 manifest](https://github.com/PrismJS/prism/blob/v1.30.0/package.json), and [PrismJS license](https://github.com/PrismJS/prism/blob/v1.30.0/LICENSE). KaTeX's local CSS references its own font files; those fonts are separately attributed under SIL OFL 1.1 in `licenses/font-license-notices.txt`. PrismJS has no runtime dependencies. KaTeX's CLI dependency `commander` is not imported by the editor renderer.
+
+## Grid formula calculation (2026-10-18)
+
+| Package/version                                                                       | Verified package license               | Authoritative evidence                                                                                                                                                        | Use                            |
+| ------------------------------------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| [formualizer 0.11.1](https://registry.npmjs.org/formualizer/-/formualizer-0.11.1.tgz) | MIT, selected from `MIT OR Apache-2.0` | Exact npm archive `package.json`, `LICENSE-MIT`, `LICENSE-APACHE`; upstream [v0.11.1 WASM README](https://github.com/PSU3D0/formualizer/blob/v0.11.1/bindings/wasm/README.md) | Grid's lazy calculation worker |
+
+The exact npm package reports no runtime dependencies and its archive was inspected locally; the browser WASM file is about 9.8 MB unpacked. The selected MIT notice is retained in `licenses/editor-license-notices.txt`. **Zlib approved by project policy on 2026-10-18; remaining compiled dependency audit pending:** follow-up inspection of the pinned Rust source, locked WASM dependency tree and installed binary identified embedded `zlib-rs 0.6.3`, licensed **Zlib**, now included in rule 06's allowlist with explicit user approval. Its path includes `formualizer-workbook → zip 7.2.0 → flate2 1.1.9 → zlib-rs`; the installed WASM contains matching crate source paths. The exact crate `LICENSE` was inspected. See [calculation evidence and hashes](docs/grid-compatibility.md) and the [exact crate license](https://docs.rs/crate/zlib-rs/0.6.3/source/LICENSE). The npm MIT option does not license all embedded code. The exact zlib-rs notice is retained in `licenses/editor-license-notices.txt` and included in the production license asset. The Zlib policy blocker is resolved; the rest of the compiled closure is not claimed cleared.

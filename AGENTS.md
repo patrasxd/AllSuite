@@ -7,6 +7,7 @@ AllSuite is a private, offline office suite. Its current app is Draft, a paginat
 - Node 22, npm workspaces, Vite, React 18, TypeScript and PWA.
 - Shell: `apps/shell`; app packages: `packages/apps/<slug>`; shared primitives/tokens: the AllUI submodule (`AllUI/`). Initialize submodules before `npm ci`.
 - Draft is loaded through metadata plus a lazy runtime import. Keep heavy editor, import and export libraries in its lazy bundle. See [architecture](.agents/rules/00-architecture.md).
+- Grid's spreadsheet contract and implementation boundaries are in [the Grid rule](.agents/rules/07-grid-spreadsheet.md).
 - Commands: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e:deploy`. In Windows PowerShell, use `npm.cmd` when `npm` is not resolved (for example, `npm.cmd run typecheck`).
 
 ## Effort and scope

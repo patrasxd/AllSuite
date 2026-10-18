@@ -20,6 +20,23 @@ const csp: Plugin = {
   ],
 }
 
+const formualizerWasmBridge: Plugin = {
+  name: 'formualizer-vite-wasm-bridge',
+  enforce: 'pre',
+  resolveId(source, importer) {
+    const normalizedImporter = importer?.replaceAll('\\', '/')
+    if (
+      source === 'formualizer' &&
+      normalizedImporter?.includes('/packages/apps/grid/src/engine/formulas/runtime.ts')
+    ) {
+      return fileURLToPath(
+        new URL('../../packages/apps/grid/src/engine/formulas/formualizer-vite-adapter.ts', import.meta.url),
+      )
+    }
+    return null
+  },
+}
+
 const officeChunkBoundary: Plugin = {
   name: 'office-chunk-boundary',
   generateBundle(_options, bundle) {
@@ -33,13 +50,25 @@ const officeChunkBoundary: Plugin = {
     })
     const chunks = Object.values(bundle).filter((asset) => asset.type === 'chunk')
     const report = chunks.map((chunk) => {
-      const modules = Object.keys(chunk.modules).join('\n').replaceAll('\\', '/')
+      const moduleIds = Object.keys(chunk.modules).map((id) => id.replaceAll('\\', '/'))
+      const modules = moduleIds.join('\n')
       const editor = modules.includes('/@tiptap/') || modules.includes('/draft/src/DocumentEditor')
       const docx = modules.includes('/node_modules/docx/')
       const mammoth = modules.includes('/node_modules/mammoth/')
       const fonts = modules.includes('/node_modules/@fontsource/') || modules.includes('/draft/src/fonts/')
+      const gridMetadata = moduleIds.some((id) => id.includes('/packages/apps/grid/src/metadata.ts'))
+      const gridRenderer = moduleIds.some((id) => id.includes('/packages/apps/grid/src/Grid.tsx'))
+      const gridWorkbook = moduleIds.some((id) => id.includes('/packages/apps/grid/src/engine/workbook/'))
+      const gridXlsx = moduleIds.some((id) => id.includes('/packages/apps/grid/src/engine/xlsx/'))
+      const gridFormula =
+        moduleIds.some((id) => id.includes('/packages/apps/grid/src/engine/formulas/')) ||
+        modules.includes('/node_modules/formualizer/')
+      const gridZip = modules.includes('/node_modules/fflate/')
+      const gridWasm = /formualizer_wasm_bg[^\s"']*\.wasm/.test(chunk.code)
       if (chunk.isEntry && (editor || docx || mammoth || fonts))
         this.error('Office runtime leaked into the shell entry chunk')
+      if (chunk.isEntry && (gridRenderer || gridWorkbook || gridXlsx || gridFormula || gridZip || gridWasm))
+        this.error('Grid runtime leaked into the shell entry chunk')
       return {
         file: chunk.fileName,
         entry: chunk.isEntry,
@@ -48,10 +77,38 @@ const officeChunkBoundary: Plugin = {
         docx,
         mammoth,
         fonts,
+        gridMetadata,
+        gridRenderer,
+        gridWorkbook,
+        gridXlsx,
+        gridFormula,
+        gridZip,
+        gridWasm,
         imports: chunk.imports,
         dynamicImports: chunk.dynamicImports,
       }
     })
+    for (const asset of Object.values(bundle)) {
+      if (asset.type !== 'asset' || !asset.fileName.endsWith('.wasm')) continue
+      report.push({
+        file: asset.fileName,
+        entry: false,
+        bytes: Buffer.byteLength(asset.source),
+        editor: false,
+        docx: false,
+        mammoth: false,
+        fonts: false,
+        gridMetadata: false,
+        gridRenderer: false,
+        gridWorkbook: false,
+        gridXlsx: false,
+        gridFormula: true,
+        gridZip: false,
+        gridWasm: true,
+        imports: [],
+        dynamicImports: [],
+      })
+    }
     this.emitFile({ type: 'asset', fileName: 'bundle-report.json', source: JSON.stringify(report, null, 2) })
   },
 }
@@ -76,7 +133,11 @@ export default defineConfig({
       },
     },
   },
+  worker: {
+    plugins: () => [formualizerWasmBridge],
+  },
   plugins: [
+    formualizerWasmBridge,
     react(),
     csp,
     officeChunkBoundary,
@@ -98,8 +159,8 @@ export default defineConfig({
       },
       workbox: {
         clientsClaim: true,
-        globPatterns: ['**/*.{js,css,html,svg,woff,woff2,webmanifest}', 'third-party-licenses.txt'],
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,svg,woff,woff2,webmanifest,wasm}', 'third-party-licenses.txt'],
+        maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         runtimeCaching: [],
       },
     }),
@@ -108,6 +169,8 @@ export default defineConfig({
     alias: {
       '@allsuite/draft/metadata': fileURLToPath(new URL('../../packages/apps/draft/src/metadata.ts', import.meta.url)),
       '@allsuite/draft': fileURLToPath(new URL('../../packages/apps/draft/src', import.meta.url)),
+      '@allsuite/grid/metadata': fileURLToPath(new URL('../../packages/apps/grid/src/metadata.ts', import.meta.url)),
+      '@allsuite/grid': fileURLToPath(new URL('../../packages/apps/grid/src', import.meta.url)),
     },
     dedupe: ['react', 'react-dom', 'framer-motion'],
   },

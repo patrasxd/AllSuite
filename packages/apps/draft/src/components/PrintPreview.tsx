@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { Button, ControlsBar, FullBleedLayout, Select, Text } from '@all/ui'
+import { Button, ControlsBar, FullBleedLayout, Select, Text, WorkspaceStatusBar, WorkspaceStatusItem } from '@all/ui'
 import type { Locale } from '../types'
 import type { PrintLayout } from '../engine/print-layout'
 import type { ExportFont } from '../engine/export/model'
@@ -71,11 +71,11 @@ export function PrintPreview({
     <FullBleedLayout
       className="draft-workspace draft-print-preview"
       footer={
-        <div className="draft-status-bar">
-          <Text as="span" variant="caption">
+        <WorkspaceStatusBar>
+          <WorkspaceStatusItem>
             {locale === 'pl' ? 'Strony' : 'Pages'}: {value.layout.pages.length}
-          </Text>
-        </div>
+          </WorkspaceStatusItem>
+        </WorkspaceStatusBar>
       }
     >
       <ControlsBar className="draft-preview-tools" role="toolbar" aria-label={t.preview}>

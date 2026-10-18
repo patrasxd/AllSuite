@@ -19,7 +19,19 @@ import type { Editor } from '@tiptap/core'
 import { Slice } from '@tiptap/pm/model'
 import { closeHistory } from '@tiptap/pm/history'
 import { EditorState } from '@tiptap/pm/state'
-import { Alert, Button, Dialog, FullBleedLayout, StatsHeader, Text, safeGetJSON, safeSetJSON } from '@all/ui'
+import {
+  Alert,
+  Button,
+  ButtonTooltipProvider,
+  Dialog,
+  FullBleedLayout,
+  StatsHeader,
+  Text,
+  WorkspaceStatusBar,
+  WorkspaceStatusItem,
+  safeGetJSON,
+  safeSetJSON,
+} from '@all/ui'
 import { editorExtensions } from '../editor/extensions'
 import { setFormattingMarks } from '../editor/formatting-marks'
 import { setDocumentColumns } from '../editor/paragraph-commands'
@@ -59,7 +71,7 @@ import { CodeBlockDialog } from './CodeBlockDialog'
 import { StarterTemplatePicker } from './StarterTemplatePicker'
 import { createStarterTemplate, type StarterTemplateId } from '../engine/starter-templates'
 import { translations } from '../i18n'
-import { clampZoom } from '../engine/page-view'
+import { getDraftButtonTooltip } from '../button-tooltips'
 import type { CodeLanguage } from '../editor/code-block'
 import type { AppComponentProps } from '../types'
 import { readCommentThreads, serializeCommentThreads, type CommentThread } from '../engine/comments'
@@ -69,11 +81,6 @@ import {
   setSuggestionTracking,
   type SuggestionSummary,
 } from '../editor/suggestions'
-
-const zoomControlLabels = {
-  en: { group: 'Document zoom', out: 'Zoom out', in: 'Zoom in', fit: 'Fit' },
-  pl: { group: 'Powiększenie dokumentu', out: 'Pomniejsz', in: 'Powiększ', fit: 'Dopasuj' },
-} as const
 
 export default function DocumentWorkspace({
   locale,
@@ -741,7 +748,7 @@ export default function DocumentWorkspace({
     ? `${t.selection}: ${counts.selection.words} ${t.words.toLowerCase()}, ` +
       `${counts.selection.charactersWithSpaces} ${t.characters.toLowerCase()}`
     : ''
-  return (
+  const appContent = (
     <>
       {preview && (
         <PrintPreview
@@ -767,72 +774,32 @@ export default function DocumentWorkspace({
         className={`draft-workspace${preview ? ' draft-workspace--preview-hidden' : ''}${focusMode ? ' draft-workspace--focus' : ''}`}
         footer={
           focusMode ? undefined : (
-            <div className="draft-status-bar">
-              <Text as="span" variant="caption" role="status" title={t.unsavedHint}>
+            <WorkspaceStatusBar
+              zoom={zoom}
+              onZoom={setZoom}
+              locale={locale}
+              zoomLabel={locale === 'pl' ? 'Powiększenie dokumentu' : 'Document zoom'}
+            >
+              <WorkspaceStatusItem role="status" title={t.unsavedHint}>
                 {dirty ? t.dirty : t.clean}
-              </Text>
-              <Text as="span" variant="caption" className="draft-status-item">
+              </WorkspaceStatusItem>
+              <WorkspaceStatusItem>
                 {t.words}: {counts.document.words}
-              </Text>
-              <Text
-                as="span"
-                variant="caption"
-                className="draft-status-item"
-                title={characterStatusLabel}
-                aria-label={characterStatusLabel}
-              >
+              </WorkspaceStatusItem>
+              <WorkspaceStatusItem title={characterStatusLabel} aria-label={characterStatusLabel}>
                 {locale === 'pl' ? 'Znaki (ze spacjami / bez spacji)' : 'Chars (with / without spaces)'}:{' '}
                 {counts.document.charactersWithSpaces} / {counts.document.charactersWithoutSpaces}
-              </Text>
+              </WorkspaceStatusItem>
               {counts.selection && (
-                <Text
-                  as="span"
-                  variant="caption"
-                  className="draft-status-item"
-                  title={selectionStatusLabel}
-                  aria-label={selectionStatusLabel}
-                >
+                <WorkspaceStatusItem title={selectionStatusLabel} aria-label={selectionStatusLabel}>
                   {locale === 'pl' ? 'Zazn.' : 'Sel.'}: {counts.selection.words}w /{' '}
                   {counts.selection.charactersWithSpaces}c
-                </Text>
+                </WorkspaceStatusItem>
               )}
-              <Text
-                as="span"
-                variant="caption"
-                className="draft-status-item draft-status-item--pages"
-                title={pageStatusLabel}
-                aria-label={pageStatusLabel}
-              >
+              <WorkspaceStatusItem strong title={pageStatusLabel} aria-label={pageStatusLabel}>
                 {hasPageStatus ? `${visibleCurrentPage}/${pages}` : '—'}
-              </Text>
-              <div className="draft-status-zoom" role="group" aria-label={zoomControlLabels[locale].group}>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="draft-status-zoom-button"
-                  aria-label={zoomControlLabels[locale].out}
-                  title={zoomControlLabels[locale].out}
-                  disabled={zoom !== 'fit' && zoom <= 50}
-                  onClick={() => setZoom(clampZoom((zoom === 'fit' ? 100 : zoom) - 10))}
-                >
-                  −
-                </Button>
-                <Text as="span" variant="caption" aria-live="polite">
-                  {zoom === 'fit' ? zoomControlLabels[locale].fit : `${zoom}%`}
-                </Text>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="draft-status-zoom-button"
-                  aria-label={zoomControlLabels[locale].in}
-                  title={zoomControlLabels[locale].in}
-                  disabled={zoom !== 'fit' && zoom >= 200}
-                  onClick={() => setZoom(clampZoom((zoom === 'fit' ? 100 : zoom) + 10))}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
+              </WorkspaceStatusItem>
+            </WorkspaceStatusBar>
           )
         }
       >
@@ -1152,5 +1119,10 @@ export default function DocumentWorkspace({
         )}
       </FullBleedLayout>
     </>
+  )
+  return (
+    <ButtonTooltipProvider locale={locale} resolveTooltip={(label) => getDraftButtonTooltip(locale, label)}>
+      {appContent}
+    </ButtonTooltipProvider>
   )
 }

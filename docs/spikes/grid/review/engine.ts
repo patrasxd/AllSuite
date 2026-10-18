@@ -1,0 +1,25 @@
+// Reuse the installed engine's existing browser bridge; no app/shell entry imports this file.
+import { initializeWasm, Workbook } from '../../../../packages/apps/grid/src/engine/formulas/formualizer-vite-adapter'
+import { canonicalizeFormulaInput } from '../../../../packages/apps/grid/src/engine/formulas/locale'
+
+await initializeWasm()
+const book = new Workbook({ cycleDetection: 'runtime', cyclePolicy: 'error', maxEvalTimeMs: 1000 })
+book.addSheet('Input')
+book.addSheet('Calc')
+book.setValue('Input', 1, 1, 5)
+book.setFormula('Calc', 1, 1, '=Input!A1*2')
+book.evaluateAll()
+const before = book.sheet('Calc').getValue(1, 1)
+book.setValue('Input', 1, 1, 7)
+book.evaluateAll()
+const after = book.sheet('Calc').getValue(1, 1)
+book.setFormula('Calc', 2, 1, '=A3')
+book.setFormula('Calc', 3, 1, '=A2')
+book.evaluateAll()
+const cycle = book.sheet('Calc').getValue(2, 1)
+const localized = canonicalizeFormulaInput('=SUMA(Input!A1;1,5)', 'pl')
+book.setFormula('Calc', 4, 1, localized.canonicalExpression)
+book.evaluateAll()
+const localizedValue = book.sheet('Calc').getValue(4, 1)
+document.querySelector('#result')!.textContent = JSON.stringify({ before, after, cycle, localized, localizedValue })
+book.free()

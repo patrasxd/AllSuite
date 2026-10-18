@@ -2,7 +2,7 @@
 
 ## Dependency license gate
 
-Allowlist: **MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, SIL OFL (OFL-1.1), 0BSD**. Forbidden: GPL, AGPL, SSPL, commercial-only and source-available licenses. Unknown/unverified licenses do not pass. For dual licensing, verify and record the allowed option used.
+Allowlist: **MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, SIL OFL (OFL-1.1), 0BSD, Zlib**. Forbidden: GPL, AGPL, SSPL, commercial-only and source-available licenses. Unknown/unverified licenses do not pass. For dual licensing, verify and record the allowed option used.
 
 Before adding dependencies, check exact-version license files and authoritative upstream sources. Review required transitive dependencies and redistributed assets too. Check **each Tiptap extension separately**; the core license does not establish extension or paid-offering licenses.
 

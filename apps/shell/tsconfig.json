@@ -12,7 +12,9 @@
     "resolveJsonModule": true,
     "paths": {
       "@allsuite/draft": ["../../packages/apps/draft/src/index.tsx"],
-      "@allsuite/draft/metadata": ["../../packages/apps/draft/src/metadata.ts"]
+      "@allsuite/draft/metadata": ["../../packages/apps/draft/src/metadata.ts"],
+      "@allsuite/grid": ["../../packages/apps/grid/src/index.tsx"],
+      "@allsuite/grid/metadata": ["../../packages/apps/grid/src/metadata.ts"]
     }
   },
   "include": ["src", "../../packages/apps/*/src"],

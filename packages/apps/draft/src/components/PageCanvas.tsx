@@ -401,6 +401,11 @@ export function PageCanvas({
                       type="button"
                       className="draft-story-region"
                       aria-label={`${storyLabels[locale].edit} — ${storyLabels[locale].header} ${index + 1}`}
+                      title={
+                        locale === 'pl'
+                          ? `Edytuj nagłówek na stronie ${index + 1}.`
+                          : `Edit the header on page ${index + 1}.`
+                      }
                       onClick={(event) => {
                         event.preventDefault()
                         onEditStories('header', storyVariant(stories, index + 1))
@@ -431,6 +436,11 @@ export function PageCanvas({
                       type="button"
                       className="draft-story-region draft-story-region--footer"
                       aria-label={`${storyLabels[locale].edit} — ${storyLabels[locale].footer} ${index + 1}`}
+                      title={
+                        locale === 'pl'
+                          ? `Edytuj stopkę na stronie ${index + 1}.`
+                          : `Edit the footer on page ${index + 1}.`
+                      }
                       onClick={(event) => {
                         event.preventDefault()
                         onEditStories('footer', storyVariant(stories, index + 1))
@@ -467,7 +477,7 @@ export function PageCanvas({
                         className="draft-comment-pin"
                         key={pin.id}
                         style={{ top: pin.top }}
-                        title={pin.title}
+                        title={locale === 'pl' ? `Przejdź do komentarza: ${pin.title}` : `Go to comment: ${pin.title}`}
                         aria-label={`${translations[locale].goToComment}: ${pin.title}`}
                         onClick={() => onSelectComment(pin.id)}
                       >

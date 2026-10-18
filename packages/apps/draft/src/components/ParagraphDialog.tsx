@@ -89,20 +89,7 @@ export function ParagraphDialog({ editor, locale, open, onClose }: Props) {
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={t.paragraphDialog}
-      description={t.paragraphDialogDescription}
-      footer={
-        <div className="draft-dialog-actions">
-          <Button variant="secondary" onClick={onClose}>
-            {t.cancel}
-          </Button>
-          <Button onClick={apply}>{t.apply}</Button>
-        </div>
-      }
-    >
+    <Dialog open={open} onClose={onClose} title={t.paragraphDialog} description={t.paragraphDialogDescription}>
       <div className="draft-paragraph-dialog">
         <SettingsGroup label={t.spacingGroup}>
           <div className="draft-paragraph-fields draft-paragraph-fields--three">
@@ -160,6 +147,12 @@ export function ParagraphDialog({ editor, locale, open, onClose }: Props) {
             {t.invalidParagraphValue}
           </Text>
         )}
+        <div className="draft-dialog-actions">
+          <Button variant="secondary" onClick={onClose}>
+            {t.cancel}
+          </Button>
+          <Button onClick={apply}>{t.apply}</Button>
+        </div>
       </div>
     </Dialog>
   )

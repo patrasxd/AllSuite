@@ -6,14 +6,13 @@ import type { ExportFormat } from '../engine/export/model'
 import { StylePicker } from './StylePicker'
 import { clearDirectFormatting, selectionFormat, toggleStyleEmphasis } from '../editor/styles'
 import { DraftIcon } from './DraftIcons'
-import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   AlignCenterIcon,
   AlignJustifyIcon,
   AlignLeftIcon,
   AlignRightIcon,
   Button,
-  ControlsBar,
   CopyIcon,
   CodeIcon,
   CutIcon,
@@ -39,13 +38,16 @@ import {
   SearchIcon,
   Select,
   Text,
+  ToolbarPager as ControlsBar,
   ToolbarGroup,
   UndoIcon,
+  WorkspaceTabs,
 } from '@all/ui'
 import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import type { Locale } from '../types'
 import { translations } from '../i18n'
+import { getDraftButtonTooltip, getDraftTabTooltip } from '../button-tooltips'
 import {
   DEFAULT_FONT_SIZE,
   MIN_FONT_SIZE,
@@ -263,7 +265,7 @@ export function EditorToolbar({
     return (
       <IconButton
         aria-label={label}
-        title={label}
+        tooltip={getDraftButtonTooltip(locale, label)}
         icon={icon}
         size="sm"
         variant={active ? 'primary' : 'outline'}
@@ -273,17 +275,6 @@ export function EditorToolbar({
         onClick={command}
       />
     )
-  }
-  function moveTabFocus(current: number, event: ReactKeyboardEvent<HTMLButtonElement>) {
-    let next = current
-    if (event.key === 'ArrowRight') next = (current + 1) % tabs.length
-    else if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length
-    else if (event.key === 'Home') next = 0
-    else if (event.key === 'End') next = tabs.length - 1
-    else return
-    event.preventDefault()
-    setActiveTab(tabs[next])
-    document.getElementById(`draft-tab-${tabs[next]}`)?.focus()
   }
   function startPainter(repeat: boolean) {
     const snapshot = captureFormatting(editor)
@@ -301,25 +292,18 @@ export function EditorToolbar({
   }
   return (
     <div className="draft-tools">
-      <div className="draft-command-tabs" role="tablist" aria-label={t.toolbar}>
-        {tabs.map((tab, index) => (
-          <Button
-            key={tab}
-            id={`draft-tab-${tab}`}
-            className="draft-command-tab"
-            role="tab"
-            variant="ghost"
-            size="sm"
-            aria-selected={activeTab === tab}
-            aria-controls="draft-command-panel"
-            tabIndex={activeTab === tab ? 0 : -1}
-            onClick={() => setActiveTab(tab)}
-            onKeyDown={(event) => moveTabFocus(index, event)}
-          >
-            {t[tab]}
-          </Button>
-        ))}
-      </div>
+      <WorkspaceTabs
+        label={t.toolbar}
+        items={tabs.map((tab) => ({
+          id: tab,
+          label: t[tab],
+          tooltip: getDraftTabTooltip(locale, tab),
+          tabId: `draft-tab-${tab}`,
+          panelId: 'draft-command-panel',
+        }))}
+        activeId={activeTab}
+        onChange={(tab) => setActiveTab(tab as ToolbarTab)}
+      />
 
       <div
         id="draft-command-panel"
@@ -328,7 +312,7 @@ export function EditorToolbar({
         aria-labelledby={`draft-tab-${activeTab}`}
       >
         {activeTab === 'file' && (
-          <ControlsBar className="draft-toolbar" role="toolbar" aria-label={t.file}>
+          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.file}>
             <ToolbarGroup label={t.documentGroup} caption={t.documentGroup}>
               <Button size="sm" variant="outline" icon={<FilePlusIcon />} disabled={saving} onClick={() => onNew?.()}>
                 {t.new}
@@ -374,7 +358,7 @@ export function EditorToolbar({
         )}
 
         {activeTab === 'insert' && (
-          <ControlsBar className="draft-toolbar" role="toolbar" aria-label={t.insert}>
+          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.insert}>
             <ToolbarGroup label={t.pageElementsGroup} caption={t.pageElementsGroup}>
               <Button
                 size="sm"
@@ -432,7 +416,7 @@ export function EditorToolbar({
           </ControlsBar>
         )}
         {activeTab === 'edit' && (
-          <ControlsBar className="draft-toolbar" role="toolbar" aria-label={t.edit}>
+          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.edit}>
             <ToolbarGroup label={t.historyGroup} caption={t.historyGroup}>
               {tool(t.undo, <UndoIcon />, () => editor.chain().focus().undo().run(), undefined, !state.undo)}
               {tool(t.redo, <RedoIcon />, () => editor.chain().focus().redo().run(), undefined, !state.redo)}
@@ -451,7 +435,12 @@ export function EditorToolbar({
         )}
 
         {activeTab === 'format' && (
-          <ControlsBar className="draft-toolbar draft-toolbar--formatting" role="toolbar" aria-label={t.format}>
+          <ControlsBar
+            locale={locale}
+            className="draft-toolbar draft-toolbar--formatting"
+            role="toolbar"
+            aria-label={t.format}
+          >
             <ToolbarGroup label={t.typographyGroup} caption={t.typographyGroup}>
               <StylePicker editor={editor} locale={locale} />
               <Select
@@ -646,7 +635,7 @@ export function EditorToolbar({
         )}
 
         {activeTab === 'layout' && (
-          <ControlsBar className="draft-toolbar" role="toolbar" aria-label={t.layout}>
+          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.layout}>
             <ToolbarGroup label={t.layout} caption={t.layout}>
               <Select
                 aria-label={t.pageSize}
@@ -703,7 +692,7 @@ export function EditorToolbar({
         )}
 
         {activeTab === 'view' && (
-          <ControlsBar className="draft-toolbar draft-toolbar--view" role="toolbar" aria-label={t.view}>
+          <ControlsBar locale={locale} className="draft-toolbar draft-toolbar--view" role="toolbar" aria-label={t.view}>
             <ToolbarGroup label={t.documentLanguage} caption={t.documentLanguage}>
               <Select
                 aria-label={t.documentLanguage}
@@ -819,7 +808,7 @@ export function EditorToolbar({
         )}
 
         {activeTab === 'review' && (
-          <ControlsBar className="draft-toolbar" role="toolbar" aria-label={t.review}>
+          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.review}>
             <ToolbarGroup label={t.comments} caption={t.comments}>
               <Button
                 size="sm"
@@ -853,7 +842,7 @@ export function EditorToolbar({
                 {t.includeCommentsInPDF}
               </Button>
             </ToolbarGroup>
-            <ToolbarGroup label={t.suggestions} caption={t.suggestions}>
+            <ToolbarGroup label={t.reviewChanges} caption={t.review}>
               <Button
                 size="sm"
                 variant={trackChanges ? 'primary' : 'outline'}
@@ -870,7 +859,7 @@ export function EditorToolbar({
                 aria-pressed={suggestionsOpen}
                 onClick={onToggleSuggestions}
               >
-                {t.suggestionCount}
+                {t.reviewChanges}
                 {suggestionCount ? ` (${suggestionCount})` : ''}
               </Button>
             </ToolbarGroup>

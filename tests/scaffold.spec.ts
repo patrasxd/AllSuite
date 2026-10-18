@@ -23,7 +23,7 @@ test('catalog card opens the editor and footer opens the legal notice', async ({
   await page.goto('./')
   await expect(page.locator('.all-directory-title')).toHaveText(/All\s*Suite/)
   await page.getByRole('button', { name: 'Open Draft', exact: true }).click()
-  await expect(page).toHaveURL(/#\/draft$/)
+  await expect(page).toHaveURL(/\/AllSuite\/apps\/draft$/)
   await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).toBeVisible()
   await page.getByRole('tab', { name: 'File', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled()
@@ -32,6 +32,18 @@ test('catalog card opens the editor and footer opens the legal notice', async ({
   await page.locator('.home-page').evaluate((element) => element.scrollTo(0, element.scrollHeight))
   await page.getByRole('button', { name: 'Legal Notice & Privacy', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Privacy', exact: true })).toBeVisible()
+})
+
+test('lazy app route shows a loading status while its bundle loads', async ({ page }) => {
+  await page.goto('./')
+  await page.route('**/assets/*.js', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    await route.continue()
+  })
+
+  await page.getByRole('button', { name: 'Open Draft', exact: true }).click()
+  await expect(page.getByRole('status')).toHaveText('Loading…')
+  await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).toBeVisible()
 })
 
 test('@smoke Polish preferences and blocked browser storage both work', async ({ page }) => {
@@ -145,12 +157,15 @@ test('@smoke production CSP, static-only PWA cache and offline lazy route', asyn
   expect(cache.length).toBeGreaterThan(0)
   expect(
     cache.every(
-      (path) => /\.(?:js|css|html|svg|woff2?|webmanifest)$/.test(path) || path.endsWith('/third-party-licenses.txt'),
+      (path) =>
+        /\.(?:js|css|html|svg|woff2?|webmanifest|wasm)$/.test(path) || path.endsWith('/third-party-licenses.txt'),
     ),
   ).toBe(true)
   await page.context().setOffline(true)
   await page.goto('./#/draft')
   await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).toBeVisible()
+  await page.goto('./#/grid')
+  await expect(page.getByRole('grid', { name: 'Spreadsheet grid' })).toBeVisible()
   expect(requests.every((url) => new URL(url).origin === 'http://127.0.0.1:4176')).toBe(true)
   const storage = await page.evaluate(async () => ({
     local: Object.keys(localStorage),
@@ -258,6 +273,54 @@ test('Draft toolbar preserves AllUI control geometry and typography', async ({ p
   await expect(rulerButton).toHaveClass(/all-btn--sm/)
   await expect(rulerButton).toHaveAttribute('aria-pressed', 'true')
   expect(await rulerButton.evaluate((element) => getComputedStyle(element).height)).toBe('32px')
+})
+
+test('Draft and Grid toolbars stay one row and page overflowing groups', async ({ page }) => {
+  const verifyPager = async (toolbarSelector: string) => {
+    const tabs = page.locator('.all-workspace-tabs')
+    await expect(tabs).toBeVisible()
+    expect(await tabs.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44)
+    const toolbar = page.locator(toolbarSelector)
+    await expect(toolbar.locator('..')).toHaveCSS('height', '72px')
+    const visibleGroups = toolbar.locator('.all-toolbar-group:visible')
+    const groupTops = await visibleGroups.evaluateAll((groups) =>
+      groups.map((group) => Math.round(group.getBoundingClientRect().top)),
+    )
+    expect(new Set(groupTops).size).toBe(1)
+    const firstPage = await toolbar
+      .locator('.all-toolbar-group')
+      .evaluateAll((groups) => groups.map((group) => getComputedStyle(group).display !== 'none'))
+
+    const next = page.getByRole('button', { name: /Next toolbar page/ })
+    await expect(next).toBeVisible()
+    await next.click()
+    await expect
+      .poll(() =>
+        toolbar
+          .locator('.all-toolbar-group')
+          .evaluateAll((groups) => groups.map((group) => getComputedStyle(group).display !== 'none')),
+      )
+      .not.toEqual(firstPage)
+    expect(await toolbar.evaluate((element) => element.scrollLeft)).toBe(0)
+    const previous = page.getByRole('button', { name: /Previous toolbar page/ })
+    await expect(previous).toBeEnabled()
+    await previous.click()
+    await expect
+      .poll(() =>
+        toolbar
+          .locator('.all-toolbar-group')
+          .evaluateAll((groups) => groups.map((group) => getComputedStyle(group).display !== 'none')),
+      )
+      .toEqual(firstPage)
+  }
+
+  await page.goto('./apps/draft')
+  await page.getByRole('tab', { name: 'Format', exact: true }).click()
+  await verifyPager('.draft-toolbar--formatting')
+
+  await page.goto('./apps/grid')
+  await page.getByRole('tab', { name: 'Format', exact: true }).click()
+  await verifyPager('.grid-format-toolbar')
 })
 
 test('Draft dialog actions stay on the same surface as their content', async ({ page }) => {

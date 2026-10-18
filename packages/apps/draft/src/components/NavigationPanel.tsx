@@ -166,7 +166,9 @@ export function NavigationPanel({
                   size="sm"
                   variant={active === target.id ? 'primary' : 'ghost'}
                   aria-current={active === target.id ? 'location' : undefined}
-                  title={target.label}
+                  tooltip={
+                    locale === 'pl' ? `Przejdź do sekcji „${target.label}”.` : `Jump to the “${target.label}” section.`
+                  }
                   onClick={() => {
                     if (phone) {
                       onClose()

@@ -67,9 +67,10 @@ Opening and editing a document should not require an account or uploading it to 
 
 ## Apps Catalog
 
-| App       | Slug    | Category  | Key Capabilities                                                                                                                    |
-| :-------- | :------ | :-------- | :---------------------------------------------------------------------------------------------------------------------------------- |
-| **Draft** | `draft` | Documents | Rich-text editing, DOCX open/save, tables and images, references, headers/footers, print preview and PDF/HTML/Markdown/text export. |
+| App                       | Slug    | Category     | Key Capabilities                                                                                                                       |
+| :------------------------ | :------ | :----------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| **Draft**                 | `draft` | Documents    | Rich-text editing, DOCX open/save, tables and images, references, headers/footers, print preview and PDF/HTML/Markdown/text export.    |
+| **Grid — in development** | `grid`  | Spreadsheets | In-memory workbook editing, localized formulas, and XLSX open/save with compatibility review; native pivot authoring is not available. |
 
 ### Draft Compatibility & Limitations
 

@@ -1,0 +1,310 @@
+{
+  "checkedAt": "2026-10-18T12:17:50.917Z",
+  "runtime": "v24.16.0",
+  "installedWasm": {
+    "bytes": 9842320,
+    "gzipBytes": 3456479,
+    "sha256": "18b89068eff940840bdc6cbece7eced2019af61dcc1cad8864b8d6439da562a0"
+  },
+  "packages": [
+    {
+      "name": "@glideapps/glide-data-grid",
+      "version": "6.0.3",
+      "published": "2024-02-03T04:18:19.514Z",
+      "license": "MIT",
+      "dependencies": {
+        "@linaria/react": "^4.5.3",
+        "canvas-hypertxt": "^1.0.3",
+        "react-number-format": "^5.0.0"
+      },
+      "peers": {
+        "react": "^16.12.0 || 17.x || 18.x",
+        "lodash": "^4.17.19",
+        "marked": "^4.0.10",
+        "react-dom": "^16.12.0 || 17.x || 18.x",
+        "react-responsive-carousel": "^3.2.7"
+      },
+      "unpackedBytes": 3662455,
+      "tarball": "https://registry.npmjs.org/@glideapps/glide-data-grid/-/glide-data-grid-6.0.3.tgz",
+      "integrity": "sha512-YXKggiNOaEemf0jP0jORq2EQKz+zXms+6mGzZc+q0mLMjmgzzoGLOQC1uYcynXSj1R61bd27JcPFsoH+Gj37Vg==",
+      "licenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "2b170413ac49c921a3aa773706367d11d149ddd6b9d536ce460f2860da0d7636",
+          "excerpt": "MIT License\n\nCopyright (c) 2021 typeguard, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software "
+        }
+      ]
+    },
+    {
+      "name": "@tanstack/react-virtual",
+      "version": "3.14.21",
+      "published": "2026-10-16T11:19:18.479Z",
+      "license": "MIT",
+      "dependencies": {
+        "@tanstack/virtual-core": "3.19.6"
+      },
+      "peers": {
+        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+        "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+      },
+      "unpackedBytes": 63728,
+      "tarball": "https://registry.npmjs.org/@tanstack/react-virtual/-/react-virtual-3.14.21.tgz",
+      "integrity": "sha512-wWE/ZJDNNDp18JHWy7n5PQooqerHePVkEEu6Op0twKQ2InF9DPhYMQptQY0syDEviMd3/r8D0OUvKJibDGm9HQ==",
+      "licenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "a405ee70c632bb938acb7ac5f210e814409b3760ea9d2329d8ed8ffcfd11a0e7",
+          "excerpt": "MIT License\n\nCopyright (c) 2021-present Tanner Linsley\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the So"
+        }
+      ]
+    },
+    {
+      "name": "@univerjs/preset-sheets-core",
+      "version": "1.1.0",
+      "published": "2026-10-17T10:47:40.505Z",
+      "license": "Apache-2.0",
+      "dependencies": {
+        "@univerjs/ui": "1.1.0",
+        "@univerjs/rpc": "1.1.0",
+        "@univerjs/docs": "1.1.0",
+        "@univerjs/design": "1.1.0",
+        "@univerjs/sheets": "1.1.0",
+        "@univerjs/docs-ui": "1.1.0",
+        "@univerjs/network": "1.1.0",
+        "@univerjs/sheets-ui": "1.1.0",
+        "@univerjs/engine-render": "1.1.0",
+        "@univerjs/sheets-numfmt": "1.1.0",
+        "@univerjs/engine-formula": "1.1.0",
+        "@univerjs/sheets-formula": "1.1.0",
+        "@univerjs/sheets-numfmt-ui": "1.1.0",
+        "@univerjs/sheets-formula-ui": "1.1.0"
+      },
+      "peers": {
+        "rxjs": ">=7.0.0",
+        "react": "^16.9.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc",
+        "react-dom": "^16.9.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc"
+      },
+      "unpackedBytes": 322155,
+      "tarball": "https://registry.npmjs.org/@univerjs/preset-sheets-core/-/preset-sheets-core-1.1.0.tgz",
+      "integrity": "sha512-ZsUZ9W8+Ma4iX/XWW2P+zQet+QHQAcA0ibJ7hNFogxC4ZuwpNPhQRtshSA8BxlXnWU+0MJQWdTFUwabYEd7ODQ==",
+      "licenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9",
+          "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTIO"
+        }
+      ]
+    },
+    {
+      "name": "exceljs",
+      "version": "4.4.0",
+      "published": "2023-10-19T19:49:55.669Z",
+      "license": "MIT",
+      "dependencies": {
+        "tmp": "^0.2.0",
+        "uuid": "^8.3.0",
+        "dayjs": "^1.8.34",
+        "jszip": "^3.10.1",
+        "saxes": "^5.0.1",
+        "archiver": "^5.0.0",
+        "fast-csv": "^4.3.1",
+        "unzipper": "^0.10.11",
+        "readable-stream": "^3.6.0"
+      },
+      "peers": {},
+      "unpackedBytes": 21825509,
+      "tarball": "https://registry.npmjs.org/exceljs/-/exceljs-4.4.0.tgz",
+      "integrity": "sha512-XctvKaEMaj1Ii9oDOqbW/6e1gXknSY4g/aLCDicOXqBE4M0nRWkUu0PTp++UPNzoFY12BNHMfs/VadKIS6llvg==",
+      "licenseFiles": [
+        {
+          "path": "package/dist/LICENSE",
+          "sha256": "2ed526b7e7c7681dc2347995b5036ddf73dc27d0539cdea59b6d4a72b63a57a0",
+          "excerpt": "The MIT License (MIT)\n\nCopyright (c) 2014-2019 Guyon Roche\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin th"
+        },
+        {
+          "path": "package/LICENSE",
+          "sha256": "2ed526b7e7c7681dc2347995b5036ddf73dc27d0539cdea59b6d4a72b63a57a0",
+          "excerpt": "The MIT License (MIT)\n\nCopyright (c) 2014-2019 Guyon Roche\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin th"
+        }
+      ],
+      "browserBundle": {
+        "bytes": 947702,
+        "gzipBytes": 257676
+      }
+    },
+    {
+      "name": "xlsx",
+      "version": "0.18.5",
+      "published": "2022-03-24T14:23:09.623Z",
+      "license": "Apache-2.0",
+      "dependencies": {
+        "cfb": "~1.2.1",
+        "ssf": "~0.11.2",
+        "wmf": "~1.0.1",
+        "word": "~0.3.0",
+        "crc-32": "~1.2.1",
+        "adler-32": "~1.3.0",
+        "codepage": "~1.15.0"
+      },
+      "peers": {},
+      "unpackedBytes": 7499035,
+      "tarball": "https://registry.npmjs.org/xlsx/-/xlsx-0.18.5.tgz",
+      "integrity": "sha512-dmg3LCjBPHZnQp5/F/+nnTa+miPJxUXB6vtk42YjBBKayDNagxGEeIdWApkYPOf3Z3pm3k62Knjzp7lMeTEtFQ==",
+      "licenseFiles": [
+        {
+          "path": "package/dist/LICENSE",
+          "sha256": "4d2a38ac35cda06a555c84074a819d413339cd3691b822cae50f8f322fe01f64",
+          "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTIO"
+        },
+        {
+          "path": "package/LICENSE",
+          "sha256": "4d2a38ac35cda06a555c84074a819d413339cd3691b822cae50f8f322fe01f64",
+          "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTIO"
+        }
+      ]
+    },
+    {
+      "name": "formualizer",
+      "version": "0.11.1",
+      "published": "2026-10-07T23:54:09.400Z",
+      "license": "MIT OR Apache-2.0",
+      "dependencies": {},
+      "peers": {},
+      "unpackedBytes": 10008177,
+      "tarball": "https://registry.npmjs.org/formualizer/-/formualizer-0.11.1.tgz",
+      "integrity": "sha512-Y3NfvJxK9O7pfnMV4aUThALsxWS6MrQkJX1e1oE7Qk3FHrDfBQVbsaYbZs8Gza9v6nvJnLLwjXwHOwnidXPXyA==",
+      "licenseFiles": [
+        {
+          "path": "package/LICENSE-APACHE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTI"
+        },
+        {
+          "path": "package/pkg/LICENSE-APACHE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTI"
+        },
+        {
+          "path": "package/LICENSE-MIT",
+          "sha256": "a2d81ebc68eed07c518dbfcd7028752f714ca8aa51378d8ff5d50a79248daafb",
+          "excerpt": "MIT License\n\nCopyright (c) 2025-2026 Frank Colson and Formualizer contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Softw"
+        },
+        {
+          "path": "package/pkg/LICENSE-MIT",
+          "sha256": "a2d81ebc68eed07c518dbfcd7028752f714ca8aa51378d8ff5d50a79248daafb",
+          "excerpt": "MIT License\n\nCopyright (c) 2025-2026 Frank Colson and Formualizer contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Softw"
+        }
+      ]
+    },
+    {
+      "name": "fast-formula-parser",
+      "version": "1.0.19",
+      "published": "2020-11-26T03:58:25.027Z",
+      "license": "MIT",
+      "dependencies": {
+        "bahttext": "^1.1.0",
+        "bessel": "^1.0.2",
+        "chevrotain": "^7.0.1",
+        "jstat": "^1.9.3"
+      },
+      "peers": {},
+      "unpackedBytes": 615501,
+      "tarball": "https://registry.npmjs.org/fast-formula-parser/-/fast-formula-parser-1.0.19.tgz",
+      "integrity": "sha512-8Roq7V1XjuYj3cWZ9tILyqBHGjS7NkejRaHxSWePu0qjIcvimZwe6WfeA9che03dgWrykZqrw691qg3lwiIkMg==",
+      "licenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "723eaad3597d8f7670dad9e5e6a702cdcd6c056736472392a4d037779b7b036b",
+          "excerpt": "MIT License\r\n\r\nCopyright (c) 2019 Dishu(Lester) Lyu\r\n\r\nPermission is hereby granted, free of charge, to any person obtaining a copy\r\nof this software and associated documentation files (the \"Software\"), to deal\r\nin the S"
+        }
+      ]
+    },
+    {
+      "name": "@formulajs/formulajs",
+      "version": "4.6.1",
+      "published": "2026-07-28T07:33:34.830Z",
+      "license": "MIT",
+      "dependencies": {
+        "bessel": "^1.0.2",
+        "jstat": "^1.9.6"
+      },
+      "peers": {},
+      "unpackedBytes": 2422485,
+      "tarball": "https://registry.npmjs.org/@formulajs/formulajs/-/formulajs-4.6.1.tgz",
+      "integrity": "sha512-QkHPCaHljG4SRT5TNOIBx4ClgQYyLlblwthF4tJP5GsWEJ7uD8eu+yN9RyCl3NCQdpWIEdtJb+pnQpuceywrLA==",
+      "licenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "174950f43de64be376a36ce6f81c9da6242f59f86c5aad6371bff0fa30469a7b",
+          "excerpt": "Copyright (c) 2014 Sutoiku, Inc.\n\nThe MIT License (MIT)\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated\ndocumentation files (the \"Software\"), to deal in the S"
+        }
+      ]
+    },
+    {
+      "name": "hyperformula",
+      "version": "3.5.0",
+      "published": "2026-10-09T10:11:49.351Z",
+      "license": "GPL-3.0-only",
+      "dependencies": {
+        "chevrotain": "^6.5.0",
+        "tiny-emitter": "^2.1.0"
+      },
+      "peers": {},
+      "unpackedBytes": 14086167,
+      "tarball": "https://registry.npmjs.org/hyperformula/-/hyperformula-3.5.0.tgz",
+      "integrity": "sha512-wV0IpiVEG1L36UGUR2vAROEWNVgOQDlTUyZTL67v75JuzSWh0ANEONuoKqdhHdhd94Uo2A1EVk9q8LZabYNDkw==",
+      "licenseFiles": [
+        {
+          "path": "package/LICENSE.txt",
+          "sha256": "acaf421aab803dd59408f028e8650283477b3d7cba130ce7d677805118b63eb1",
+          "excerpt": "Copyright (c) HANDSONCODE sp. z o. o.\n\nHYPERFORMULA is a software distributed by HANDSONCODE sp. z o. o., a\nPolish corporation based in Gdynia, Poland, at Aleja Zwyciestwa 96-98,\nregistered by the District Court in Gdans"
+        }
+      ]
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "published": "2026-05-16T00:14:03.449Z",
+      "license": "MIT",
+      "dependencies": {},
+      "peers": {},
+      "unpackedBytes": 796742,
+      "tarball": "https://registry.npmjs.org/fflate/-/fflate-0.8.3.tgz",
+      "integrity": "sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==",
+      "licenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "0a1df3a083d0c010560aa342e87959c8c1070e6fd54545741f083f22d0c8b551",
+          "excerpt": "MIT License\n\nCopyright (c) 2026 Arjun Barrett\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software wi"
+        }
+      ]
+    },
+    {
+      "name": "@xmldom/xmldom",
+      "version": "0.9.12",
+      "published": "2026-08-21T22:32:42.389Z",
+      "license": "MIT",
+      "dependencies": {},
+      "peers": {},
+      "unpackedBytes": 440251,
+      "tarball": "https://registry.npmjs.org/@xmldom/xmldom/-/xmldom-0.9.12.tgz",
+      "integrity": "sha512-5AXjrcMClTryPe9LgZrygpB1lj7s0S9E0+W+AHaVKAVyHanafK86iPSvG5xHVSp/jC+VH1UXu0TAEmY279xH7A==",
+      "licenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "4da724fc305d81606b245b324d4d2586916b9d248b23d82183df753ace0fdf71",
+          "excerpt": "Copyright 2019 - present Christopher J. Brody and other contributors, as listed in: https://github.com/xmldom/xmldom/graphs/contributors\nCopyright 2012 - 2017 @jindw <jindw@xidea.org> and other contributors, as listed in"
+        }
+      ]
+    },
+    {
+      "name": "SheetJS official CE",
+      "version": "0.20.3",
+      "url": "https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs",
+      "bytes": 1008308,
+      "gzipBytes": 255278,
+      "sha256": "1a0fb062ee9781b13f6687371b202aaefc53b6ce55b530c027e01f9c087b77db",
+      "licenseText": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"{}\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright (C) 2012-present   SheetJS LLC\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.\n"
+    }
+  ]
+}

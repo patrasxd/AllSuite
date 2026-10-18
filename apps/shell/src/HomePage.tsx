@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AppFooter, CatalogCard, CatalogGrid, CatalogSectionHeader, DirectoryHero, FilterGroup } from '@all/ui'
 import { APPS_METADATA } from './apps/registry'
 import type { Locale } from './types/app'
 
 export function HomePage({ locale }: { locale: Locale }) {
+  const navigate = useNavigate()
   const [tag, setTag] = useState<string | null>(null)
   const pl = locale === 'pl'
   const tags = [...new Set(APPS_METADATA.flatMap((app) => app.tags[locale]))]
@@ -67,7 +69,7 @@ export function HomePage({ locale }: { locale: Locale }) {
                   ariaLabel={`${pl ? 'Otwórz' : 'Open'} ${app.name[locale]}`}
                   clampDescription
                   onActivate={() => {
-                    window.location.hash = `/${app.slug}`
+                    navigate(`/apps/${app.slug}`)
                   }}
                 />
               </div>
@@ -77,7 +79,7 @@ export function HomePage({ locale }: { locale: Locale }) {
         <AppFooter
           legalLabel={pl ? 'Nota prawna & Prywatność' : 'Legal Notice & Privacy'}
           onLegalClick={() => {
-            window.location.hash = '/legal'
+            navigate('/legal')
           }}
           copyright="AllSuite © 2026. Free & Open Source."
           links={[

@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import { MotionProvider } from '@all/ui'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import './theme-init'
@@ -17,8 +18,10 @@ function ThemedApp() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <ThemedApp />
-    </ThemeProvider>
+    <BrowserRouter basename="/AllSuite/">
+      <ThemeProvider>
+        <ThemedApp />
+      </ThemeProvider>
+    </BrowserRouter>
   </StrictMode>,
 )

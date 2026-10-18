@@ -3,14 +3,15 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const allowed = new Set(['MIT', 'BSD-2-Clause', 'BSD-3-Clause', 'Apache-2.0', 'ISC', 'OFL-1.1', '0BSD'])
+const allowed = new Set(['MIT', 'BSD-2-Clause', 'BSD-3-Clause', 'Apache-2.0', 'ISC', 'OFL-1.1', '0BSD', 'Zlib'])
 const chosenDualLicense = new Map([
   ['dompurify', 'Apache-2.0'],
+  ['formualizer', 'MIT'],
   ['jszip', 'MIT'],
   ['type-fest', 'MIT'],
 ])
-const firstParty = new Set(['@all/ui', '@allsuite/draft', '@allsuite/shell'])
-const workspaceDirectories = ['apps/shell', 'packages/apps/draft', 'AllUI']
+const firstParty = new Set(['@all/ui', '@allsuite/draft', '@allsuite/grid', '@allsuite/shell'])
+const workspaceDirectories = ['apps/shell', 'packages/apps/draft', 'packages/apps/grid', 'AllUI']
 
 async function readJson(file) {
   return JSON.parse(await fs.readFile(file, 'utf8'))

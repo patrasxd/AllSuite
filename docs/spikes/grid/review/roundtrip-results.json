@@ -1,0 +1,76 @@
+[
+  {
+    "writer": "ExcelJS 4.4.0 browser bundle",
+    "missingParts": [
+      "customXml/item1.xml",
+      "xl/pivotCache/pivotCacheDefinition1.xml",
+      "xl/pivotCache/pivotCacheRecords1.xml",
+      "xl/pivotCache/_rels/pivotCacheDefinition1.xml.rels",
+      "xl/pivotTables/pivotTable1.xml",
+      "xl/pivotTables/_rels/pivotTable1.xml.rels"
+    ],
+    "changedParts": [
+      "[Content_Types].xml",
+      "xl/_rels/workbook.xml.rels",
+      "xl/worksheets/sheet1.xml",
+      "xl/worksheets/_rels/sheet1.xml.rels",
+      "xl/worksheets/sheet2.xml",
+      "xl/workbook.xml"
+    ],
+    "bold": true,
+    "merged": true,
+    "comment": true,
+    "validation": "whole",
+    "cachedFormulaResult": 10
+  },
+  {
+    "writer": "SheetJS CE 0.20.3",
+    "missingParts": [
+      "_rels/",
+      "xl/",
+      "xl/_rels/",
+      "xl/worksheets/",
+      "xl/worksheets/_rels/",
+      "xl/drawings/",
+      "xl/sharedStrings.xml",
+      "xl/theme/",
+      "docProps/",
+      "customXml/item1.xml",
+      "xl/pivotCache/pivotCacheDefinition1.xml",
+      "xl/pivotCache/pivotCacheRecords1.xml",
+      "xl/pivotCache/_rels/pivotCacheDefinition1.xml.rels",
+      "xl/pivotTables/pivotTable1.xml",
+      "xl/pivotTables/_rels/pivotTable1.xml.rels"
+    ],
+    "changedParts": [
+      "[Content_Types].xml",
+      "_rels/.rels",
+      "xl/_rels/workbook.xml.rels",
+      "xl/worksheets/sheet1.xml",
+      "xl/worksheets/_rels/sheet1.xml.rels",
+      "xl/comments1.xml",
+      "xl/drawings/vmlDrawing1.vml",
+      "xl/worksheets/sheet2.xml",
+      "xl/theme/theme1.xml",
+      "xl/styles.xml",
+      "docProps/app.xml",
+      "docProps/core.xml",
+      "xl/workbook.xml"
+    ],
+    "bold": false,
+    "merged": true,
+    "comment": true,
+    "validation": null,
+    "cachedFormulaResult": 10
+  },
+  {
+    "writer": "fflate/xmldom narrow overlay",
+    "missingParts": [],
+    "changedParts": ["xl/workbook.xml", "xl/worksheets/sheet1.xml", "xl/worksheets/sheet2.xml"],
+    "bold": true,
+    "merged": true,
+    "comment": true,
+    "validation": "whole",
+    "cachedFormulaResult": 14
+  }
+]

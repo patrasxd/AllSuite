@@ -378,6 +378,11 @@ function ImageView({ node, selected, editor, getPos, extension }: NodeViewProps)
               type="button"
               className={`draft-image-handle draft-image-handle--${handle}`}
               aria-label={`${pl ? 'Zmień rozmiar obrazu' : 'Resize image'}: ${handleLabels[handle]}`}
+              title={
+                pl
+                  ? `Przeciągnij ${handleLabels[handle]}, aby zmienić rozmiar obrazu.`
+                  : `Drag the ${handleLabels[handle]} to resize the image.`
+              }
               onPointerDown={(event) => beginResize(event, handle)}
             />
           ))}

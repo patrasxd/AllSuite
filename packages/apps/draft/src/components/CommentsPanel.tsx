@@ -4,6 +4,7 @@ import { Button, Heading, SidePanel, Text } from '@all/ui'
 import type { CommentThread } from '../engine/comments'
 import type { Locale } from '../types'
 import { translations } from '../i18n'
+import { getDraftButtonTooltip } from '../button-tooltips'
 import { DraftIcon } from './DraftIcons'
 
 function selectThread(editor: Editor, id: string) {
@@ -110,7 +111,7 @@ export function CommentsPanel({
               <button
                 type="button"
                 className="draft-comment-anchor-link"
-                title={t.goToComment}
+                title={getDraftButtonTooltip(locale, t.goToComment)}
                 onClick={() => selectThread(editor, thread.id)}
               >
                 <span className="draft-comment-author">{thread.author}</span>

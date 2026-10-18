@@ -13,7 +13,7 @@ AllSuite is a browser office monorepo managed with npm workspaces and Node 22:
 
 ## Shell and registry contract
 
-Follow AllTools' registry pattern: an eager metadata list (`APPS_METADATA`) and lazy loader (`loadAppComponent(slug)`). Resolve routes through this registry without app-specific shell layout conditionals. The shell uses hash routes in `src/App.tsx` and the registry in `src/apps/registry.ts`; preserve static hosting until a routing change is requested.
+Follow AllTools' registry pattern: an eager metadata list (`APPS_METADATA`) and lazy loader (`loadAppComponent(slug)`). Resolve routes through this registry without app-specific shell layout conditionals. The shell uses browser-history routes under `/AllSuite/` in `src/App.tsx` and the registry in `src/apps/registry.ts`. App routes follow `/apps/:slug`; GitHub Pages copies `index.html` to `404.html` for SPA fallback.
 
 Each package has genuinely separate module graphs:
 

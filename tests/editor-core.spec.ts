@@ -200,9 +200,9 @@ test('editing utilities find across formatting, report selection stats and inser
   await find.getByRole('button', { name: 'Close find and replace', exact: true }).click()
 
   await editor.press('Control+a')
-  await expect(page.locator('.draft-status-bar')).toContainText('Selection: 2 words, 11 characters')
-  await expect(page.locator('.draft-status-bar')).toContainText('Characters with spaces: 11')
-  await expect(page.locator('.draft-status-bar')).toContainText('Pages: 1')
+  await expect(page.locator('.all-workspace-status')).toContainText('Selection: 2 words, 11 characters')
+  await expect(page.locator('.all-workspace-status')).toContainText('Characters with spaces: 11')
+  await expect(page.locator('.all-workspace-status')).toContainText('Pages: 1')
 
   expect(
     await page.evaluate(() =>

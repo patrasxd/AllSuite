@@ -35,7 +35,11 @@ export function DocumentRuler({ editor, locale, widthPt = 482 }: Props) {
         icon={<span aria-hidden="true">{symbol}</span>}
         style={fromRight ? { right: `${position}%` } : { left: `${position}%` }}
         aria-label={`${label}: ${value} pt`}
-        title={`${label}: ${value} pt`}
+        tooltip={
+          locale === 'pl'
+            ? `Przeciągnij, aby zmienić ${label.toLocaleLowerCase('pl-PL')}.`
+            : `Drag to adjust ${label.toLocaleLowerCase('en-US')}.`
+        }
         onClick={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.currentTarget.setPointerCapture(event.pointerId)}
         onPointerMove={(event) => {
@@ -82,7 +86,7 @@ export function DocumentRuler({ editor, locale, widthPt = 482 }: Props) {
           icon={<span aria-hidden="true">⌞</span>}
           style={{ left: `${(value / rulerWidthPt) * 100}%` }}
           aria-label={`${t.tabStop}: ${value} pt`}
-          title={`${t.tabStop}: ${value} pt`}
+          tooltip={locale === 'pl' ? `Usuń tabulator na pozycji ${value} pt.` : `Remove the tab stop at ${value} pt.`}
           onClick={(event) => {
             event.stopPropagation()
             updateSelectedParagraphs(editor, { tabStops: tabs.filter((item) => item !== value) })

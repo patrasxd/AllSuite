@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Grid architecture spike</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --all-bg: #f3f0e8;
+        --all-surface: #fffdf8;
+        --all-surface-2: #f4f1e9;
+        --all-text: #25251f;
+        --all-text-dim: #68675f;
+        --all-border: #d5d1c7;
+        --all-accent: #315e52;
+        --all-font-sans: Inter, system-ui, sans-serif;
+        --cell-width: 112px;
+        --row-height: 32px;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--all-bg); color: var(--all-text); font: 14px var(--all-font-sans); }
+      .draft-frame { height: 100dvh; min-height: 360px; display: grid; grid-template-rows: 48px 46px minmax(0, 1fr) 34px; }
+      .app-header, .toolbar, .status { display: flex; align-items: center; gap: 12px; padding: 0 16px; background: var(--all-surface); border-bottom: 1px solid var(--all-border); }
+      .app-header { font-weight: 700; }
+      .app-header small, .status { color: var(--all-text-dim); font-size: 12px; }
+      .toolbar button { min-width: 44px; min-height: 40px; border: 1px solid var(--all-border); border-radius: 4px; background: var(--all-surface); color: inherit; }
+      .toolbar button:focus-visible, #grid:focus-visible, input:focus-visible { outline: 2px solid var(--all-accent); outline-offset: 1px; }
+      .sheet-shell { min-height: 0; padding: 12px; }
+      .sheet { height: 100%; display: grid; grid-template-rows: 32px minmax(0, 1fr); border: 1px solid var(--all-border); background: var(--all-surface); }
+      .column-head { overflow: hidden; background: var(--all-surface-2); border-bottom: 1px solid var(--all-border); }
+      .column-head-inner { position: relative; height: 100%; }
+      .column-label { position: absolute; top: 0; height: 32px; width: var(--cell-width); padding: 8px; text-align: center; border-right: 1px solid var(--all-border); color: var(--all-text-dim); font-weight: 600; }
+      #grid { min-height: 0; overflow: auto; position: relative; outline: none; }
+      .world { position: relative; }
+      .grid-row { position: absolute; inset-inline: 0; height: var(--row-height); }
+      .grid-cell { position: absolute; height: var(--row-height); width: var(--cell-width); padding: 6px 8px; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #e6e2d9; border-right: 1px solid #e6e2d9; }
+      .grid-cell[aria-selected="true"] { z-index: 1; outline: 2px solid var(--all-accent); outline-offset: -2px; background: #f5fbf7; }
+      .grid-cell input { width: 100%; height: 100%; border: 0; padding: 0; font: inherit; background: transparent; color: inherit; }
+      .status { justify-content: space-between; border-top: 1px solid var(--all-border); border-bottom: 0; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+      @media (max-width: 600px) { .sheet-shell { padding: 4px; } .toolbar { gap: 4px; padding-inline: 8px; } }
+    </style>
+  </head>
+  <body>
+    <main class="draft-frame">
+      <header class="app-header">Grid <small>architecture spike · 100 × 100</small></header>
+      <nav class="toolbar" aria-label="Grid proof controls">
+        <button type="button" aria-label="New workbook (proof only)">New</button>
+        <button type="button" aria-label="Open workbook (proof only)">Open</button>
+        <button type="button" aria-label="Save workbook (proof only)">Save</button>
+        <span>Arrow keys move · Enter or F2 edits · Tab advances</span>
+      </nav>
+      <section class="sheet-shell" aria-label="Spreadsheet proof">
+        <div class="sheet">
+          <div class="column-head" aria-hidden="true"><div class="column-head-inner" id="column-head-inner"></div></div>
+          <div
+            id="grid"
+            role="grid"
+            aria-label="Proof sheet, 100 rows by 100 columns"
+            aria-rowcount="100"
+            aria-colcount="100"
+            aria-describedby="grid-help"
+            tabindex="0"
+          >
+            <div class="world" id="world"></div>
+          </div>
+        </div>
+        <p id="grid-help" class="sr-only">
+          Use arrow keys to move between cells. Press Enter or F2 to edit. Press Escape to cancel editing. Press Tab to
+          move to the next cell.
+        </p>
+        <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+      </section>
+      <footer class="status">
+        <span id="selection-status">A1</span><span>Unsaved proof data stays in memory</span>
+      </footer>
+    </main>
+    <script type="module" src="./grid.js"></script>
+  </body>
+</html>

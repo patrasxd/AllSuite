@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   AppHeader,
   HeaderMenu,
@@ -26,39 +28,74 @@ const appComponents = Object.fromEntries(
 const copy = {
   en: {
     back: 'Back to AllSuite',
+    loading: 'Loading…',
   },
   pl: {
     back: 'Wróć do AllSuite',
+    loading: 'Wczytywanie…',
   },
 }
 
+function AppFallback({ label }: { label: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        color: 'var(--all-text-muted)',
+        fontSize: '0.8125rem',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        fontWeight: 500,
+      }}
+    >
+      <motion.span
+        animate={{ opacity: [0.3, 1, 0.3] }}
+        transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+      >
+        {label}
+      </motion.span>
+    </div>
+  )
+}
+
 export default function App() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [locale, setLocale] = useState<Locale>(() => (safeGetItem('allsuite:locale') === 'pl' ? 'pl' : 'en'))
-  const [route, setRoute] = useState(window.location.hash)
   const [editorDirty, setEditorDirty] = useState(false)
   const [headerContent, setHeaderContent] = useState<ReactNode>(null)
   const [pendingRoute, setPendingRoute] = useState<string | null>(null)
   const { theme, setTheme, isEink, isDark } = useTheme()
   const { canInstall, install } = usePWAInstall()
   const t = copy[locale]
-  const appMetadata = APPS_METADATA.find((app) => route === `#/${app.slug}`)
+  const legacySlug = window.location.hash.match(/^#\/([^/]+)$/)?.[1]
+  const routeSlug = location.pathname.match(/^\/apps\/([^/]+)$/)?.[1] ?? legacySlug
+  const appMetadata = APPS_METADATA.find((app) => app.slug === routeSlug)
   const ActiveApp = appMetadata ? appComponents[appMetadata.slug] : null
   const inEditor = Boolean(ActiveApp)
   useEffect(() => {
-    const change = () => {
-      const next = window.location.hash
-      if (editorDirty && inEditor && next !== route) {
-        window.history.replaceState(null, '', route)
-        setPendingRoute(next)
-      } else setRoute(next)
+    if (!legacySlug) return
+    navigate(`/apps/${legacySlug}`, { replace: true })
+  }, [legacySlug, navigate])
+  useEffect(() => {
+    if (!editorDirty || !inEditor) return
+    window.history.pushState({ allSuiteExitGuard: true }, '')
+    const guard = () => {
+      window.history.pushState({ allSuiteExitGuard: true }, '')
+      setPendingRoute('/')
     }
-    window.addEventListener('hashchange', change)
-    return () => window.removeEventListener('hashchange', change)
-  }, [editorDirty, route, inEditor])
+    window.addEventListener('popstate', guard)
+    return () => window.removeEventListener('popstate', guard)
+  }, [editorDirty, inEditor])
   useEffect(() => {
     setHeaderContent(null)
     setEditorDirty(false)
-  }, [route])
+  }, [location.pathname])
   useEffect(() => {
     if (!editorDirty) return
     const guard = (event: BeforeUnloadEvent) => {
@@ -82,7 +119,8 @@ export default function App() {
             className="header-logo"
             aria-label={t.back}
             onClick={() => {
-              window.location.hash = '/'
+              if (editorDirty && inEditor) setPendingRoute('/')
+              else navigate('/')
             }}
           >
             <span>AllSuite</span>
@@ -113,7 +151,7 @@ export default function App() {
       />
       {ActiveApp && (
         <div className="suite-workspace">
-          <Suspense fallback={null}>
+          <Suspense fallback={<AppFallback label={t.loading} />}>
             <ActiveApp
               key={appMetadata?.slug}
               locale={locale}
@@ -126,7 +164,7 @@ export default function App() {
         </div>
       )}
       {!inEditor &&
-        (route === '#/legal' ? (
+        (location.pathname === '/legal' ? (
           <main className="legal-page">
             <div className="container">
               <LegalNotice
@@ -172,11 +210,10 @@ export default function App() {
         confirmVariant="danger"
         onClose={() => setPendingRoute(null)}
         onConfirm={() => {
-          const next = pendingRoute || '#/'
+          const next = pendingRoute || '/'
           setEditorDirty(false)
-          setRoute(next)
-          window.history.replaceState(null, '', next)
           setPendingRoute(null)
+          navigate(next)
         }}
       />
     </div>

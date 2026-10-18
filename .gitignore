@@ -40,6 +40,12 @@ playwright-report/
 !/docs/
 /docs/*
 !/docs/decisions.md
+!/docs/adr/
+/docs/adr/*
+!/docs/adr/0001-grid-architecture.md
+!/docs/spikes/
+/docs/spikes/*
+!/docs/spikes/grid/
 
 # Archived editor and its browser test; outside the active workspaces
 /packages/tools/draft/

@@ -1,0 +1,4437 @@
+{
+  "checkedAt": "2026-10-18T12:15:48.190Z",
+  "method": "Registry manifest declarations only; independent resolution per dependency edge, React pinned to 18.3.1; optional peer packages omitted. Not a bundler graph, installed lockfile, license-text audit or WASM/Rust closure approval.",
+  "candidates": [
+    {
+      "key": "@glideapps/glide-data-grid@6.0.3",
+      "closure": [
+        "@babel/code-frame@7.29.7",
+        "@babel/compat-data@7.29.7",
+        "@babel/core@7.29.7",
+        "@babel/generator@7.29.8",
+        "@babel/helper-compilation-targets@7.29.7",
+        "@babel/helper-globals@7.29.7",
+        "@babel/helper-module-imports@7.29.7",
+        "@babel/helper-module-transforms@7.29.7",
+        "@babel/helper-plugin-utils@7.29.7",
+        "@babel/helper-string-parser@7.29.7",
+        "@babel/helper-validator-identifier@7.29.7",
+        "@babel/helper-validator-option@7.29.7",
+        "@babel/helpers@7.29.10",
+        "@babel/parser@7.29.9",
+        "@babel/plugin-proposal-export-namespace-from@7.18.9",
+        "@babel/plugin-syntax-dynamic-import@7.8.3",
+        "@babel/plugin-syntax-export-namespace-from@7.8.3",
+        "@babel/plugin-transform-modules-commonjs@7.29.7",
+        "@babel/template@7.29.7",
+        "@babel/traverse@7.29.10",
+        "@babel/types@7.29.8",
+        "@emotion/is-prop-valid@1.4.0",
+        "@emotion/memoize@0.9.0",
+        "@glideapps/glide-data-grid@6.0.3",
+        "@jridgewell/gen-mapping@0.3.13",
+        "@jridgewell/remapping@2.3.5",
+        "@jridgewell/resolve-uri@3.1.2",
+        "@jridgewell/sourcemap-codec@1.6.0",
+        "@jridgewell/trace-mapping@0.3.31",
+        "@linaria/core@4.5.4",
+        "@linaria/logger@4.5.0",
+        "@linaria/react@4.5.4",
+        "@linaria/tags@4.5.4",
+        "@linaria/utils@4.5.3",
+        "babel-merge@3.0.0",
+        "balanced-match@1.0.2",
+        "baseline-browser-mapping@2.11.29",
+        "brace-expansion@2.1.7",
+        "browserslist@4.29.3",
+        "caniuse-lite@1.0.30001816",
+        "canvas-hypertxt@1.0.3",
+        "classnames@2.5.1",
+        "convert-source-map@2.0.0",
+        "debug@4.4.3",
+        "deepmerge@2.2.1",
+        "electron-to-chromium@1.5.459",
+        "escalade@3.2.0",
+        "find-up@5.0.0",
+        "gensync@1.0.0-beta.2",
+        "html-element-attributes@1.3.1",
+        "is-extendable@1.0.1",
+        "is-plain-object@2.0.4",
+        "isobject@3.0.1",
+        "js-tokens@4.0.0",
+        "jsesc@3.1.0",
+        "json5@2.2.3",
+        "locate-path@6.0.0",
+        "lodash@4.18.1",
+        "loose-envify@1.4.0",
+        "lru-cache@5.1.1",
+        "marked@4.3.0",
+        "minimatch@9.0.9",
+        "ms@2.1.3",
+        "node-releases@2.0.59",
+        "object-assign@4.1.1",
+        "object.omit@3.0.0",
+        "p-limit@3.1.0",
+        "p-locate@5.0.0",
+        "path-exists@4.0.0",
+        "picocolors@1.1.1",
+        "prop-types@15.8.1",
+        "react-dom@18.3.1",
+        "react-easy-swipe@0.0.21",
+        "react-html-attributes@1.4.6",
+        "react-is@16.13.1",
+        "react-number-format@5.4.5",
+        "react-responsive-carousel@3.2.23",
+        "react@18.3.1",
+        "scheduler@0.23.2",
+        "semver@6.3.1",
+        "ts-invariant@0.10.3",
+        "tslib@2.8.1",
+        "update-browserslist-db@1.3.4",
+        "yallist@3.1.1",
+        "yocto-queue@0.1.0"
+      ]
+    },
+    {
+      "key": "@tanstack/react-virtual@3.14.21",
+      "closure": [
+        "@tanstack/react-virtual@3.14.21",
+        "@tanstack/virtual-core@3.19.6",
+        "js-tokens@4.0.0",
+        "loose-envify@1.4.0",
+        "react-dom@18.3.1",
+        "react@18.3.1",
+        "scheduler@0.23.2"
+      ]
+    },
+    {
+      "key": "@univerjs/preset-sheets-core@1.1.0",
+      "closure": [
+        "@flatten-js/interval-tree@1.1.3",
+        "@floating-ui/core@1.8.0",
+        "@floating-ui/dom@1.8.0",
+        "@floating-ui/react-dom@2.1.9",
+        "@floating-ui/utils@0.2.12",
+        "@grpc/grpc-js@1.14.6",
+        "@grpc/proto-loader@0.8.1",
+        "@js-sdsl/ordered-map@4.4.2",
+        "@protobufjs/aspromise@1.1.2",
+        "@protobufjs/base64@1.1.2",
+        "@protobufjs/codegen@2.0.5",
+        "@protobufjs/eventemitter@1.1.1",
+        "@protobufjs/fetch@1.1.1",
+        "@protobufjs/float@1.0.2",
+        "@protobufjs/path@1.1.2",
+        "@protobufjs/pool@1.1.0",
+        "@protobufjs/utf8@1.1.2",
+        "@radix-ui/primitive@1.2.0",
+        "@radix-ui/react-arrow@1.1.17",
+        "@radix-ui/react-collection@1.2.0",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-context@1.3.0",
+        "@radix-ui/react-dialog@1.3.1",
+        "@radix-ui/react-direction@1.2.0",
+        "@radix-ui/react-dismissable-layer@1.2.1",
+        "@radix-ui/react-dropdown-menu@2.2.1",
+        "@radix-ui/react-focus-guards@1.2.0",
+        "@radix-ui/react-focus-scope@1.3.1",
+        "@radix-ui/react-hover-card@1.2.1",
+        "@radix-ui/react-id@1.1.4",
+        "@radix-ui/react-menu@2.2.1",
+        "@radix-ui/react-popover@1.3.1",
+        "@radix-ui/react-popper@1.4.0",
+        "@radix-ui/react-portal@1.2.0",
+        "@radix-ui/react-presence@1.1.11",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-roving-focus@1.2.1",
+        "@radix-ui/react-separator@1.2.0",
+        "@radix-ui/react-slot@1.5.0",
+        "@radix-ui/react-use-callback-ref@1.1.5",
+        "@radix-ui/react-use-controllable-state@1.3.0",
+        "@radix-ui/react-use-effect-event@0.0.5",
+        "@radix-ui/react-use-is-hydrated@0.1.3",
+        "@radix-ui/react-use-layout-effect@1.1.4",
+        "@radix-ui/react-use-rect@1.1.4",
+        "@radix-ui/react-use-size@1.1.5",
+        "@radix-ui/rect@1.1.3",
+        "@types/node@26.6.5",
+        "@univerjs/core@1.1.0",
+        "@univerjs/design@1.1.0",
+        "@univerjs/docs-ui@1.1.0",
+        "@univerjs/docs@1.1.0",
+        "@univerjs/drawing@1.1.0",
+        "@univerjs/engine-formula@1.1.0",
+        "@univerjs/engine-render@1.1.0",
+        "@univerjs/icons@1.46.0",
+        "@univerjs/network@1.1.0",
+        "@univerjs/preset-sheets-core@1.1.0",
+        "@univerjs/protocol@1.1.0",
+        "@univerjs/rpc@1.1.0",
+        "@univerjs/sheets-formula-ui@1.1.0",
+        "@univerjs/sheets-formula@1.1.0",
+        "@univerjs/sheets-numfmt-ui@1.1.0",
+        "@univerjs/sheets-numfmt@1.1.0",
+        "@univerjs/sheets-ui@1.1.0",
+        "@univerjs/sheets@1.1.0",
+        "@univerjs/telemetry@1.1.0",
+        "@univerjs/themes@1.1.0",
+        "@univerjs/ui@1.1.0",
+        "@wendellhu/redi@1.1.3",
+        "ansi-regex@5.0.1",
+        "ansi-styles@4.3.0",
+        "aria-hidden@1.2.6",
+        "async-lock@1.4.1",
+        "class-variance-authority@0.7.1",
+        "cliui@8.0.1",
+        "clsx@2.1.1",
+        "cmdk@1.1.1",
+        "collapse-white-space@2.1.0",
+        "color-convert@2.0.1",
+        "color-name@1.1.4",
+        "decimal.js@10.6.0",
+        "detect-node-es@1.1.0",
+        "emoji-regex@8.0.0",
+        "escalade@3.2.0",
+        "fast-diff@1.3.0",
+        "franc-min@6.2.0",
+        "get-caller-file@2.0.5",
+        "get-nonce@1.0.1",
+        "is-fullwidth-code-point@3.0.0",
+        "js-tokens@4.0.0",
+        "kdbush@4.1.0",
+        "lodash-es@4.18.1",
+        "lodash.camelcase@4.3.0",
+        "long@5.3.2",
+        "loose-envify@1.4.0",
+        "n-gram@2.0.2",
+        "ot-json1@1.0.2",
+        "ot-text-unicode@4.0.0",
+        "protobufjs@7.6.6",
+        "quickselect@3.0.0",
+        "rbush@4.0.1",
+        "react-dom@18.3.1",
+        "react-remove-scroll-bar@2.3.8",
+        "react-remove-scroll@2.7.2",
+        "react-style-singleton@2.2.3",
+        "react@18.3.1",
+        "require-directory@2.1.1",
+        "rxjs@7.8.2",
+        "scheduler@0.23.2",
+        "sonner@2.0.8",
+        "string-width@4.2.3",
+        "strip-ansi@6.0.1",
+        "trigram-utils@2.0.1",
+        "tslib@2.8.1",
+        "undici-types@8.9.0",
+        "unicount@1.1.0",
+        "use-callback-ref@1.3.3",
+        "use-sidecar@1.1.3",
+        "wrap-ansi@7.0.0",
+        "y18n@5.0.8",
+        "yargs-parser@21.1.1",
+        "yargs@17.7.3"
+      ]
+    },
+    {
+      "key": "exceljs@4.4.0",
+      "closure": [
+        "@fast-csv/format@4.3.5",
+        "@fast-csv/parse@4.3.6",
+        "@types/node@14.18.63",
+        "archiver-utils@2.1.0",
+        "archiver-utils@3.0.4",
+        "archiver@5.3.2",
+        "array-buffer-byte-length@1.0.2",
+        "arraybuffer.prototype.slice@1.0.4",
+        "async-function@1.0.0",
+        "async-generator-function@1.0.0",
+        "async@3.2.6",
+        "available-typed-arrays@1.0.7",
+        "balanced-match@1.0.2",
+        "base64-js@1.5.1",
+        "big-integer@1.6.52",
+        "binary@0.3.0",
+        "bl@4.1.0",
+        "bluebird@3.4.7",
+        "brace-expansion@1.1.21",
+        "brace-expansion@2.1.7",
+        "buffer-crc32@0.2.13",
+        "buffer-indexof-polyfill@1.0.2",
+        "buffer@5.7.1",
+        "buffers@0.1.1",
+        "call-bind-apply-helpers@1.0.2",
+        "call-bind@1.0.9",
+        "call-bound@1.0.4",
+        "chainsaw@0.1.0",
+        "compress-commons@4.1.2",
+        "concat-map@0.0.1",
+        "core-util-is@1.0.3",
+        "crc-32@1.2.2",
+        "crc32-stream@4.0.3",
+        "data-view-buffer@1.0.2",
+        "data-view-byte-length@1.0.2",
+        "data-view-byte-offset@1.0.1",
+        "dayjs@1.11.23",
+        "define-data-property@1.1.4",
+        "define-properties@1.2.1",
+        "dunder-proto@1.0.1",
+        "duplexer2@0.1.4",
+        "end-of-stream@1.4.5",
+        "es-abstract-get@1.0.0",
+        "es-abstract@1.24.2",
+        "es-define-property@1.0.1",
+        "es-errors@1.3.0",
+        "es-object-atoms@1.1.2",
+        "es-set-tostringtag@2.1.0",
+        "es-to-primitive@1.3.4",
+        "exceljs@4.4.0",
+        "fast-csv@4.3.6",
+        "for-each@0.3.5",
+        "fs-constants@1.0.0",
+        "fs.realpath@1.0.0",
+        "fstream@1.0.12",
+        "function-bind@1.1.2",
+        "function.prototype.name@1.2.0",
+        "functions-have-names@1.2.3",
+        "generator-function@2.0.1",
+        "get-intrinsic@1.3.1",
+        "get-proto@1.0.1",
+        "get-symbol-description@1.1.0",
+        "glob@7.2.3",
+        "globalthis@1.0.4",
+        "gopd@1.2.0",
+        "graceful-fs@4.2.11",
+        "has-bigints@1.1.0",
+        "has-property-descriptors@1.0.2",
+        "has-proto@1.2.0",
+        "has-symbols@1.1.0",
+        "has-tostringtag@1.0.2",
+        "hasown@2.0.4",
+        "ieee754@1.2.1",
+        "immediate@3.0.6",
+        "inflight@1.0.6",
+        "inherits@2.0.4",
+        "internal-slot@1.1.0",
+        "is-array-buffer@3.0.5",
+        "is-async-function@2.1.1",
+        "is-bigint@1.1.0",
+        "is-boolean-object@1.2.2",
+        "is-callable@1.2.7",
+        "is-data-view@1.0.2",
+        "is-date-object@1.1.0",
+        "is-document.all@1.0.0",
+        "is-finalizationregistry@1.1.1",
+        "is-generator-function@1.1.2",
+        "is-map@2.0.3",
+        "is-negative-zero@2.0.3",
+        "is-number-object@1.1.1",
+        "is-regex@1.2.1",
+        "is-set@2.0.3",
+        "is-shared-array-buffer@1.0.4",
+        "is-string@1.1.1",
+        "is-symbol@1.1.1",
+        "is-typed-array@1.1.15",
+        "is-weakmap@2.0.2",
+        "is-weakref@1.1.1",
+        "is-weakset@2.0.4",
+        "isarray@1.0.0",
+        "isarray@2.0.5",
+        "jszip@3.10.2",
+        "lazystream@1.0.1",
+        "lie@3.3.0",
+        "listenercount@1.0.1",
+        "lodash.defaults@4.2.0",
+        "lodash.difference@4.5.0",
+        "lodash.escaperegexp@4.1.2",
+        "lodash.flatten@4.4.0",
+        "lodash.groupby@4.6.0",
+        "lodash.isboolean@3.0.3",
+        "lodash.isequal@4.5.0",
+        "lodash.isfunction@3.0.9",
+        "lodash.isnil@4.0.0",
+        "lodash.isplainobject@4.0.6",
+        "lodash.isundefined@3.0.1",
+        "lodash.union@4.6.0",
+        "lodash.uniq@4.5.0",
+        "math-intrinsics@1.1.0",
+        "minimatch@3.1.5",
+        "minimatch@5.1.9",
+        "minimist@1.2.8",
+        "mkdirp@0.5.6",
+        "normalize-path@3.0.0",
+        "object-inspect@1.13.4",
+        "object-keys@1.1.1",
+        "object.assign@4.1.7",
+        "once@1.4.0",
+        "own-keys@1.0.2",
+        "pako@1.0.11",
+        "path-is-absolute@1.0.1",
+        "possible-typed-array-names@1.1.0",
+        "process-nextick-args@2.0.1",
+        "readable-stream@2.3.8",
+        "readable-stream@3.6.2",
+        "readdir-glob@1.1.3",
+        "reflect.getprototypeof@1.0.10",
+        "regexp.prototype.flags@1.5.4",
+        "rimraf@2.7.1",
+        "safe-array-concat@1.1.4",
+        "safe-buffer@5.1.2",
+        "safe-buffer@5.2.1",
+        "safe-push-apply@1.0.0",
+        "safe-regex-test@1.1.0",
+        "saxes@5.0.1",
+        "set-function-length@1.2.2",
+        "set-function-name@2.0.2",
+        "set-proto@1.0.0",
+        "setimmediate@1.0.5",
+        "side-channel-list@1.0.1",
+        "side-channel-map@1.0.1",
+        "side-channel-weakmap@1.0.2",
+        "side-channel@1.1.1",
+        "stop-iteration-iterator@1.1.0",
+        "string.prototype.trim@1.2.11",
+        "string.prototype.trimend@1.0.10",
+        "string.prototype.trimstart@1.0.8",
+        "string_decoder@1.1.1",
+        "string_decoder@1.3.0",
+        "tar-stream@2.2.0",
+        "tmp@0.2.7",
+        "traverse@0.3.10",
+        "typed-array-buffer@1.0.3",
+        "typed-array-byte-length@1.0.3",
+        "typed-array-byte-offset@1.0.5",
+        "typed-array-length@1.0.8",
+        "typedarray.prototype.slice@1.0.6",
+        "unbox-primitive@1.1.0",
+        "unzipper@0.10.14",
+        "util-deprecate@1.0.2",
+        "uuid@8.3.2",
+        "which-boxed-primitive@1.1.1",
+        "which-builtin-type@1.2.1",
+        "which-collection@1.0.2",
+        "which-typed-array@1.1.24",
+        "wrappy@1.0.2",
+        "xmlchars@2.2.0",
+        "zip-stream@4.1.1"
+      ]
+    },
+    {
+      "key": "xlsx@0.18.5",
+      "closure": [
+        "adler-32@1.3.1",
+        "cfb@1.2.2",
+        "codepage@1.15.0",
+        "crc-32@1.2.2",
+        "frac@1.1.2",
+        "ssf@0.11.2",
+        "wmf@1.0.2",
+        "word@0.3.0",
+        "xlsx@0.18.5"
+      ]
+    },
+    {
+      "key": "formualizer@0.11.1",
+      "closure": ["formualizer@0.11.1"]
+    },
+    {
+      "key": "fast-formula-parser@1.0.19",
+      "closure": [
+        "bahttext@1.1.0",
+        "bessel@1.0.2",
+        "chevrotain@7.1.2",
+        "fast-formula-parser@1.0.19",
+        "jstat@1.9.6",
+        "regexp-to-ast@0.5.0"
+      ]
+    },
+    {
+      "key": "@formulajs/formulajs@4.6.1",
+      "closure": ["@formulajs/formulajs@4.6.1", "bessel@1.0.2", "jstat@1.9.6"]
+    },
+    {
+      "key": "fflate@0.8.3",
+      "closure": ["fflate@0.8.3"]
+    },
+    {
+      "key": "@xmldom/xmldom@0.9.12",
+      "closure": ["@xmldom/xmldom@0.9.12"]
+    }
+  ],
+  "packages": [
+    {
+      "name": "@babel/code-frame",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.7.tgz",
+      "dependencies": ["js-tokens@4.0.0", "picocolors@1.1.1", "@babel/helper-validator-identifier@7.29.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/compat-data",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/compat-data/-/compat-data-7.29.7.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/core",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/core/-/core-7.29.7.tgz",
+      "dependencies": [
+        "debug@4.4.3",
+        "json5@2.2.3",
+        "semver@6.3.1",
+        "gensync@1.0.0-beta.2",
+        "@babel/types@7.29.8",
+        "@babel/parser@7.29.9",
+        "@babel/helpers@7.29.10",
+        "@babel/template@7.29.7",
+        "@babel/traverse@7.29.10",
+        "@babel/generator@7.29.8",
+        "@babel/code-frame@7.29.7",
+        "convert-source-map@2.0.0",
+        "@jridgewell/remapping@2.3.5",
+        "@babel/helper-module-transforms@7.29.7",
+        "@babel/helper-compilation-targets@7.29.7"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/generator",
+      "version": "7.29.8",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/generator/-/generator-7.29.8.tgz",
+      "dependencies": [
+        "jsesc@3.1.0",
+        "@babel/types@7.29.8",
+        "@babel/parser@7.29.9",
+        "@jridgewell/gen-mapping@0.3.13",
+        "@jridgewell/trace-mapping@0.3.31"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/helper-compilation-targets",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/helper-compilation-targets/-/helper-compilation-targets-7.29.7.tgz",
+      "dependencies": [
+        "semver@6.3.1",
+        "lru-cache@5.1.1",
+        "browserslist@4.29.3",
+        "@babel/compat-data@7.29.7",
+        "@babel/helper-validator-option@7.29.7"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/helper-globals",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/helper-globals/-/helper-globals-7.29.7.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/helper-module-imports",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/helper-module-imports/-/helper-module-imports-7.29.7.tgz",
+      "dependencies": ["@babel/types@7.29.8", "@babel/traverse@7.29.10"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/helper-module-transforms",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/helper-module-transforms/-/helper-module-transforms-7.29.7.tgz",
+      "dependencies": [
+        "@babel/traverse@7.29.10",
+        "@babel/helper-module-imports@7.29.7",
+        "@babel/helper-validator-identifier@7.29.7",
+        "@babel/core@7.29.7"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/helper-plugin-utils",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/helper-plugin-utils/-/helper-plugin-utils-7.29.7.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/helper-string-parser",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/helper-validator-identifier",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/helper-validator-option",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/helper-validator-option/-/helper-validator-option-7.29.7.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/helpers",
+      "version": "7.29.10",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/helpers/-/helpers-7.29.10.tgz",
+      "dependencies": ["@babel/types@7.29.8", "@babel/template@7.29.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/parser",
+      "version": "7.29.9",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.9.tgz",
+      "dependencies": ["@babel/types@7.29.8"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/plugin-proposal-export-namespace-from",
+      "version": "7.18.9",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/plugin-proposal-export-namespace-from/-/plugin-proposal-export-namespace-from-7.18.9.tgz",
+      "dependencies": [
+        "@babel/helper-plugin-utils@7.29.7",
+        "@babel/plugin-syntax-export-namespace-from@7.8.3",
+        "@babel/core@7.29.7"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/plugin-syntax-dynamic-import",
+      "version": "7.8.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/plugin-syntax-dynamic-import/-/plugin-syntax-dynamic-import-7.8.3.tgz",
+      "dependencies": ["@babel/helper-plugin-utils@7.29.7", "@babel/core@7.29.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/plugin-syntax-export-namespace-from",
+      "version": "7.8.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/plugin-syntax-export-namespace-from/-/plugin-syntax-export-namespace-from-7.8.3.tgz",
+      "dependencies": ["@babel/helper-plugin-utils@7.29.7", "@babel/core@7.29.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/plugin-transform-modules-commonjs",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/plugin-transform-modules-commonjs/-/plugin-transform-modules-commonjs-7.29.7.tgz",
+      "dependencies": [
+        "@babel/helper-plugin-utils@7.29.7",
+        "@babel/helper-module-transforms@7.29.7",
+        "@babel/core@7.29.7"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/template",
+      "version": "7.29.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/template/-/template-7.29.7.tgz",
+      "dependencies": ["@babel/types@7.29.8", "@babel/parser@7.29.9", "@babel/code-frame@7.29.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/traverse",
+      "version": "7.29.10",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/traverse/-/traverse-7.29.10.tgz",
+      "dependencies": [
+        "debug@4.4.3",
+        "@babel/types@7.29.8",
+        "@babel/parser@7.29.9",
+        "@babel/template@7.29.7",
+        "@babel/generator@7.29.8",
+        "@babel/code-frame@7.29.7",
+        "@babel/helper-globals@7.29.7"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@babel/types",
+      "version": "7.29.8",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+      "dependencies": ["@babel/helper-string-parser@7.29.7", "@babel/helper-validator-identifier@7.29.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@emotion/is-prop-valid",
+      "version": "1.4.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@emotion/is-prop-valid/-/is-prop-valid-1.4.0.tgz",
+      "dependencies": ["@emotion/memoize@0.9.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@emotion/memoize",
+      "version": "0.9.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@emotion/memoize/-/memoize-0.9.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@fast-csv/format",
+      "version": "4.3.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@fast-csv/format/-/format-4.3.5.tgz",
+      "dependencies": [
+        "@types/node@14.18.63",
+        "lodash.isnil@4.0.0",
+        "lodash.isequal@4.5.0",
+        "lodash.isboolean@3.0.3",
+        "lodash.isfunction@3.0.9",
+        "lodash.escaperegexp@4.1.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@fast-csv/parse",
+      "version": "4.3.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@fast-csv/parse/-/parse-4.3.6.tgz",
+      "dependencies": [
+        "@types/node@14.18.63",
+        "lodash.uniq@4.5.0",
+        "lodash.isnil@4.0.0",
+        "lodash.groupby@4.6.0",
+        "lodash.isfunction@3.0.9",
+        "lodash.isundefined@3.0.1",
+        "lodash.escaperegexp@4.1.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@flatten-js/interval-tree",
+      "version": "1.1.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@flatten-js/interval-tree/-/interval-tree-1.1.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@floating-ui/core",
+      "version": "1.8.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@floating-ui/core/-/core-1.8.0.tgz",
+      "dependencies": ["@floating-ui/utils@0.2.12"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@floating-ui/dom",
+      "version": "1.8.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@floating-ui/dom/-/dom-1.8.0.tgz",
+      "dependencies": ["@floating-ui/core@1.8.0", "@floating-ui/utils@0.2.12"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@floating-ui/react-dom",
+      "version": "2.1.9",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@floating-ui/react-dom/-/react-dom-2.1.9.tgz",
+      "dependencies": ["@floating-ui/dom@1.8.0", "react@18.3.1", "react-dom@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@floating-ui/utils",
+      "version": "0.2.12",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.12.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@formulajs/formulajs",
+      "version": "4.6.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@formulajs/formulajs/-/formulajs-4.6.1.tgz",
+      "dependencies": ["bessel@1.0.2", "jstat@1.9.6"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@glideapps/glide-data-grid",
+      "version": "6.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@glideapps/glide-data-grid/-/glide-data-grid-6.0.3.tgz",
+      "dependencies": [
+        "@linaria/react@4.5.4",
+        "canvas-hypertxt@1.0.3",
+        "react-number-format@5.4.5",
+        "react@18.3.1",
+        "lodash@4.18.1",
+        "marked@4.3.0",
+        "react-dom@18.3.1",
+        "react-responsive-carousel@3.2.23"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@grpc/grpc-js",
+      "version": "1.14.6",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@grpc/grpc-js/-/grpc-js-1.14.6.tgz",
+      "dependencies": ["@grpc/proto-loader@0.8.1", "@js-sdsl/ordered-map@4.4.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@grpc/proto-loader",
+      "version": "0.8.1",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@grpc/proto-loader/-/proto-loader-0.8.1.tgz",
+      "dependencies": ["lodash.camelcase@4.3.0", "long@5.3.2", "protobufjs@7.6.6", "yargs@17.7.3"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@jridgewell/gen-mapping",
+      "version": "0.3.13",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@jridgewell/gen-mapping/-/gen-mapping-0.3.13.tgz",
+      "dependencies": ["@jridgewell/trace-mapping@0.3.31", "@jridgewell/sourcemap-codec@1.6.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@jridgewell/remapping",
+      "version": "2.3.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@jridgewell/remapping/-/remapping-2.3.5.tgz",
+      "dependencies": ["@jridgewell/gen-mapping@0.3.13", "@jridgewell/trace-mapping@0.3.31"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@jridgewell/resolve-uri",
+      "version": "3.1.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@jridgewell/sourcemap-codec",
+      "version": "1.6.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@jridgewell/trace-mapping",
+      "version": "0.3.31",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz",
+      "dependencies": ["@jridgewell/resolve-uri@3.1.2", "@jridgewell/sourcemap-codec@1.6.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@js-sdsl/ordered-map",
+      "version": "4.4.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@js-sdsl/ordered-map/-/ordered-map-4.4.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@linaria/core",
+      "version": "4.5.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@linaria/core/-/core-4.5.4.tgz",
+      "dependencies": ["@linaria/tags@4.5.4", "@linaria/utils@4.5.3", "@linaria/logger@4.5.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@linaria/logger",
+      "version": "4.5.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@linaria/logger/-/logger-4.5.0.tgz",
+      "dependencies": ["debug@4.4.3", "picocolors@1.1.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@linaria/react",
+      "version": "4.5.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@linaria/react/-/react-4.5.4.tgz",
+      "dependencies": [
+        "minimatch@9.0.9",
+        "ts-invariant@0.10.3",
+        "@linaria/core@4.5.4",
+        "@linaria/tags@4.5.4",
+        "@linaria/utils@4.5.3",
+        "react-html-attributes@1.4.6",
+        "@emotion/is-prop-valid@1.4.0",
+        "react@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@linaria/tags",
+      "version": "4.5.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@linaria/tags/-/tags-4.5.4.tgz",
+      "dependencies": ["@babel/generator@7.29.8", "@linaria/logger@4.5.0", "@linaria/utils@4.5.3"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@linaria/utils",
+      "version": "4.5.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@linaria/utils/-/utils-4.5.3.tgz",
+      "dependencies": [
+        "@babel/core@7.29.7",
+        "@babel/generator@7.29.8",
+        "@babel/plugin-proposal-export-namespace-from@7.18.9",
+        "@babel/plugin-syntax-dynamic-import@7.8.3",
+        "@babel/plugin-transform-modules-commonjs@7.29.7",
+        "@babel/template@7.29.7",
+        "@babel/traverse@7.29.10",
+        "@babel/types@7.29.8",
+        "babel-merge@3.0.0",
+        "find-up@5.0.0",
+        "minimatch@9.0.9",
+        "@linaria/logger@4.5.0"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@protobufjs/aspromise",
+      "version": "1.1.2",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/@protobufjs/aspromise/-/aspromise-1.1.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@protobufjs/base64",
+      "version": "1.1.2",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/@protobufjs/base64/-/base64-1.1.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@protobufjs/codegen",
+      "version": "2.0.5",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/@protobufjs/codegen/-/codegen-2.0.5.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@protobufjs/eventemitter",
+      "version": "1.1.1",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/@protobufjs/eventemitter/-/eventemitter-1.1.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@protobufjs/fetch",
+      "version": "1.1.1",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/@protobufjs/fetch/-/fetch-1.1.1.tgz",
+      "dependencies": ["@protobufjs/aspromise@1.1.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@protobufjs/float",
+      "version": "1.0.2",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/@protobufjs/float/-/float-1.0.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@protobufjs/path",
+      "version": "1.1.2",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/@protobufjs/path/-/path-1.1.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@protobufjs/pool",
+      "version": "1.1.0",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/@protobufjs/pool/-/pool-1.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@protobufjs/utf8",
+      "version": "1.1.2",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/primitive",
+      "version": "1.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/primitive/-/primitive-1.2.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-arrow",
+      "version": "1.1.17",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-arrow/-/react-arrow-1.1.17.tgz",
+      "dependencies": ["@radix-ui/react-primitive@2.2.0", "react@18.3.1", "react-dom@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-collection",
+      "version": "1.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-collection/-/react-collection-1.2.0.tgz",
+      "dependencies": [
+        "@radix-ui/react-slot@1.5.0",
+        "@radix-ui/react-context@1.3.0",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-use-layout-effect@1.1.4",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-compose-refs",
+      "version": "1.1.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-compose-refs/-/react-compose-refs-1.1.5.tgz",
+      "dependencies": ["react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-context",
+      "version": "1.3.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-context/-/react-context-1.3.0.tgz",
+      "dependencies": ["react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-dialog",
+      "version": "1.3.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-dialog/-/react-dialog-1.3.1.tgz",
+      "dependencies": [
+        "aria-hidden@1.2.6",
+        "@radix-ui/react-id@1.1.4",
+        "@radix-ui/primitive@1.2.0",
+        "react-remove-scroll@2.7.2",
+        "@radix-ui/react-slot@1.5.0",
+        "@radix-ui/react-portal@1.2.0",
+        "@radix-ui/react-context@1.3.0",
+        "@radix-ui/react-presence@1.1.11",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-focus-scope@1.3.1",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-focus-guards@1.2.0",
+        "@radix-ui/react-dismissable-layer@1.2.1",
+        "@radix-ui/react-use-layout-effect@1.1.4",
+        "@radix-ui/react-use-controllable-state@1.3.0",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-direction",
+      "version": "1.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-direction/-/react-direction-1.2.0.tgz",
+      "dependencies": ["react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-dismissable-layer",
+      "version": "1.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-dismissable-layer/-/react-dismissable-layer-1.2.1.tgz",
+      "dependencies": [
+        "@radix-ui/primitive@1.2.0",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-use-callback-ref@1.1.5",
+        "@radix-ui/react-use-effect-event@0.0.5",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-dropdown-menu",
+      "version": "2.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-dropdown-menu/-/react-dropdown-menu-2.2.1.tgz",
+      "dependencies": [
+        "@radix-ui/react-id@1.1.4",
+        "@radix-ui/primitive@1.2.0",
+        "@radix-ui/react-menu@2.2.1",
+        "@radix-ui/react-context@1.3.0",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-use-controllable-state@1.3.0",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-focus-guards",
+      "version": "1.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-focus-guards/-/react-focus-guards-1.2.0.tgz",
+      "dependencies": ["react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-focus-scope",
+      "version": "1.3.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-focus-scope/-/react-focus-scope-1.3.1.tgz",
+      "dependencies": [
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-use-callback-ref@1.1.5",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-hover-card",
+      "version": "1.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-hover-card/-/react-hover-card-1.2.1.tgz",
+      "dependencies": [
+        "@radix-ui/primitive@1.2.0",
+        "@radix-ui/react-popper@1.4.0",
+        "@radix-ui/react-portal@1.2.0",
+        "@radix-ui/react-context@1.3.0",
+        "@radix-ui/react-presence@1.1.11",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-focus-scope@1.3.1",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-dismissable-layer@1.2.1",
+        "@radix-ui/react-use-controllable-state@1.3.0",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-id",
+      "version": "1.1.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-id/-/react-id-1.1.4.tgz",
+      "dependencies": ["@radix-ui/react-use-layout-effect@1.1.4", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-menu",
+      "version": "2.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-menu/-/react-menu-2.2.1.tgz",
+      "dependencies": [
+        "aria-hidden@1.2.6",
+        "@radix-ui/react-id@1.1.4",
+        "@radix-ui/primitive@1.2.0",
+        "react-remove-scroll@2.7.2",
+        "@radix-ui/react-slot@1.5.0",
+        "@radix-ui/react-popper@1.4.0",
+        "@radix-ui/react-portal@1.2.0",
+        "@radix-ui/react-context@1.3.0",
+        "@radix-ui/react-presence@1.1.11",
+        "@radix-ui/react-direction@1.2.0",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-collection@1.2.0",
+        "@radix-ui/react-focus-scope@1.3.1",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-focus-guards@1.2.0",
+        "@radix-ui/react-roving-focus@1.2.1",
+        "@radix-ui/react-use-callback-ref@1.1.5",
+        "@radix-ui/react-dismissable-layer@1.2.1",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-popover",
+      "version": "1.3.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-popover/-/react-popover-1.3.1.tgz",
+      "dependencies": [
+        "aria-hidden@1.2.6",
+        "@radix-ui/react-id@1.1.4",
+        "@radix-ui/primitive@1.2.0",
+        "react-remove-scroll@2.7.2",
+        "@radix-ui/react-slot@1.5.0",
+        "@radix-ui/react-popper@1.4.0",
+        "@radix-ui/react-portal@1.2.0",
+        "@radix-ui/react-context@1.3.0",
+        "@radix-ui/react-presence@1.1.11",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-focus-scope@1.3.1",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-focus-guards@1.2.0",
+        "@radix-ui/react-dismissable-layer@1.2.1",
+        "@radix-ui/react-use-layout-effect@1.1.4",
+        "@radix-ui/react-use-controllable-state@1.3.0",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-popper",
+      "version": "1.4.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-popper/-/react-popper-1.4.0.tgz",
+      "dependencies": [
+        "@radix-ui/rect@1.1.3",
+        "@radix-ui/react-arrow@1.1.17",
+        "@floating-ui/react-dom@2.1.9",
+        "@radix-ui/react-context@1.3.0",
+        "@radix-ui/react-use-rect@1.1.4",
+        "@radix-ui/react-use-size@1.1.5",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-use-callback-ref@1.1.5",
+        "@radix-ui/react-use-layout-effect@1.1.4",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-portal",
+      "version": "1.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-portal/-/react-portal-1.2.0.tgz",
+      "dependencies": [
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-use-layout-effect@1.1.4",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-presence",
+      "version": "1.1.11",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-presence/-/react-presence-1.1.11.tgz",
+      "dependencies": ["@radix-ui/react-use-layout-effect@1.1.4", "react@18.3.1", "react-dom@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-primitive",
+      "version": "2.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-primitive/-/react-primitive-2.2.0.tgz",
+      "dependencies": ["@radix-ui/react-slot@1.5.0", "react@18.3.1", "react-dom@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-roving-focus",
+      "version": "1.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-roving-focus/-/react-roving-focus-1.2.1.tgz",
+      "dependencies": [
+        "@radix-ui/react-id@1.1.4",
+        "@radix-ui/primitive@1.2.0",
+        "@radix-ui/react-context@1.3.0",
+        "@radix-ui/react-direction@1.2.0",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-collection@1.2.0",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "@radix-ui/react-use-is-hydrated@0.1.3",
+        "@radix-ui/react-use-callback-ref@1.1.5",
+        "@radix-ui/react-use-layout-effect@1.1.4",
+        "@radix-ui/react-use-controllable-state@1.3.0",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-separator",
+      "version": "1.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-separator/-/react-separator-1.2.0.tgz",
+      "dependencies": ["@radix-ui/react-primitive@2.2.0", "react@18.3.1", "react-dom@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-slot",
+      "version": "1.5.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-slot/-/react-slot-1.5.0.tgz",
+      "dependencies": ["@radix-ui/react-compose-refs@1.1.5", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-use-callback-ref",
+      "version": "1.1.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-use-callback-ref/-/react-use-callback-ref-1.1.5.tgz",
+      "dependencies": ["@radix-ui/react-use-layout-effect@1.1.4", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-use-controllable-state",
+      "version": "1.3.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-use-controllable-state/-/react-use-controllable-state-1.3.0.tgz",
+      "dependencies": [
+        "@radix-ui/primitive@1.2.0",
+        "@radix-ui/react-use-effect-event@0.0.5",
+        "@radix-ui/react-use-layout-effect@1.1.4",
+        "react@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-use-effect-event",
+      "version": "0.0.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-use-effect-event/-/react-use-effect-event-0.0.5.tgz",
+      "dependencies": ["@radix-ui/react-use-layout-effect@1.1.4", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-use-is-hydrated",
+      "version": "0.1.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-use-is-hydrated/-/react-use-is-hydrated-0.1.3.tgz",
+      "dependencies": ["react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.1.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-use-layout-effect/-/react-use-layout-effect-1.1.4.tgz",
+      "dependencies": ["react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-use-rect",
+      "version": "1.1.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-use-rect/-/react-use-rect-1.1.4.tgz",
+      "dependencies": ["@radix-ui/rect@1.1.3", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/react-use-size",
+      "version": "1.1.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/react-use-size/-/react-use-size-1.1.5.tgz",
+      "dependencies": ["@radix-ui/react-use-layout-effect@1.1.4", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@radix-ui/rect",
+      "version": "1.1.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@radix-ui/rect/-/rect-1.1.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@tanstack/react-virtual",
+      "version": "3.14.21",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@tanstack/react-virtual/-/react-virtual-3.14.21.tgz",
+      "dependencies": ["@tanstack/virtual-core@3.19.6", "react@18.3.1", "react-dom@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@tanstack/virtual-core",
+      "version": "3.19.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@tanstack/virtual-core/-/virtual-core-3.19.6.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "a405ee70c632bb938acb7ac5f210e814409b3760ea9d2329d8ed8ffcfd11a0e7",
+          "text": "MIT License\n\nCopyright (c) 2021-present Tanner Linsley\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+        }
+      ]
+    },
+    {
+      "name": "@types/node",
+      "version": "14.18.63",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@types/node/-/node-14.18.63.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@types/node",
+      "version": "26.6.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@types/node/-/node-26.6.5.tgz",
+      "dependencies": ["undici-types@8.9.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/core",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/core/-/core-1.1.0.tgz",
+      "dependencies": [
+        "rbush@4.0.1",
+        "kdbush@4.1.0",
+        "ot-json1@1.0.2",
+        "fast-diff@1.3.0",
+        "lodash-es@4.18.1",
+        "async-lock@1.4.1",
+        "@wendellhu/redi@1.1.3",
+        "@univerjs/themes@1.1.0",
+        "@univerjs/protocol@1.1.0",
+        "rxjs@7.8.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/design",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/design/-/design-1.1.0.tgz",
+      "dependencies": [
+        "cmdk@1.1.1",
+        "sonner@2.0.8",
+        "@univerjs/icons@1.46.0",
+        "@radix-ui/react-slot@1.5.0",
+        "@radix-ui/react-dialog@1.3.1",
+        "@radix-ui/react-popover@1.3.1",
+        "class-variance-authority@0.7.1",
+        "@radix-ui/react-direction@1.2.0",
+        "@radix-ui/react-separator@1.2.0",
+        "@radix-ui/react-hover-card@1.2.1",
+        "@radix-ui/react-dropdown-menu@2.2.1",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/docs",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/docs/-/docs-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/rpc@1.1.0",
+        "@univerjs/core@1.1.0",
+        "@univerjs/protocol@1.1.0",
+        "@univerjs/engine-render@1.1.0",
+        "rxjs@7.8.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/docs-ui",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/docs-ui/-/docs-ui-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/ui@1.1.0",
+        "@univerjs/core@1.1.0",
+        "@univerjs/docs@1.1.0",
+        "@univerjs/icons@1.46.0",
+        "@univerjs/design@1.1.0",
+        "@univerjs/drawing@1.1.0",
+        "@univerjs/protocol@1.1.0",
+        "@univerjs/engine-render@1.1.0",
+        "rxjs@7.8.2",
+        "react@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/drawing",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/drawing/-/drawing-1.1.0.tgz",
+      "dependencies": ["@univerjs/core@1.1.0", "rxjs@7.8.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/engine-formula",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/engine-formula/-/engine-formula-1.1.0.tgz",
+      "dependencies": [
+        "decimal.js@10.6.0",
+        "@univerjs/rpc@1.1.0",
+        "@univerjs/core@1.1.0",
+        "@flatten-js/interval-tree@1.1.3",
+        "rxjs@7.8.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/engine-render",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/engine-render/-/engine-render-1.1.0.tgz",
+      "dependencies": [
+        "franc-min@6.2.0",
+        "@univerjs/core@1.1.0",
+        "@floating-ui/dom@1.8.0",
+        "@floating-ui/utils@0.2.12",
+        "rxjs@7.8.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/icons",
+      "version": "1.46.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@univerjs/icons/-/icons-1.46.0.tgz",
+      "dependencies": ["react@18.3.1", "react-dom@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/network",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/network/-/network-1.1.0.tgz",
+      "dependencies": ["@univerjs/core@1.1.0", "rxjs@7.8.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/preset-sheets-core",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/preset-sheets-core/-/preset-sheets-core-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/ui@1.1.0",
+        "@univerjs/rpc@1.1.0",
+        "@univerjs/docs@1.1.0",
+        "@univerjs/design@1.1.0",
+        "@univerjs/sheets@1.1.0",
+        "@univerjs/docs-ui@1.1.0",
+        "@univerjs/network@1.1.0",
+        "@univerjs/sheets-ui@1.1.0",
+        "@univerjs/engine-render@1.1.0",
+        "@univerjs/sheets-numfmt@1.1.0",
+        "@univerjs/engine-formula@1.1.0",
+        "@univerjs/sheets-formula@1.1.0",
+        "@univerjs/sheets-numfmt-ui@1.1.0",
+        "@univerjs/sheets-formula-ui@1.1.0",
+        "rxjs@7.8.2",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/protocol",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/protocol/-/protocol-1.1.0.tgz",
+      "dependencies": ["@grpc/grpc-js@1.14.6"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/rpc",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/rpc/-/rpc-1.1.0.tgz",
+      "dependencies": ["@univerjs/core@1.1.0", "rxjs@7.8.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/sheets",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/sheets/-/sheets-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/rpc@1.1.0",
+        "@univerjs/core@1.1.0",
+        "@univerjs/protocol@1.1.0",
+        "@univerjs/engine-render@1.1.0",
+        "@univerjs/engine-formula@1.1.0",
+        "rxjs@7.8.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/sheets-formula",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/sheets-formula/-/sheets-formula-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/rpc@1.1.0",
+        "@univerjs/core@1.1.0",
+        "@univerjs/docs@1.1.0",
+        "@univerjs/sheets@1.1.0",
+        "@univerjs/engine-formula@1.1.0",
+        "rxjs@7.8.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/sheets-formula-ui",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/sheets-formula-ui/-/sheets-formula-ui-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/ui@1.1.0",
+        "@univerjs/core@1.1.0",
+        "@univerjs/docs@1.1.0",
+        "@univerjs/icons@1.46.0",
+        "@univerjs/design@1.1.0",
+        "@univerjs/sheets@1.1.0",
+        "@univerjs/docs-ui@1.1.0",
+        "@univerjs/sheets-ui@1.1.0",
+        "@univerjs/engine-render@1.1.0",
+        "@univerjs/engine-formula@1.1.0",
+        "@univerjs/sheets-formula@1.1.0",
+        "rxjs@7.8.2",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/sheets-numfmt",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/sheets-numfmt/-/sheets-numfmt-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/core@1.1.0",
+        "@univerjs/sheets@1.1.0",
+        "@univerjs/engine-formula@1.1.0",
+        "rxjs@7.8.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/sheets-numfmt-ui",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/sheets-numfmt-ui/-/sheets-numfmt-ui-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/ui@1.1.0",
+        "@univerjs/core@1.1.0",
+        "@univerjs/icons@1.46.0",
+        "@univerjs/design@1.1.0",
+        "@univerjs/sheets@1.1.0",
+        "@univerjs/sheets-ui@1.1.0",
+        "@univerjs/engine-render@1.1.0",
+        "@univerjs/sheets-numfmt@1.1.0",
+        "@univerjs/engine-formula@1.1.0",
+        "rxjs@7.8.2",
+        "react@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/sheets-ui",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/sheets-ui/-/sheets-ui-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/ui@1.1.0",
+        "@univerjs/core@1.1.0",
+        "@univerjs/docs@1.1.0",
+        "@univerjs/icons@1.46.0",
+        "@univerjs/design@1.1.0",
+        "@univerjs/sheets@1.1.0",
+        "@univerjs/docs-ui@1.1.0",
+        "@univerjs/protocol@1.1.0",
+        "@univerjs/telemetry@1.1.0",
+        "@univerjs/engine-render@1.1.0",
+        "@univerjs/engine-formula@1.1.0",
+        "rxjs@7.8.2",
+        "react@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/telemetry",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/telemetry/-/telemetry-1.1.0.tgz",
+      "dependencies": ["@univerjs/core@1.1.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/themes",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/themes/-/themes-1.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@univerjs/ui",
+      "version": "1.1.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/@univerjs/ui/-/ui-1.1.0.tgz",
+      "dependencies": [
+        "@univerjs/core@1.1.0",
+        "@univerjs/icons@1.46.0",
+        "@wendellhu/redi@1.1.3",
+        "@univerjs/design@1.1.0",
+        "@univerjs/protocol@1.1.0",
+        "@univerjs/engine-render@1.1.0",
+        "rxjs@7.8.2",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@wendellhu/redi",
+      "version": "1.1.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@wendellhu/redi/-/redi-1.1.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "@xmldom/xmldom",
+      "version": "0.9.12",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/@xmldom/xmldom/-/xmldom-0.9.12.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "adler-32",
+      "version": "1.3.1",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/adler-32/-/adler-32-1.3.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "ansi-regex",
+      "version": "5.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-5.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "ansi-styles",
+      "version": "4.3.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/ansi-styles/-/ansi-styles-4.3.0.tgz",
+      "dependencies": ["color-convert@2.0.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "archiver",
+      "version": "5.3.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/archiver/-/archiver-5.3.2.tgz",
+      "dependencies": [
+        "async@3.2.6",
+        "tar-stream@2.2.0",
+        "zip-stream@4.1.1",
+        "buffer-crc32@0.2.13",
+        "readdir-glob@1.1.3",
+        "archiver-utils@2.1.0",
+        "readable-stream@3.6.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "archiver-utils",
+      "version": "2.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/archiver-utils/-/archiver-utils-2.1.0.tgz",
+      "dependencies": [
+        "glob@7.2.3",
+        "graceful-fs@4.2.11",
+        "lazystream@1.0.1",
+        "lodash.defaults@4.2.0",
+        "lodash.difference@4.5.0",
+        "lodash.flatten@4.4.0",
+        "lodash.isplainobject@4.0.6",
+        "lodash.union@4.6.0",
+        "normalize-path@3.0.0",
+        "readable-stream@2.3.8"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "archiver-utils",
+      "version": "3.0.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/archiver-utils/-/archiver-utils-3.0.4.tgz",
+      "dependencies": [
+        "glob@7.2.3",
+        "graceful-fs@4.2.11",
+        "lazystream@1.0.1",
+        "lodash.defaults@4.2.0",
+        "lodash.difference@4.5.0",
+        "lodash.flatten@4.4.0",
+        "lodash.isplainobject@4.0.6",
+        "lodash.union@4.6.0",
+        "normalize-path@3.0.0",
+        "readable-stream@3.6.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "aria-hidden",
+      "version": "1.2.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/aria-hidden/-/aria-hidden-1.2.6.tgz",
+      "dependencies": ["tslib@2.8.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "array-buffer-byte-length",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/array-buffer-byte-length/-/array-buffer-byte-length-1.0.2.tgz",
+      "dependencies": ["call-bound@1.0.4", "is-array-buffer@3.0.5"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "arraybuffer.prototype.slice",
+      "version": "1.0.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/arraybuffer.prototype.slice/-/arraybuffer.prototype.slice-1.0.4.tgz",
+      "dependencies": [
+        "array-buffer-byte-length@1.0.2",
+        "call-bind@1.0.9",
+        "define-properties@1.2.1",
+        "es-abstract@1.24.2",
+        "es-errors@1.3.0",
+        "get-intrinsic@1.3.1",
+        "is-array-buffer@3.0.5"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "async",
+      "version": "3.2.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/async/-/async-3.2.6.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "async-function",
+      "version": "1.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/async-function/-/async-function-1.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "async-generator-function",
+      "version": "1.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/async-generator-function/-/async-generator-function-1.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "async-lock",
+      "version": "1.4.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/async-lock/-/async-lock-1.4.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "available-typed-arrays",
+      "version": "1.0.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/available-typed-arrays/-/available-typed-arrays-1.0.7.tgz",
+      "dependencies": ["possible-typed-array-names@1.1.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "babel-merge",
+      "version": "3.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/babel-merge/-/babel-merge-3.0.0.tgz",
+      "dependencies": ["deepmerge@2.2.1", "object.omit@3.0.0", "@babel/core@7.29.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "bahttext",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/bahttext/-/bahttext-1.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "balanced-match",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "base64-js",
+      "version": "1.5.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/base64-js/-/base64-js-1.5.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "baseline-browser-mapping",
+      "version": "2.11.29",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/baseline-browser-mapping/-/baseline-browser-mapping-2.11.29.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "bessel",
+      "version": "1.0.2",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/bessel/-/bessel-1.0.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "big-integer",
+      "version": "1.6.52",
+      "license": "Unlicense",
+      "tarball": "https://registry.npmjs.org/big-integer/-/big-integer-1.6.52.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "e9b0e94f628e00b5ed98046cfa041696ff89eebbbdd54108ee350625bc6d0363",
+          "text": "This is free and unencumbered software released into the public domain.\r\n\r\nAnyone is free to copy, modify, publish, use, compile, sell, or\r\ndistribute this software, either in source code form or as a compiled\r\nbinary, for any purpose, commercial or non-commercial, and by any\r\nmeans.\r\n\r\nIn jurisdictions that recognize copyright laws, the author or authors\r\nof this software dedicate any and all copyright interest in the\r\nsoftware to the public domain. We make this dedication for the benefit\r\nof the public at large and to the detriment of our heirs and\r\nsuccessors. We intend this dedication to be an overt act of\r\nrelinquishment in perpetuity of all present and future rights to this\r\nsoftware under copyright law.\r\n\r\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\r\nEXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\r\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\r\nIN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR\r\nOTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,\r\nARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR\r\nOTHER DEALINGS IN THE SOFTWARE.\r\n\r\nFor more information, please refer to <http://unlicense.org>\r\n"
+        }
+      ]
+    },
+    {
+      "name": "binary",
+      "version": "0.3.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/binary/-/binary-0.3.0.tgz",
+      "dependencies": ["chainsaw@0.1.0", "buffers@0.1.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "bl",
+      "version": "4.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/bl/-/bl-4.1.0.tgz",
+      "dependencies": ["buffer@5.7.1", "inherits@2.0.4", "readable-stream@3.6.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "bluebird",
+      "version": "3.4.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/bluebird/-/bluebird-3.4.7.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "brace-expansion",
+      "version": "1.1.21",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.21.tgz",
+      "dependencies": ["concat-map@0.0.1", "balanced-match@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "brace-expansion",
+      "version": "2.1.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-2.1.7.tgz",
+      "dependencies": ["balanced-match@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "browserslist",
+      "version": "4.29.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/browserslist/-/browserslist-4.29.3.tgz",
+      "dependencies": [
+        "caniuse-lite@1.0.30001816",
+        "node-releases@2.0.59",
+        "electron-to-chromium@1.5.459",
+        "update-browserslist-db@1.3.4",
+        "baseline-browser-mapping@2.11.29"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "buffer",
+      "version": "5.7.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/buffer/-/buffer-5.7.1.tgz",
+      "dependencies": ["base64-js@1.5.1", "ieee754@1.2.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "buffer-crc32",
+      "version": "0.2.13",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/buffer-crc32/-/buffer-crc32-0.2.13.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "buffer-indexof-polyfill",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/buffer-indexof-polyfill/-/buffer-indexof-polyfill-1.0.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "buffers",
+      "version": "0.1.1",
+      "license": "UNKNOWN",
+      "tarball": "https://registry.npmjs.org/buffers/-/buffers-0.1.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": []
+    },
+    {
+      "name": "call-bind",
+      "version": "1.0.9",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/call-bind/-/call-bind-1.0.9.tgz",
+      "dependencies": [
+        "call-bind-apply-helpers@1.0.2",
+        "es-define-property@1.0.1",
+        "get-intrinsic@1.3.1",
+        "set-function-length@1.2.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "call-bind-apply-helpers",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/call-bind-apply-helpers/-/call-bind-apply-helpers-1.0.2.tgz",
+      "dependencies": ["es-errors@1.3.0", "function-bind@1.1.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "call-bound",
+      "version": "1.0.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/call-bound/-/call-bound-1.0.4.tgz",
+      "dependencies": ["call-bind-apply-helpers@1.0.2", "get-intrinsic@1.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "caniuse-lite",
+      "version": "1.0.30001816",
+      "license": "CC-BY-4.0",
+      "tarball": "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001816.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "fd3a263fe19ed8faa9068b43abaebafc02c77897b0c6fc09abc04bb592e5f16e",
+          "text": "Attribution 4.0 International\n\n=======================================================================\n\nCreative Commons Corporation (\"Creative Commons\") is not a law firm and\ndoes not provide legal services or legal advice. Distribution of\nCreative Commons public licenses does not create a lawyer-client or\nother relationship. Creative Commons makes its licenses and related\ninformation available on an \"as-is\" basis. Creative Commons gives no\nwarranties regarding its licenses, any material licensed under their\nterms and conditions, or any related information. Creative Commons\ndisclaims all liability for damages resulting from their use to the\nfullest extent possible.\n\nUsing Creative Commons Public Licenses\n\nCreative Commons public licenses provide a standard set of terms and\nconditions that creators and other rights holders may use to share\noriginal works of authorship and other material subject to copyright\nand certain other rights specified in the public license below. The\nfollowing considerations are for informational purposes only, are not\nexhaustive, and do not form part of our licenses.\n\n     Considerations for licensors: Our public licenses are\n     intended for use by those authorized to give the public\n     permission to use material in ways otherwise restricted by\n     copyright and certain other rights. Our licenses are\n     irrevocable. Licensors should read and understand the terms\n     and conditions of the license they choose before applying it.\n     Licensors should also secure all rights necessary before\n     applying our licenses so that the public can reuse the\n     material as expected. Licensors should clearly mark any\n     material not subject to the license. This includes other CC-\n     licensed material, or material used under an exception or\n     limitation to copyright. More considerations for licensors:\n\twiki.creativecommons.org/Considerations_for_licensors\n\n     Considerations for the public: By using one of our public\n     licenses, a licensor grants the public permission to use the\n     licensed material under specified terms and conditions. If\n     the licensor's permission is not necessary for any reason--for\n     example, because of any applicable exception or limitation to\n     copyright--then that use is not regulated by the license. Our\n     licenses grant only permissions under copyright and certain\n     other rights that a licensor has authority to grant. Use of\n     the licensed material may still be restricted for other\n     reasons, including because others have copyright or other\n     rights in the material. A licensor may make special requests,\n     such as asking that all changes be marked or described.\n     Although not required by our licenses, you are encouraged to\n     respect those requests where reasonable. More_considerations\n     for the public: \n\twiki.creativecommons.org/Considerations_for_licensees\n\n=======================================================================\n\nCreative Commons Attribution 4.0 International Public License\n\nBy exercising the Licensed Rights (defined below), You accept and agree\nto be bound by the terms and conditions of this Creative Commons\nAttribution 4.0 International Public License (\"Public License\"). To the\nextent this Public License may be interpreted as a contract, You are\ngranted the Licensed Rights in consideration of Your acceptance of\nthese terms and conditions, and the Licensor grants You such rights in\nconsideration of benefits the Licensor receives from making the\nLicensed Material available under these terms and conditions.\n\n\nSection 1 -- Definitions.\n\n  a. Adapted Material means material subject to Copyright and Similar\n     Rights that is derived from or based upon the Licensed Material\n     and in which the Licensed Material is translated, altered,\n     arranged, transformed, or otherwise modified in a manner requiring\n     permission under the Copyright and Similar Rights held by the\n     Licensor. For purposes of this Public License, where the Licensed\n     Material is a musical work, performance, or sound recording,\n     Adapted Material is always produced where the Licensed Material is\n     synched in timed relation with a moving image.\n\n  b. Adapter's License means the license You apply to Your Copyright\n     and Similar Rights in Your contributions to Adapted Material in\n     accordance with the terms and conditions of this Public License.\n\n  c. Copyright and Similar Rights means copyright and/or similar rights\n     closely related to copyright including, without limitation,\n     performance, broadcast, sound recording, and Sui Generis Database\n     Rights, without regard to how the rights are labeled or\n     categorized. For purposes of this Public License, the rights\n     specified in Section 2(b)(1)-(2) are not Copyright and Similar\n     Rights.\n\n  d. Effective Technological Measures means those measures that, in the\n     absence of proper authority, may not be circumvented under laws\n     fulfilling obligations under Article 11 of the WIPO Copyright\n     Treaty adopted on December 20, 1996, and/or similar international\n     agreements.\n\n  e. Exceptions and Limitations means fair use, fair dealing, and/or\n     any other exception or limitation to Copyright and Similar Rights\n     that applies to Your use of the Licensed Material.\n\n  f. Licensed Material means the artistic or literary work, database,\n     or other material to which the Licensor applied this Public\n     License.\n\n  g. Licensed Rights means the rights granted to You subject to the\n     terms and conditions of this Public License, which are limited to\n     all Copyright and Similar Rights that apply to Your use of the\n     Licensed Material and that the Licensor has authority to license.\n\n  h. Licensor means the individual(s) or entity(ies) granting rights\n     under this Public License.\n\n  i. Share means to provide material to the public by any means or\n     process that requires permission under the Licensed Rights, such\n     as reproduction, public display, public performance, distribution,\n     dissemination, communication, or importation, and to make material\n     available to the public including in ways that members of the\n     public may access the material from a place and at a time\n     individually chosen by them.\n\n  j. Sui Generis Database Rights means rights other than copyright\n     resulting from Directive 96/9/EC of the European Parliament and of\n     the Council of 11 March 1996 on the legal protection of databases,\n     as amended and/or succeeded, as well as other essentially\n     equivalent rights anywhere in the world.\n\n  k. You means the individual or entity exercising the Licensed Rights\n     under this Public License. Your has a corresponding meaning.\n\n\nSection 2 -- Scope.\n\n  a. License grant.\n\n       1. Subject to the terms and conditions of this Public License,\n          the Licensor hereby grants You a worldwide, royalty-free,\n          non-sublicensable, non-exclusive, irrevocable license to\n          exercise the Licensed Rights in the Licensed Material to:\n\n            a. reproduce and Share the Licensed Material, in whole or\n               in part; and\n\n            b. produce, reproduce, and Share Adapted Material.\n\n       2. Exceptions and Limitations. For the avoidance of doubt, where\n          Exceptions and Limitations apply to Your use, this Public\n          License does not apply, and You do not need to comply with\n          its terms and conditions.\n\n       3. Term. The term of this Public License is specified in Section\n          6(a).\n\n       4. Media and formats; technical modifications allowed. The\n          Licensor authorizes You to exercise the Licensed Rights in\n          all media and formats whether now known or hereafter created,\n          and to make technical modifications necessary to do so. The\n          Licensor waives and/or agrees not to assert any right or\n          authority to forbid You from making technical modifications\n          necessary to exercise the Licensed Rights, including\n          technical modifications necessary to circumvent Effective\n          Technological Measures. For purposes of this Public License,\n          simply making modifications authorized by this Section 2(a)\n          (4) never produces Adapted Material.\n\n       5. Downstream recipients.\n\n            a. Offer from the Licensor -- Licensed Material. Every\n               recipient of the Licensed Material automatically\n               receives an offer from the Licensor to exercise the\n               Licensed Rights under the terms and conditions of this\n               Public License.\n\n            b. No downstream restrictions. You may not offer or impose\n               any additional or different terms or conditions on, or\n               apply any Effective Technological Measures to, the\n               Licensed Material if doing so restricts exercise of the\n               Licensed Rights by any recipient of the Licensed\n               Material.\n\n       6. No endorsement. Nothing in this Public License constitutes or\n          may be construed as permission to assert or imply that You\n          are, or that Your use of the Licensed Material is, connected\n          with, or sponsored, endorsed, or granted official status by,\n          the Licensor or others designated to receive attribution as\n          provided in Section 3(a)(1)(A)(i).\n\n  b. Other rights.\n\n       1. Moral rights, such as the right of integrity, are not\n          licensed under this Public License, nor are publicity,\n          privacy, and/or other similar personality rights; however, to\n          the extent possible, the Licensor waives and/or agrees not to\n          assert any such rights held by the Licensor to the limited\n          extent necessary to allow You to exercise the Licensed\n          Rights, but not otherwise.\n\n       2. Patent and trademark rights are not licensed under this\n          Public License.\n\n       3. To the extent possible, the Licensor waives any right to\n          collect royalties from You for the exercise of the Licensed\n          Rights, whether directly or through a collecting society\n          under any voluntary or waivable statutory or compulsory\n          licensing scheme. In all other cases the Licensor expressly\n          reserves any right to collect such royalties.\n\n\nSection 3 -- License Conditions.\n\nYour exercise of the Licensed Rights is expressly made subject to the\nfollowing conditions.\n\n  a. Attribution.\n\n       1. If You Share the Licensed Material (including in modified\n          form), You must:\n\n            a. retain the following if it is supplied by the Licensor\n               with the Licensed Material:\n\n                 i. identification of the creator(s) of the Licensed\n                    Material and any others designated to receive\n                    attribution, in any reasonable manner requested by\n                    the Licensor (including by pseudonym if\n                    designated);\n\n                ii. a copyright notice;\n\n               iii. a notice that refers to this Public License;\n\n                iv. a notice that refers to the disclaimer of\n                    warranties;\n\n                 v. a URI or hyperlink to the Licensed Material to the\n                    extent reasonably practicable;\n\n            b. indicate if You modified the Licensed Material and\n               retain an indication of any previous modifications; and\n\n            c. indicate the Licensed Material is licensed under this\n               Public License, and include the text of, or the URI or\n               hyperlink to, this Public License.\n\n       2. You may satisfy the conditions in Section 3(a)(1) in any\n          reasonable manner based on the medium, means, and context in\n          which You Share the Licensed Material. For example, it may be\n          reasonable to satisfy the conditions by providing a URI or\n          hyperlink to a resource that includes the required\n          information.\n\n       3. If requested by the Licensor, You must remove any of the\n          information required by Section 3(a)(1)(A) to the extent\n          reasonably practicable.\n\n       4. If You Share Adapted Material You produce, the Adapter's\n          License You apply must not prevent recipients of the Adapted\n          Material from complying with this Public License.\n\n\nSection 4 -- Sui Generis Database Rights.\n\nWhere the Licensed Rights include Sui Generis Database Rights that\napply to Your use of the Licensed Material:\n\n  a. for the avoidance of doubt, Section 2(a)(1) grants You the right\n     to extract, reuse, reproduce, and Share all or a substantial\n     portion of the contents of the database;\n\n  b. if You include all or a substantial portion of the database\n     contents in a database in which You have Sui Generis Database\n     Rights, then the database in which You have Sui Generis Database\n     Rights (but not its individual contents) is Adapted Material; and\n\n  c. You must comply with the conditions in Section 3(a) if You Share\n     all or a substantial portion of the contents of the database.\n\nFor the avoidance of doubt, this Section 4 supplements and does not\nreplace Your obligations under this Public License where the Licensed\nRights include other Copyright and Similar Rights.\n\n\nSection 5 -- Disclaimer of Warranties and Limitation of Liability.\n\n  a. UNLESS OTHERWISE SEPARATELY UNDERTAKEN BY THE LICENSOR, TO THE\n     EXTENT POSSIBLE, THE LICENSOR OFFERS THE LICENSED MATERIAL AS-IS\n     AND AS-AVAILABLE, AND MAKES NO REPRESENTATIONS OR WARRANTIES OF\n     ANY KIND CONCERNING THE LICENSED MATERIAL, WHETHER EXPRESS,\n     IMPLIED, STATUTORY, OR OTHER. THIS INCLUDES, WITHOUT LIMITATION,\n     WARRANTIES OF TITLE, MERCHANTABILITY, FITNESS FOR A PARTICULAR\n     PURPOSE, NON-INFRINGEMENT, ABSENCE OF LATENT OR OTHER DEFECTS,\n     ACCURACY, OR THE PRESENCE OR ABSENCE OF ERRORS, WHETHER OR NOT\n     KNOWN OR DISCOVERABLE. WHERE DISCLAIMERS OF WARRANTIES ARE NOT\n     ALLOWED IN FULL OR IN PART, THIS DISCLAIMER MAY NOT APPLY TO YOU.\n\n  b. TO THE EXTENT POSSIBLE, IN NO EVENT WILL THE LICENSOR BE LIABLE\n     TO YOU ON ANY LEGAL THEORY (INCLUDING, WITHOUT LIMITATION,\n     NEGLIGENCE) OR OTHERWISE FOR ANY DIRECT, SPECIAL, INDIRECT,\n     INCIDENTAL, CONSEQUENTIAL, PUNITIVE, EXEMPLARY, OR OTHER LOSSES,\n     COSTS, EXPENSES, OR DAMAGES ARISING OUT OF THIS PUBLIC LICENSE OR\n     USE OF THE LICENSED MATERIAL, EVEN IF THE LICENSOR HAS BEEN\n     ADVISED OF THE POSSIBILITY OF SUCH LOSSES, COSTS, EXPENSES, OR\n     DAMAGES. WHERE A LIMITATION OF LIABILITY IS NOT ALLOWED IN FULL OR\n     IN PART, THIS LIMITATION MAY NOT APPLY TO YOU.\n\n  c. The disclaimer of warranties and limitation of liability provided\n     above shall be interpreted in a manner that, to the extent\n     possible, most closely approximates an absolute disclaimer and\n     waiver of all liability.\n\n\nSection 6 -- Term and Termination.\n\n  a. This Public License applies for the term of the Copyright and\n     Similar Rights licensed here. However, if You fail to comply with\n     this Public License, then Your rights under this Public License\n     terminate automatically.\n\n  b. Where Your right to use the Licensed Material has terminated under\n     Section 6(a), it reinstates:\n\n       1. automatically as of the date the violation is cured, provided\n          it is cured within 30 days of Your discovery of the\n          violation; or\n\n       2. upon express reinstatement by the Licensor.\n\n     For the avoidance of doubt, this Section 6(b) does not affect any\n     right the Licensor may have to seek remedies for Your violations\n     of this Public License.\n\n  c. For the avoidance of doubt, the Licensor may also offer the\n     Licensed Material under separate terms or conditions or stop\n     distributing the Licensed Material at any time; however, doing so\n     will not terminate this Public License.\n\n  d. Sections 1, 5, 6, 7, and 8 survive termination of this Public\n     License.\n\n\nSection 7 -- Other Terms and Conditions.\n\n  a. The Licensor shall not be bound by any additional or different\n     terms or conditions communicated by You unless expressly agreed.\n\n  b. Any arrangements, understandings, or agreements regarding the\n     Licensed Material not stated herein are separate from and\n     independent of the terms and conditions of this Public License.\n\n\nSection 8 -- Interpretation.\n\n  a. For the avoidance of doubt, this Public License does not, and\n     shall not be interpreted to, reduce, limit, restrict, or impose\n     conditions on any use of the Licensed Material that could lawfully\n     be made without permission under this Public License.\n\n  b. To the extent possible, if any provision of this Public License is\n     deemed unenforceable, it shall be automatically reformed to the\n     minimum extent necessary to make it enforceable. If the provision\n     cannot be reformed, it shall be severed from this Public License\n     without affecting the enforceability of the remaining terms and\n     conditions.\n\n  c. No term or condition of this Public License will be waived and no\n     failure to comply consented to unless expressly agreed to by the\n     Licensor.\n\n  d. Nothing in this Public License constitutes or may be interpreted\n     as a limitation upon, or waiver of, any privileges and immunities\n     that apply to the Licensor or You, including from the legal\n     processes of any jurisdiction or authority.\n\n\n=======================================================================\n\nCreative Commons is not a party to its public\nlicenses. Notwithstanding, Creative Commons may elect to apply one of\nits public licenses to material it publishes and in those instances\nwill be considered the “Licensor.” The text of the Creative Commons\npublic licenses is dedicated to the public domain under the CC0 Public\nDomain Dedication. Except for the limited purpose of indicating that\nmaterial is shared under a Creative Commons public license or as\notherwise permitted by the Creative Commons policies published at\ncreativecommons.org/policies, Creative Commons does not authorize the\nuse of the trademark \"Creative Commons\" or any other trademark or logo\nof Creative Commons without its prior written consent including,\nwithout limitation, in connection with any unauthorized modifications\nto any of its public licenses or any other arrangements,\nunderstandings, or agreements concerning use of licensed material. For\nthe avoidance of doubt, this paragraph does not form part of the\npublic licenses.\n\nCreative Commons may be contacted at creativecommons.org.\n"
+        }
+      ]
+    },
+    {
+      "name": "canvas-hypertxt",
+      "version": "1.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/canvas-hypertxt/-/canvas-hypertxt-1.0.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "cfb",
+      "version": "1.2.2",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/cfb/-/cfb-1.2.2.tgz",
+      "dependencies": ["adler-32@1.3.1", "crc-32@1.2.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "chainsaw",
+      "version": "0.1.0",
+      "license": "MIT/X11",
+      "tarball": "https://registry.npmjs.org/chainsaw/-/chainsaw-0.1.0.tgz",
+      "dependencies": ["traverse@0.3.10"],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": []
+    },
+    {
+      "name": "chevrotain",
+      "version": "7.1.2",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/chevrotain/-/chevrotain-7.1.2.tgz",
+      "dependencies": ["regexp-to-ast@0.5.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "class-variance-authority",
+      "version": "0.7.1",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/class-variance-authority/-/class-variance-authority-0.7.1.tgz",
+      "dependencies": ["clsx@2.1.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "classnames",
+      "version": "2.5.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/classnames/-/classnames-2.5.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "cliui",
+      "version": "8.0.1",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/cliui/-/cliui-8.0.1.tgz",
+      "dependencies": ["wrap-ansi@7.0.0", "strip-ansi@6.0.1", "string-width@4.2.3"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "clsx",
+      "version": "2.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/clsx/-/clsx-2.1.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "cmdk",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/cmdk/-/cmdk-1.1.1.tgz",
+      "dependencies": [
+        "@radix-ui/react-id@1.1.4",
+        "@radix-ui/react-dialog@1.3.1",
+        "@radix-ui/react-primitive@2.2.0",
+        "@radix-ui/react-compose-refs@1.1.5",
+        "react@18.3.1",
+        "react-dom@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "codepage",
+      "version": "1.15.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/codepage/-/codepage-1.15.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "collapse-white-space",
+      "version": "2.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/collapse-white-space/-/collapse-white-space-2.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "color-convert",
+      "version": "2.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/color-convert/-/color-convert-2.0.1.tgz",
+      "dependencies": ["color-name@1.1.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "color-name",
+      "version": "1.1.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "compress-commons",
+      "version": "4.1.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/compress-commons/-/compress-commons-4.1.2.tgz",
+      "dependencies": ["buffer-crc32@0.2.13", "crc32-stream@4.0.3", "normalize-path@3.0.0", "readable-stream@3.6.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "concat-map",
+      "version": "0.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "convert-source-map",
+      "version": "2.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/convert-source-map/-/convert-source-map-2.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "core-util-is",
+      "version": "1.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/core-util-is/-/core-util-is-1.0.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "crc-32",
+      "version": "1.2.2",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/crc-32/-/crc-32-1.2.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "crc32-stream",
+      "version": "4.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/crc32-stream/-/crc32-stream-4.0.3.tgz",
+      "dependencies": ["crc-32@1.2.2", "readable-stream@3.6.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "data-view-buffer",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/data-view-buffer/-/data-view-buffer-1.0.2.tgz",
+      "dependencies": ["call-bound@1.0.4", "es-errors@1.3.0", "is-data-view@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "data-view-byte-length",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/data-view-byte-length/-/data-view-byte-length-1.0.2.tgz",
+      "dependencies": ["call-bound@1.0.4", "es-errors@1.3.0", "is-data-view@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "data-view-byte-offset",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/data-view-byte-offset/-/data-view-byte-offset-1.0.1.tgz",
+      "dependencies": ["call-bound@1.0.4", "es-errors@1.3.0", "is-data-view@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "dayjs",
+      "version": "1.11.23",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/dayjs/-/dayjs-1.11.23.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "debug",
+      "version": "4.4.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
+      "dependencies": ["ms@2.1.3"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "decimal.js",
+      "version": "10.6.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/decimal.js/-/decimal.js-10.6.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "deepmerge",
+      "version": "2.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/deepmerge/-/deepmerge-2.2.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "define-data-property",
+      "version": "1.1.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/define-data-property/-/define-data-property-1.1.4.tgz",
+      "dependencies": ["es-define-property@1.0.1", "es-errors@1.3.0", "gopd@1.2.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "define-properties",
+      "version": "1.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/define-properties/-/define-properties-1.2.1.tgz",
+      "dependencies": ["define-data-property@1.1.4", "has-property-descriptors@1.0.2", "object-keys@1.1.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "detect-node-es",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/detect-node-es/-/detect-node-es-1.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "dunder-proto",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/dunder-proto/-/dunder-proto-1.0.1.tgz",
+      "dependencies": ["call-bind-apply-helpers@1.0.2", "es-errors@1.3.0", "gopd@1.2.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "duplexer2",
+      "version": "0.1.4",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/duplexer2/-/duplexer2-0.1.4.tgz",
+      "dependencies": ["readable-stream@2.3.8"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "electron-to-chromium",
+      "version": "1.5.459",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.5.459.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "emoji-regex",
+      "version": "8.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/emoji-regex/-/emoji-regex-8.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "end-of-stream",
+      "version": "1.4.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/end-of-stream/-/end-of-stream-1.4.5.tgz",
+      "dependencies": ["once@1.4.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "es-abstract",
+      "version": "1.24.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/es-abstract/-/es-abstract-1.24.2.tgz",
+      "dependencies": [
+        "array-buffer-byte-length@1.0.2",
+        "arraybuffer.prototype.slice@1.0.4",
+        "available-typed-arrays@1.0.7",
+        "call-bind@1.0.9",
+        "call-bound@1.0.4",
+        "data-view-buffer@1.0.2",
+        "data-view-byte-length@1.0.2",
+        "data-view-byte-offset@1.0.1",
+        "es-define-property@1.0.1",
+        "es-errors@1.3.0",
+        "es-object-atoms@1.1.2",
+        "es-set-tostringtag@2.1.0",
+        "es-to-primitive@1.3.4",
+        "function.prototype.name@1.2.0",
+        "get-intrinsic@1.3.1",
+        "get-proto@1.0.1",
+        "get-symbol-description@1.1.0",
+        "globalthis@1.0.4",
+        "gopd@1.2.0",
+        "has-property-descriptors@1.0.2",
+        "has-proto@1.2.0",
+        "has-symbols@1.1.0",
+        "hasown@2.0.4",
+        "internal-slot@1.1.0",
+        "is-array-buffer@3.0.5",
+        "is-callable@1.2.7",
+        "is-data-view@1.0.2",
+        "is-negative-zero@2.0.3",
+        "is-regex@1.2.1",
+        "is-set@2.0.3",
+        "is-shared-array-buffer@1.0.4",
+        "is-string@1.1.1",
+        "is-typed-array@1.1.15",
+        "is-weakref@1.1.1",
+        "math-intrinsics@1.1.0",
+        "object-inspect@1.13.4",
+        "object-keys@1.1.1",
+        "object.assign@4.1.7",
+        "own-keys@1.0.2",
+        "regexp.prototype.flags@1.5.4",
+        "safe-array-concat@1.1.4",
+        "safe-push-apply@1.0.0",
+        "safe-regex-test@1.1.0",
+        "set-proto@1.0.0",
+        "stop-iteration-iterator@1.1.0",
+        "string.prototype.trim@1.2.11",
+        "string.prototype.trimend@1.0.10",
+        "string.prototype.trimstart@1.0.8",
+        "typed-array-buffer@1.0.3",
+        "typed-array-byte-length@1.0.3",
+        "typed-array-byte-offset@1.0.5",
+        "typed-array-length@1.0.8",
+        "unbox-primitive@1.1.0",
+        "which-typed-array@1.1.24"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "es-abstract-get",
+      "version": "1.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/es-abstract-get/-/es-abstract-get-1.0.0.tgz",
+      "dependencies": ["es-errors@1.3.0", "es-object-atoms@1.1.2", "is-callable@1.2.7", "object-inspect@1.13.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "es-define-property",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/es-define-property/-/es-define-property-1.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "es-errors",
+      "version": "1.3.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "es-object-atoms",
+      "version": "1.1.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/es-object-atoms/-/es-object-atoms-1.1.2.tgz",
+      "dependencies": ["es-errors@1.3.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "es-set-tostringtag",
+      "version": "2.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/es-set-tostringtag/-/es-set-tostringtag-2.1.0.tgz",
+      "dependencies": ["es-errors@1.3.0", "get-intrinsic@1.3.1", "has-tostringtag@1.0.2", "hasown@2.0.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "es-to-primitive",
+      "version": "1.3.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/es-to-primitive/-/es-to-primitive-1.3.4.tgz",
+      "dependencies": [
+        "es-errors@1.3.0",
+        "is-symbol@1.1.1",
+        "is-callable@1.2.7",
+        "is-date-object@1.1.0",
+        "es-abstract-get@1.0.0",
+        "es-define-property@1.0.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "escalade",
+      "version": "3.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/escalade/-/escalade-3.2.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "exceljs",
+      "version": "4.4.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/exceljs/-/exceljs-4.4.0.tgz",
+      "dependencies": [
+        "tmp@0.2.7",
+        "uuid@8.3.2",
+        "dayjs@1.11.23",
+        "jszip@3.10.2",
+        "saxes@5.0.1",
+        "archiver@5.3.2",
+        "fast-csv@4.3.6",
+        "unzipper@0.10.14",
+        "readable-stream@3.6.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "fast-csv",
+      "version": "4.3.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/fast-csv/-/fast-csv-4.3.6.tgz",
+      "dependencies": ["@fast-csv/parse@4.3.6", "@fast-csv/format@4.3.5"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "fast-diff",
+      "version": "1.3.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/fast-diff/-/fast-diff-1.3.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "fast-formula-parser",
+      "version": "1.0.19",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/fast-formula-parser/-/fast-formula-parser-1.0.19.tgz",
+      "dependencies": ["bahttext@1.1.0", "bessel@1.0.2", "chevrotain@7.1.2", "jstat@1.9.6"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/fflate/-/fflate-0.8.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "find-up",
+      "version": "5.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/find-up/-/find-up-5.0.0.tgz",
+      "dependencies": ["locate-path@6.0.0", "path-exists@4.0.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "for-each",
+      "version": "0.3.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/for-each/-/for-each-0.3.5.tgz",
+      "dependencies": ["is-callable@1.2.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "formualizer",
+      "version": "0.11.1",
+      "license": "MIT OR Apache-2.0",
+      "tarball": "https://registry.npmjs.org/formualizer/-/formualizer-0.11.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "frac",
+      "version": "1.1.2",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/frac/-/frac-1.1.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "franc-min",
+      "version": "6.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/franc-min/-/franc-min-6.2.0.tgz",
+      "dependencies": ["trigram-utils@2.0.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "fs-constants",
+      "version": "1.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/fs-constants/-/fs-constants-1.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "fs.realpath",
+      "version": "1.0.0",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "fstream",
+      "version": "1.0.12",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/fstream/-/fstream-1.0.12.tgz",
+      "dependencies": ["mkdirp@0.5.6", "rimraf@2.7.1", "inherits@2.0.4", "graceful-fs@4.2.11"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "function-bind",
+      "version": "1.1.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "function.prototype.name",
+      "version": "1.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/function.prototype.name/-/function.prototype.name-1.2.0.tgz",
+      "dependencies": [
+        "hasown@2.0.4",
+        "call-bind@1.0.9",
+        "es-errors@1.3.0",
+        "call-bound@1.0.4",
+        "is-callable@1.2.7",
+        "is-document.all@1.0.0",
+        "es-define-property@1.0.1",
+        "functions-have-names@1.2.3",
+        "has-property-descriptors@1.0.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "functions-have-names",
+      "version": "1.2.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/functions-have-names/-/functions-have-names-1.2.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "generator-function",
+      "version": "2.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/generator-function/-/generator-function-2.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "gensync",
+      "version": "1.0.0-beta.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/gensync/-/gensync-1.0.0-beta.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "get-caller-file",
+      "version": "2.0.5",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/get-caller-file/-/get-caller-file-2.0.5.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "get-intrinsic",
+      "version": "1.3.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/get-intrinsic/-/get-intrinsic-1.3.1.tgz",
+      "dependencies": [
+        "gopd@1.2.0",
+        "hasown@2.0.4",
+        "es-errors@1.3.0",
+        "get-proto@1.0.1",
+        "has-symbols@1.1.0",
+        "function-bind@1.1.2",
+        "async-function@1.0.0",
+        "es-object-atoms@1.1.2",
+        "math-intrinsics@1.1.0",
+        "es-define-property@1.0.1",
+        "generator-function@2.0.1",
+        "call-bind-apply-helpers@1.0.2",
+        "async-generator-function@1.0.0"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "get-nonce",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/get-nonce/-/get-nonce-1.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "get-proto",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/get-proto/-/get-proto-1.0.1.tgz",
+      "dependencies": ["dunder-proto@1.0.1", "es-object-atoms@1.1.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "get-symbol-description",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/get-symbol-description/-/get-symbol-description-1.1.0.tgz",
+      "dependencies": ["call-bound@1.0.4", "es-errors@1.3.0", "get-intrinsic@1.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "glob",
+      "version": "7.2.3",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/glob/-/glob-7.2.3.tgz",
+      "dependencies": [
+        "once@1.4.0",
+        "inflight@1.0.6",
+        "inherits@2.0.4",
+        "minimatch@3.1.5",
+        "fs.realpath@1.0.0",
+        "path-is-absolute@1.0.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "globalthis",
+      "version": "1.0.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/globalthis/-/globalthis-1.0.4.tgz",
+      "dependencies": ["define-properties@1.2.1", "gopd@1.2.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "gopd",
+      "version": "1.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/gopd/-/gopd-1.2.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "graceful-fs",
+      "version": "4.2.11",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "has-bigints",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/has-bigints/-/has-bigints-1.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "has-property-descriptors",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/has-property-descriptors/-/has-property-descriptors-1.0.2.tgz",
+      "dependencies": ["es-define-property@1.0.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "has-proto",
+      "version": "1.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/has-proto/-/has-proto-1.2.0.tgz",
+      "dependencies": ["dunder-proto@1.0.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "has-symbols",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/has-symbols/-/has-symbols-1.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "has-tostringtag",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/has-tostringtag/-/has-tostringtag-1.0.2.tgz",
+      "dependencies": ["has-symbols@1.1.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "hasown",
+      "version": "2.0.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/hasown/-/hasown-2.0.4.tgz",
+      "dependencies": ["function-bind@1.1.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "html-element-attributes",
+      "version": "1.3.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/html-element-attributes/-/html-element-attributes-1.3.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "ieee754",
+      "version": "1.2.1",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/ieee754/-/ieee754-1.2.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "immediate",
+      "version": "3.0.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/immediate/-/immediate-3.0.6.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "inflight",
+      "version": "1.0.6",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/inflight/-/inflight-1.0.6.tgz",
+      "dependencies": ["once@1.4.0", "wrappy@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "inherits",
+      "version": "2.0.4",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "internal-slot",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/internal-slot/-/internal-slot-1.1.0.tgz",
+      "dependencies": ["es-errors@1.3.0", "hasown@2.0.4", "side-channel@1.1.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-array-buffer",
+      "version": "3.0.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-array-buffer/-/is-array-buffer-3.0.5.tgz",
+      "dependencies": ["call-bind@1.0.9", "call-bound@1.0.4", "get-intrinsic@1.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-async-function",
+      "version": "2.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-async-function/-/is-async-function-2.1.1.tgz",
+      "dependencies": [
+        "async-function@1.0.0",
+        "call-bound@1.0.4",
+        "get-proto@1.0.1",
+        "has-tostringtag@1.0.2",
+        "safe-regex-test@1.1.0"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-bigint",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-bigint/-/is-bigint-1.1.0.tgz",
+      "dependencies": ["has-bigints@1.1.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-boolean-object",
+      "version": "1.2.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-boolean-object/-/is-boolean-object-1.2.2.tgz",
+      "dependencies": ["call-bound@1.0.4", "has-tostringtag@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-callable",
+      "version": "1.2.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-callable/-/is-callable-1.2.7.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-data-view",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-data-view/-/is-data-view-1.0.2.tgz",
+      "dependencies": ["call-bound@1.0.4", "get-intrinsic@1.3.1", "is-typed-array@1.1.15"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-date-object",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-date-object/-/is-date-object-1.1.0.tgz",
+      "dependencies": ["call-bound@1.0.4", "has-tostringtag@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-document.all",
+      "version": "1.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-document.all/-/is-document.all-1.0.0.tgz",
+      "dependencies": ["call-bound@1.0.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-extendable",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-extendable/-/is-extendable-1.0.1.tgz",
+      "dependencies": ["is-plain-object@2.0.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-finalizationregistry",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-finalizationregistry/-/is-finalizationregistry-1.1.1.tgz",
+      "dependencies": ["call-bound@1.0.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-fullwidth-code-point",
+      "version": "3.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-generator-function",
+      "version": "1.1.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-generator-function/-/is-generator-function-1.1.2.tgz",
+      "dependencies": [
+        "call-bound@1.0.4",
+        "generator-function@2.0.1",
+        "get-proto@1.0.1",
+        "has-tostringtag@1.0.2",
+        "safe-regex-test@1.1.0"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-map",
+      "version": "2.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-map/-/is-map-2.0.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-negative-zero",
+      "version": "2.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-negative-zero/-/is-negative-zero-2.0.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-number-object",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-number-object/-/is-number-object-1.1.1.tgz",
+      "dependencies": ["call-bound@1.0.4", "has-tostringtag@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-plain-object",
+      "version": "2.0.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-plain-object/-/is-plain-object-2.0.4.tgz",
+      "dependencies": ["isobject@3.0.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-regex",
+      "version": "1.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-regex/-/is-regex-1.2.1.tgz",
+      "dependencies": ["call-bound@1.0.4", "gopd@1.2.0", "has-tostringtag@1.0.2", "hasown@2.0.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-set",
+      "version": "2.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-set/-/is-set-2.0.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-shared-array-buffer",
+      "version": "1.0.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-shared-array-buffer/-/is-shared-array-buffer-1.0.4.tgz",
+      "dependencies": ["call-bound@1.0.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-string",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-string/-/is-string-1.1.1.tgz",
+      "dependencies": ["call-bound@1.0.4", "has-tostringtag@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-symbol",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-symbol/-/is-symbol-1.1.1.tgz",
+      "dependencies": ["call-bound@1.0.4", "has-symbols@1.1.0", "safe-regex-test@1.1.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-typed-array",
+      "version": "1.1.15",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-typed-array/-/is-typed-array-1.1.15.tgz",
+      "dependencies": ["which-typed-array@1.1.24"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-weakmap",
+      "version": "2.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-weakmap/-/is-weakmap-2.0.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-weakref",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-weakref/-/is-weakref-1.1.1.tgz",
+      "dependencies": ["call-bound@1.0.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "is-weakset",
+      "version": "2.0.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/is-weakset/-/is-weakset-2.0.4.tgz",
+      "dependencies": ["call-bound@1.0.4", "get-intrinsic@1.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "isarray",
+      "version": "1.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/isarray/-/isarray-1.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "isarray",
+      "version": "2.0.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/isarray/-/isarray-2.0.5.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "isobject",
+      "version": "3.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/isobject/-/isobject-3.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "js-tokens",
+      "version": "4.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "2213d91c606205c71eb051a199478cdc2adde945893404d7f1421436dd6d5cc1",
+          "text": "The MIT License (MIT)\n\nCopyright (c) 2014, 2015, 2016, 2017, 2018 Simon Lydell\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n"
+        }
+      ]
+    },
+    {
+      "name": "jsesc",
+      "version": "3.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/jsesc/-/jsesc-3.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "json5",
+      "version": "2.2.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/json5/-/json5-2.2.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "jstat",
+      "version": "1.9.6",
+      "license": "UNKNOWN",
+      "tarball": "https://registry.npmjs.org/jstat/-/jstat-1.9.6.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "854847b5c4375f52fbe73364fd13ba138e59a52c88938ed0bab7f940dd8dd800",
+          "text": "Copyright (c) 2013 jStat\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n"
+        }
+      ]
+    },
+    {
+      "name": "jszip",
+      "version": "3.10.2",
+      "license": "(MIT OR GPL-3.0-or-later)",
+      "tarball": "https://registry.npmjs.org/jszip/-/jszip-3.10.2.tgz",
+      "dependencies": ["lie@3.3.0", "pako@1.0.11", "setimmediate@1.0.5", "readable-stream@2.3.8"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "kdbush",
+      "version": "4.1.0",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/kdbush/-/kdbush-4.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lazystream",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lazystream/-/lazystream-1.0.1.tgz",
+      "dependencies": ["readable-stream@2.3.8"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lie",
+      "version": "3.3.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lie/-/lie-3.3.0.tgz",
+      "dependencies": ["immediate@3.0.6"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "listenercount",
+      "version": "1.0.1",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/listenercount/-/listenercount-1.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "locate-path",
+      "version": "6.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/locate-path/-/locate-path-6.0.0.tgz",
+      "dependencies": ["p-locate@5.0.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash",
+      "version": "4.18.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash/-/lodash-4.18.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash-es",
+      "version": "4.18.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash-es/-/lodash-es-4.18.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.camelcase",
+      "version": "4.3.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.camelcase/-/lodash.camelcase-4.3.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.defaults",
+      "version": "4.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.defaults/-/lodash.defaults-4.2.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.difference",
+      "version": "4.5.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.difference/-/lodash.difference-4.5.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.escaperegexp",
+      "version": "4.1.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.escaperegexp/-/lodash.escaperegexp-4.1.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.flatten",
+      "version": "4.4.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.flatten/-/lodash.flatten-4.4.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.groupby",
+      "version": "4.6.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.groupby/-/lodash.groupby-4.6.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.isboolean",
+      "version": "3.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.isboolean/-/lodash.isboolean-3.0.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.isequal",
+      "version": "4.5.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.isequal/-/lodash.isequal-4.5.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.isfunction",
+      "version": "3.0.9",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.isfunction/-/lodash.isfunction-3.0.9.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.isnil",
+      "version": "4.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.isnil/-/lodash.isnil-4.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.isplainobject",
+      "version": "4.0.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.isplainobject/-/lodash.isplainobject-4.0.6.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.isundefined",
+      "version": "3.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.isundefined/-/lodash.isundefined-3.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.union",
+      "version": "4.6.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.union/-/lodash.union-4.6.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "lodash.uniq",
+      "version": "4.5.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/lodash.uniq/-/lodash.uniq-4.5.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "long",
+      "version": "5.3.2",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/long/-/long-5.3.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "loose-envify",
+      "version": "1.4.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/loose-envify/-/loose-envify-1.4.0.tgz",
+      "dependencies": ["js-tokens@4.0.0"],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "4eb7543b08d955a6d23fcc224601d43ff566e775be918805e26210d7f6eb4893",
+          "text": "The MIT License (MIT)\n\nCopyright (c) 2015 Andres Suarez <zertosh@gmail.com>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n"
+        }
+      ]
+    },
+    {
+      "name": "lru-cache",
+      "version": "5.1.1",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/lru-cache/-/lru-cache-5.1.1.tgz",
+      "dependencies": ["yallist@3.1.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "marked",
+      "version": "4.3.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/marked/-/marked-4.3.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "math-intrinsics",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "minimatch",
+      "version": "3.1.5",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/minimatch/-/minimatch-3.1.5.tgz",
+      "dependencies": ["brace-expansion@1.1.21"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "minimatch",
+      "version": "5.1.9",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/minimatch/-/minimatch-5.1.9.tgz",
+      "dependencies": ["brace-expansion@2.1.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "minimatch",
+      "version": "9.0.9",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.9.tgz",
+      "dependencies": ["brace-expansion@2.1.7"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "minimist",
+      "version": "1.2.8",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "mkdirp",
+      "version": "0.5.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/mkdirp/-/mkdirp-0.5.6.tgz",
+      "dependencies": ["minimist@1.2.8"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "ms",
+      "version": "2.1.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "n-gram",
+      "version": "2.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/n-gram/-/n-gram-2.0.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "node-releases",
+      "version": "2.0.59",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/node-releases/-/node-releases-2.0.59.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "normalize-path",
+      "version": "3.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/normalize-path/-/normalize-path-3.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "object-assign",
+      "version": "4.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "object-inspect",
+      "version": "1.13.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/object-inspect/-/object-inspect-1.13.4.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "object-keys",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/object-keys/-/object-keys-1.1.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "object.assign",
+      "version": "4.1.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/object.assign/-/object.assign-4.1.7.tgz",
+      "dependencies": [
+        "call-bind@1.0.9",
+        "call-bound@1.0.4",
+        "define-properties@1.2.1",
+        "es-object-atoms@1.1.2",
+        "has-symbols@1.1.0",
+        "object-keys@1.1.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "object.omit",
+      "version": "3.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/object.omit/-/object.omit-3.0.0.tgz",
+      "dependencies": ["is-extendable@1.0.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "once",
+      "version": "1.4.0",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/once/-/once-1.4.0.tgz",
+      "dependencies": ["wrappy@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "ot-json1",
+      "version": "1.0.2",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/ot-json1/-/ot-json1-1.0.2.tgz",
+      "dependencies": ["ot-text-unicode@4.0.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "ot-text-unicode",
+      "version": "4.0.0",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/ot-text-unicode/-/ot-text-unicode-4.0.0.tgz",
+      "dependencies": ["unicount@1.1.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "own-keys",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/own-keys/-/own-keys-1.0.2.tgz",
+      "dependencies": ["call-bound@1.0.4", "object-keys@1.1.1", "get-intrinsic@1.3.1", "safe-push-apply@1.0.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "p-limit",
+      "version": "3.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/p-limit/-/p-limit-3.1.0.tgz",
+      "dependencies": ["yocto-queue@0.1.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "p-locate",
+      "version": "5.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/p-locate/-/p-locate-5.0.0.tgz",
+      "dependencies": ["p-limit@3.1.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "pako",
+      "version": "1.0.11",
+      "license": "(MIT AND Zlib)",
+      "tarball": "https://registry.npmjs.org/pako/-/pako-1.0.11.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539",
+          "text": "(The MIT License)\n\nCopyright (C) 2014-2017 by Vitaly Puzrin and Andrei Tuputcyn\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n"
+        }
+      ]
+    },
+    {
+      "name": "path-exists",
+      "version": "4.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/path-exists/-/path-exists-4.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "path-is-absolute",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "picocolors",
+      "version": "1.1.1",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "possible-typed-array-names",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/possible-typed-array-names/-/possible-typed-array-names-1.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "process-nextick-args",
+      "version": "2.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/process-nextick-args/-/process-nextick-args-2.0.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "prop-types",
+      "version": "15.8.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/prop-types/-/prop-types-15.8.1.tgz",
+      "dependencies": ["loose-envify@1.4.0", "object-assign@4.1.1", "react-is@16.13.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "protobufjs",
+      "version": "7.6.6",
+      "license": "BSD-3-Clause",
+      "tarball": "https://registry.npmjs.org/protobufjs/-/protobufjs-7.6.6.tgz",
+      "dependencies": [
+        "long@5.3.2",
+        "@types/node@26.6.5",
+        "@protobufjs/path@1.1.2",
+        "@protobufjs/pool@1.1.0",
+        "@protobufjs/utf8@1.1.2",
+        "@protobufjs/fetch@1.1.1",
+        "@protobufjs/float@1.0.2",
+        "@protobufjs/base64@1.1.2",
+        "@protobufjs/codegen@2.0.5",
+        "@protobufjs/aspromise@1.1.2",
+        "@protobufjs/eventemitter@1.1.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "quickselect",
+      "version": "3.0.0",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/quickselect/-/quickselect-3.0.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "rbush",
+      "version": "4.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/rbush/-/rbush-4.0.1.tgz",
+      "dependencies": ["quickselect@3.0.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "react",
+      "version": "18.3.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react/-/react-18.3.1.tgz",
+      "dependencies": ["loose-envify@1.4.0"],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+          "text": "MIT License\n\nCopyright (c) Facebook, Inc. and its affiliates.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+        }
+      ]
+    },
+    {
+      "name": "react-dom",
+      "version": "18.3.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react-dom/-/react-dom-18.3.1.tgz",
+      "dependencies": ["scheduler@0.23.2", "loose-envify@1.4.0", "react@18.3.1"],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+          "text": "MIT License\n\nCopyright (c) Facebook, Inc. and its affiliates.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+        }
+      ]
+    },
+    {
+      "name": "react-easy-swipe",
+      "version": "0.0.21",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react-easy-swipe/-/react-easy-swipe-0.0.21.tgz",
+      "dependencies": ["prop-types@15.8.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "react-html-attributes",
+      "version": "1.4.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react-html-attributes/-/react-html-attributes-1.4.6.tgz",
+      "dependencies": ["html-element-attributes@1.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "react-is",
+      "version": "16.13.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react-is/-/react-is-16.13.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "react-number-format",
+      "version": "5.4.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react-number-format/-/react-number-format-5.4.5.tgz",
+      "dependencies": ["react@18.3.1", "react-dom@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "react-remove-scroll",
+      "version": "2.7.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react-remove-scroll/-/react-remove-scroll-2.7.2.tgz",
+      "dependencies": [
+        "react-remove-scroll-bar@2.3.8",
+        "react-style-singleton@2.2.3",
+        "tslib@2.8.1",
+        "use-callback-ref@1.3.3",
+        "use-sidecar@1.1.3",
+        "react@18.3.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "react-remove-scroll-bar",
+      "version": "2.3.8",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz",
+      "dependencies": ["react-style-singleton@2.2.3", "tslib@2.8.1", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "react-responsive-carousel",
+      "version": "3.2.23",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react-responsive-carousel/-/react-responsive-carousel-3.2.23.tgz",
+      "dependencies": ["classnames@2.5.1", "prop-types@15.8.1", "react-easy-swipe@0.0.21"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "react-style-singleton",
+      "version": "2.2.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/react-style-singleton/-/react-style-singleton-2.2.3.tgz",
+      "dependencies": ["tslib@2.8.1", "get-nonce@1.0.1", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "readable-stream",
+      "version": "2.3.8",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/readable-stream/-/readable-stream-2.3.8.tgz",
+      "dependencies": [
+        "isarray@1.0.0",
+        "inherits@2.0.4",
+        "safe-buffer@5.1.2",
+        "core-util-is@1.0.3",
+        "string_decoder@1.1.1",
+        "util-deprecate@1.0.2",
+        "process-nextick-args@2.0.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "readable-stream",
+      "version": "3.6.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.2.tgz",
+      "dependencies": ["inherits@2.0.4", "string_decoder@1.3.0", "util-deprecate@1.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "readdir-glob",
+      "version": "1.1.3",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/readdir-glob/-/readdir-glob-1.1.3.tgz",
+      "dependencies": ["minimatch@5.1.9"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "reflect.getprototypeof",
+      "version": "1.0.10",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/reflect.getprototypeof/-/reflect.getprototypeof-1.0.10.tgz",
+      "dependencies": [
+        "call-bind@1.0.9",
+        "define-properties@1.2.1",
+        "es-abstract@1.24.2",
+        "es-errors@1.3.0",
+        "es-object-atoms@1.1.2",
+        "get-intrinsic@1.3.1",
+        "get-proto@1.0.1",
+        "which-builtin-type@1.2.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "regexp-to-ast",
+      "version": "0.5.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/regexp-to-ast/-/regexp-to-ast-0.5.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "regexp.prototype.flags",
+      "version": "1.5.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/regexp.prototype.flags/-/regexp.prototype.flags-1.5.4.tgz",
+      "dependencies": [
+        "call-bind@1.0.9",
+        "define-properties@1.2.1",
+        "es-errors@1.3.0",
+        "get-proto@1.0.1",
+        "gopd@1.2.0",
+        "set-function-name@2.0.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "require-directory",
+      "version": "2.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/require-directory/-/require-directory-2.1.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "rimraf",
+      "version": "2.7.1",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/rimraf/-/rimraf-2.7.1.tgz",
+      "dependencies": ["glob@7.2.3"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "rxjs",
+      "version": "7.8.2",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/rxjs/-/rxjs-7.8.2.tgz",
+      "dependencies": ["tslib@2.8.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "safe-array-concat",
+      "version": "1.1.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/safe-array-concat/-/safe-array-concat-1.1.4.tgz",
+      "dependencies": [
+        "call-bind@1.0.9",
+        "call-bound@1.0.4",
+        "get-intrinsic@1.3.1",
+        "has-symbols@1.1.0",
+        "isarray@2.0.5"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "safe-buffer",
+      "version": "5.1.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.1.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "safe-buffer",
+      "version": "5.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "safe-push-apply",
+      "version": "1.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/safe-push-apply/-/safe-push-apply-1.0.0.tgz",
+      "dependencies": ["es-errors@1.3.0", "isarray@2.0.5"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "safe-regex-test",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/safe-regex-test/-/safe-regex-test-1.1.0.tgz",
+      "dependencies": ["call-bound@1.0.4", "es-errors@1.3.0", "is-regex@1.2.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "saxes",
+      "version": "5.0.1",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/saxes/-/saxes-5.0.1.tgz",
+      "dependencies": ["xmlchars@2.2.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "scheduler",
+      "version": "0.23.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/scheduler/-/scheduler-0.23.2.tgz",
+      "dependencies": ["loose-envify@1.4.0"],
+      "optionalNotEvaluated": {},
+      "checkedLicenseFiles": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+          "text": "MIT License\n\nCopyright (c) Facebook, Inc. and its affiliates.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+        }
+      ]
+    },
+    {
+      "name": "semver",
+      "version": "6.3.1",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/semver/-/semver-6.3.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "set-function-length",
+      "version": "1.2.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/set-function-length/-/set-function-length-1.2.2.tgz",
+      "dependencies": [
+        "define-data-property@1.1.4",
+        "es-errors@1.3.0",
+        "function-bind@1.1.2",
+        "get-intrinsic@1.3.1",
+        "gopd@1.2.0",
+        "has-property-descriptors@1.0.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "set-function-name",
+      "version": "2.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/set-function-name/-/set-function-name-2.0.2.tgz",
+      "dependencies": [
+        "define-data-property@1.1.4",
+        "es-errors@1.3.0",
+        "functions-have-names@1.2.3",
+        "has-property-descriptors@1.0.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "set-proto",
+      "version": "1.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/set-proto/-/set-proto-1.0.0.tgz",
+      "dependencies": ["dunder-proto@1.0.1", "es-errors@1.3.0", "es-object-atoms@1.1.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "setimmediate",
+      "version": "1.0.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/setimmediate/-/setimmediate-1.0.5.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "side-channel",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/side-channel/-/side-channel-1.1.1.tgz",
+      "dependencies": [
+        "es-errors@1.3.0",
+        "object-inspect@1.13.4",
+        "side-channel-list@1.0.1",
+        "side-channel-map@1.0.1",
+        "side-channel-weakmap@1.0.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "side-channel-list",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/side-channel-list/-/side-channel-list-1.0.1.tgz",
+      "dependencies": ["es-errors@1.3.0", "object-inspect@1.13.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "side-channel-map",
+      "version": "1.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/side-channel-map/-/side-channel-map-1.0.1.tgz",
+      "dependencies": ["call-bound@1.0.4", "es-errors@1.3.0", "get-intrinsic@1.3.1", "object-inspect@1.13.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "side-channel-weakmap",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/side-channel-weakmap/-/side-channel-weakmap-1.0.2.tgz",
+      "dependencies": [
+        "call-bound@1.0.4",
+        "es-errors@1.3.0",
+        "get-intrinsic@1.3.1",
+        "object-inspect@1.13.4",
+        "side-channel-map@1.0.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "sonner",
+      "version": "2.0.8",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/sonner/-/sonner-2.0.8.tgz",
+      "dependencies": ["react@18.3.1", "react-dom@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "ssf",
+      "version": "0.11.2",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/ssf/-/ssf-0.11.2.tgz",
+      "dependencies": ["frac@1.1.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "stop-iteration-iterator",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/stop-iteration-iterator/-/stop-iteration-iterator-1.1.0.tgz",
+      "dependencies": ["es-errors@1.3.0", "internal-slot@1.1.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "string_decoder",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/string_decoder/-/string_decoder-1.1.1.tgz",
+      "dependencies": ["safe-buffer@5.1.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "string_decoder",
+      "version": "1.3.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/string_decoder/-/string_decoder-1.3.0.tgz",
+      "dependencies": ["safe-buffer@5.2.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "string-width",
+      "version": "4.2.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz",
+      "dependencies": ["strip-ansi@6.0.1", "emoji-regex@8.0.0", "is-fullwidth-code-point@3.0.0"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "string.prototype.trim",
+      "version": "1.2.11",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/string.prototype.trim/-/string.prototype.trim-1.2.11.tgz",
+      "dependencies": [
+        "call-bind@1.0.9",
+        "call-bound@1.0.4",
+        "define-data-property@1.1.4",
+        "define-properties@1.2.1",
+        "es-abstract@1.24.2",
+        "es-object-atoms@1.1.2",
+        "has-property-descriptors@1.0.2",
+        "safe-regex-test@1.1.0"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "string.prototype.trimend",
+      "version": "1.0.10",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/string.prototype.trimend/-/string.prototype.trimend-1.0.10.tgz",
+      "dependencies": ["call-bind@1.0.9", "call-bound@1.0.4", "define-properties@1.2.1", "es-object-atoms@1.1.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "string.prototype.trimstart",
+      "version": "1.0.8",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/string.prototype.trimstart/-/string.prototype.trimstart-1.0.8.tgz",
+      "dependencies": ["call-bind@1.0.9", "define-properties@1.2.1", "es-object-atoms@1.1.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "strip-ansi",
+      "version": "6.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz",
+      "dependencies": ["ansi-regex@5.0.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "tar-stream",
+      "version": "2.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/tar-stream/-/tar-stream-2.2.0.tgz",
+      "dependencies": [
+        "bl@4.1.0",
+        "inherits@2.0.4",
+        "fs-constants@1.0.0",
+        "end-of-stream@1.4.5",
+        "readable-stream@3.6.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "tmp",
+      "version": "0.2.7",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/tmp/-/tmp-0.2.7.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "traverse",
+      "version": "0.3.10",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/traverse/-/traverse-0.3.10.tgz",
+      "dependencies": [
+        "gopd@1.2.0",
+        "es-to-primitive@1.3.4",
+        "which-typed-array@1.1.24",
+        "define-data-property@1.1.4",
+        "typedarray.prototype.slice@1.0.6"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "trigram-utils",
+      "version": "2.0.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/trigram-utils/-/trigram-utils-2.0.1.tgz",
+      "dependencies": ["collapse-white-space@2.1.0", "n-gram@2.0.2"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "ts-invariant",
+      "version": "0.10.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/ts-invariant/-/ts-invariant-0.10.3.tgz",
+      "dependencies": ["tslib@2.8.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "tslib",
+      "version": "2.8.1",
+      "license": "0BSD",
+      "tarball": "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "typed-array-buffer",
+      "version": "1.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/typed-array-buffer/-/typed-array-buffer-1.0.3.tgz",
+      "dependencies": ["call-bound@1.0.4", "es-errors@1.3.0", "is-typed-array@1.1.15"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "typed-array-byte-length",
+      "version": "1.0.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/typed-array-byte-length/-/typed-array-byte-length-1.0.3.tgz",
+      "dependencies": ["call-bind@1.0.9", "for-each@0.3.5", "gopd@1.2.0", "has-proto@1.2.0", "is-typed-array@1.1.15"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "typed-array-byte-offset",
+      "version": "1.0.5",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/typed-array-byte-offset/-/typed-array-byte-offset-1.0.5.tgz",
+      "dependencies": [
+        "gopd@1.2.0",
+        "for-each@0.3.5",
+        "call-bind@1.0.9",
+        "is-typed-array@1.1.15",
+        "available-typed-arrays@1.0.7",
+        "reflect.getprototypeof@1.0.10"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "typed-array-length",
+      "version": "1.0.8",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/typed-array-length/-/typed-array-length-1.0.8.tgz",
+      "dependencies": [
+        "call-bind@1.0.9",
+        "for-each@0.3.5",
+        "gopd@1.2.0",
+        "is-typed-array@1.1.15",
+        "possible-typed-array-names@1.1.0",
+        "reflect.getprototypeof@1.0.10"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "typedarray.prototype.slice",
+      "version": "1.0.6",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/typedarray.prototype.slice/-/typedarray.prototype.slice-1.0.6.tgz",
+      "dependencies": [
+        "call-bind@1.0.9",
+        "es-errors@1.3.0",
+        "get-proto@1.0.1",
+        "es-abstract@1.24.2",
+        "math-intrinsics@1.1.0",
+        "define-properties@1.2.1",
+        "typed-array-buffer@1.0.3",
+        "typed-array-byte-offset@1.0.5"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "unbox-primitive",
+      "version": "1.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/unbox-primitive/-/unbox-primitive-1.1.0.tgz",
+      "dependencies": ["call-bound@1.0.4", "has-bigints@1.1.0", "has-symbols@1.1.0", "which-boxed-primitive@1.1.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "undici-types",
+      "version": "8.9.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/undici-types/-/undici-types-8.9.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "unicount",
+      "version": "1.1.0",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/unicount/-/unicount-1.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "unzipper",
+      "version": "0.10.14",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/unzipper/-/unzipper-0.10.14.tgz",
+      "dependencies": [
+        "binary@0.3.0",
+        "fstream@1.0.12",
+        "bluebird@3.4.7",
+        "duplexer2@0.1.4",
+        "big-integer@1.6.52",
+        "graceful-fs@4.2.11",
+        "setimmediate@1.0.5",
+        "listenercount@1.0.1",
+        "readable-stream@2.3.8",
+        "buffer-indexof-polyfill@1.0.2"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "update-browserslist-db",
+      "version": "1.3.4",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/update-browserslist-db/-/update-browserslist-db-1.3.4.tgz",
+      "dependencies": ["escalade@3.2.0", "picocolors@1.1.1", "browserslist@4.29.3"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "use-callback-ref",
+      "version": "1.3.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/use-callback-ref/-/use-callback-ref-1.3.3.tgz",
+      "dependencies": ["tslib@2.8.1", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "use-sidecar",
+      "version": "1.1.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/use-sidecar/-/use-sidecar-1.1.3.tgz",
+      "dependencies": ["detect-node-es@1.1.0", "tslib@2.8.1", "react@18.3.1"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "util-deprecate",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "uuid",
+      "version": "8.3.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/uuid/-/uuid-8.3.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "which-boxed-primitive",
+      "version": "1.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/which-boxed-primitive/-/which-boxed-primitive-1.1.1.tgz",
+      "dependencies": [
+        "is-bigint@1.1.0",
+        "is-boolean-object@1.2.2",
+        "is-number-object@1.1.1",
+        "is-string@1.1.1",
+        "is-symbol@1.1.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "which-builtin-type",
+      "version": "1.2.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/which-builtin-type/-/which-builtin-type-1.2.1.tgz",
+      "dependencies": [
+        "call-bound@1.0.4",
+        "function.prototype.name@1.2.0",
+        "has-tostringtag@1.0.2",
+        "is-async-function@2.1.1",
+        "is-date-object@1.1.0",
+        "is-finalizationregistry@1.1.1",
+        "is-generator-function@1.1.2",
+        "is-regex@1.2.1",
+        "is-weakref@1.1.1",
+        "isarray@2.0.5",
+        "which-boxed-primitive@1.1.1",
+        "which-collection@1.0.2",
+        "which-typed-array@1.1.24"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "which-collection",
+      "version": "1.0.2",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/which-collection/-/which-collection-1.0.2.tgz",
+      "dependencies": ["is-map@2.0.3", "is-set@2.0.3", "is-weakmap@2.0.2", "is-weakset@2.0.4"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "which-typed-array",
+      "version": "1.1.24",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/which-typed-array/-/which-typed-array-1.1.24.tgz",
+      "dependencies": [
+        "gopd@1.2.0",
+        "for-each@0.3.5",
+        "call-bind@1.0.9",
+        "get-proto@1.0.1",
+        "call-bound@1.0.4",
+        "has-tostringtag@1.0.2",
+        "available-typed-arrays@1.0.7"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "wmf",
+      "version": "1.0.2",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/wmf/-/wmf-1.0.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "word",
+      "version": "0.3.0",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/word/-/word-0.3.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "wrap-ansi",
+      "version": "7.0.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/wrap-ansi/-/wrap-ansi-7.0.0.tgz",
+      "dependencies": ["strip-ansi@6.0.1", "ansi-styles@4.3.0", "string-width@4.2.3"],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "wrappy",
+      "version": "1.0.2",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "xlsx",
+      "version": "0.18.5",
+      "license": "Apache-2.0",
+      "tarball": "https://registry.npmjs.org/xlsx/-/xlsx-0.18.5.tgz",
+      "dependencies": [
+        "cfb@1.2.2",
+        "ssf@0.11.2",
+        "wmf@1.0.2",
+        "word@0.3.0",
+        "crc-32@1.2.2",
+        "adler-32@1.3.1",
+        "codepage@1.15.0"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "xmlchars",
+      "version": "2.2.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/xmlchars/-/xmlchars-2.2.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "y18n",
+      "version": "5.0.8",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/y18n/-/y18n-5.0.8.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "yallist",
+      "version": "3.1.1",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/yallist/-/yallist-3.1.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "yargs",
+      "version": "17.7.3",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/yargs/-/yargs-17.7.3.tgz",
+      "dependencies": [
+        "y18n@5.0.8",
+        "cliui@8.0.1",
+        "escalade@3.2.0",
+        "string-width@4.2.3",
+        "yargs-parser@21.1.1",
+        "get-caller-file@2.0.5",
+        "require-directory@2.1.1"
+      ],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "yargs-parser",
+      "version": "21.1.1",
+      "license": "ISC",
+      "tarball": "https://registry.npmjs.org/yargs-parser/-/yargs-parser-21.1.1.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "yocto-queue",
+      "version": "0.1.0",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/yocto-queue/-/yocto-queue-0.1.0.tgz",
+      "dependencies": [],
+      "optionalNotEvaluated": {}
+    },
+    {
+      "name": "zip-stream",
+      "version": "4.1.1",
+      "license": "MIT",
+      "tarball": "https://registry.npmjs.org/zip-stream/-/zip-stream-4.1.1.tgz",
+      "dependencies": ["archiver-utils@3.0.4", "readable-stream@3.6.2", "compress-commons@4.1.2"],
+      "optionalNotEvaluated": {}
+    }
+  ]
+}
