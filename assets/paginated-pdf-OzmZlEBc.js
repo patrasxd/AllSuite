@@ -1,4 +1,4 @@
-import{g as Vn}from"./draft-xml-runtime-CFkymArP.js";import{j as Xv}from"./DocumentWorkspace-Aazm3t13.js";import"./index-DNSwijQc.js";import"./WorkspaceChrome-CELr_ijS.js";import"./draft-math-runtime-C7umrvKo.js";import"./draft-paste-sanitizer-DowdsyMd.js";/*! *****************************************************************************
+import{g as Vn}from"./draft-xml-runtime-Di-hrRl1.js";import{j as Xv}from"./DocumentWorkspace-C9hVYQoO.js";import"./index-EgDJt23x.js";import"./RibbonMenuButton-DTSZVI6j.js";import"./draft-math-runtime-C7umrvKo.js";import"./draft-paste-sanitizer-DowdsyMd.js";/*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 
 Permission to use, copy, modify, and/or distribute this software for any

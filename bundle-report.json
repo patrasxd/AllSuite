@@ -1,8 +1,8 @@
 [
   {
-    "file": "assets/draft-xml-runtime-CFkymArP.js",
+    "file": "assets/draft-xml-runtime-Di-hrRl1.js",
     "entry": false,
-    "bytes": 85195,
+    "bytes": 85227,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -54,9 +54,9 @@
     "dynamicImports": []
   },
   {
-    "file": "assets/index-DNSwijQc.js",
+    "file": "assets/index-EgDJt23x.js",
     "entry": true,
-    "bytes": 340065,
+    "bytes": 345743,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -69,15 +69,15 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/draft-xml-runtime-CFkymArP.js"
+      "assets/draft-xml-runtime-Di-hrRl1.js"
     ],
     "dynamicImports": [
-      "assets/index-DFfH0OB2.js",
-      "assets/index-C7arBu5K.js"
+      "assets/index-Dj1JGky2.js",
+      "assets/index-WIkktZt_.js"
     ]
   },
   {
-    "file": "assets/index-DFfH0OB2.js",
+    "file": "assets/index-Dj1JGky2.js",
     "entry": false,
     "bytes": 481,
     "editor": false,
@@ -92,17 +92,17 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/index-DNSwijQc.js",
-      "assets/draft-xml-runtime-CFkymArP.js"
+      "assets/index-EgDJt23x.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js"
     ],
     "dynamicImports": [
-      "assets/DocumentWorkspace-Aazm3t13.js"
+      "assets/DocumentWorkspace-C9hVYQoO.js"
     ]
   },
   {
-    "file": "assets/index-C7arBu5K.js",
+    "file": "assets/index-WIkktZt_.js",
     "entry": false,
-    "bytes": 166740,
+    "bytes": 406826,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -113,18 +113,19 @@
     "gridXlsx": true,
     "gridFormula": true,
     "gridZip": false,
-    "gridWasm": false,
+    "gridWasm": true,
     "imports": [
-      "assets/index-DNSwijQc.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
-      "assets/draft-xml-runtime-CFkymArP.js"
+      "assets/index-EgDJt23x.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/browser-DGJMdpFZ.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/DocumentWorkspace-Aazm3t13.js",
+    "file": "assets/DocumentWorkspace-C9hVYQoO.js",
     "entry": false,
-    "bytes": 763303,
+    "bytes": 785853,
     "editor": true,
     "docx": false,
     "mammoth": false,
@@ -137,14 +138,14 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/index-DNSwijQc.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
-      "assets/draft-xml-runtime-CFkymArP.js",
+      "assets/index-EgDJt23x.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
       "assets/draft-math-runtime-C7umrvKo.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": [
-      "assets/reference-layout-DUVkcX3b.js",
+      "assets/reference-layout-wY0BKNpq.js",
       "assets/carlito-DRsPRvRv.js",
       "assets/caladea-BFoHbI4T.js",
       "assets/arimo-OfVQoPeE.js",
@@ -159,25 +160,24 @@
       "assets/prism-sql-AgAyy5H_.js",
       "assets/prism-typescript-B2PMeEx1.js",
       "assets/prism-yaml-Chm5ZdEN.js",
-      "assets/prism-D7fhOkP7.js",
-      "assets/index-D49I_UZQ.js",
-      "assets/worker-client-CePr8OJ1.js",
-      "assets/reference-layout-DUVkcX3b.js",
-      "assets/index-DJjgTjdR.js",
-      "assets/export-CuSavPYm.js",
-      "assets/index-BaDI2C8k.js",
-      "assets/print-layout-DoXgGL94.js",
-      "assets/paginated-pdf-C4ongVA1.js",
-      "assets/index-BaDI2C8k.js",
-      "assets/reference-layout-DUVkcX3b.js",
-      "assets/export-CAqPbhqn.js",
-      "assets/export-CuSavPYm.js"
+      "assets/prism-DqHPJ3Mo.js",
+      "assets/index-BTvR7_PT.js",
+      "assets/worker-client-C-3s8jvN.js",
+      "assets/reference-layout-wY0BKNpq.js",
+      "assets/index-DW--O8FO.js",
+      "assets/export-CAtUNMCf.js",
+      "assets/print-layout-DriXd6Jj.js",
+      "assets/paginated-pdf-OzmZlEBc.js",
+      "assets/index-DMUpjcFb.js",
+      "assets/reference-layout-wY0BKNpq.js",
+      "assets/export-1wbgPMbK.js",
+      "assets/export-CAtUNMCf.js"
     ]
   },
   {
-    "file": "assets/WorkspaceChrome-CELr_ijS.js",
+    "file": "assets/RibbonMenuButton-DTSZVI6j.js",
     "entry": false,
-    "bytes": 6576,
+    "bytes": 5071,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -190,14 +190,14 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/index-DNSwijQc.js"
+      "assets/index-EgDJt23x.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/index-DJjgTjdR.js",
+    "file": "assets/index-DW--O8FO.js",
     "entry": false,
-    "bytes": 438475,
+    "bytes": 438938,
     "editor": false,
     "docx": true,
     "mammoth": false,
@@ -210,21 +210,21 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/browser-BBJ3rJbX.js",
-      "assets/draft-xml-runtime-CFkymArP.js",
-      "assets/DocumentWorkspace-Aazm3t13.js",
-      "assets/math-BkvQeszB.js",
-      "assets/index-DNSwijQc.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
+      "assets/browser-DGJMdpFZ.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/DocumentWorkspace-C9hVYQoO.js",
+      "assets/math-BAaUBEKY.js",
+      "assets/index-EgDJt23x.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
       "assets/draft-math-runtime-C7umrvKo.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/export-CuSavPYm.js",
+    "file": "assets/export-CAtUNMCf.js",
     "entry": false,
-    "bytes": 37607,
+    "bytes": 37608,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -237,19 +237,19 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/DocumentWorkspace-Aazm3t13.js",
-      "assets/index-DNSwijQc.js",
-      "assets/draft-xml-runtime-CFkymArP.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
+      "assets/DocumentWorkspace-C9hVYQoO.js",
+      "assets/index-EgDJt23x.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
       "assets/draft-math-runtime-C7umrvKo.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/index-BaDI2C8k.js",
+    "file": "assets/print-layout-DriXd6Jj.js",
     "entry": false,
-    "bytes": 5684,
+    "bytes": 8772,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -262,19 +262,20 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/DocumentWorkspace-Aazm3t13.js",
-      "assets/index-DNSwijQc.js",
-      "assets/draft-xml-runtime-CFkymArP.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
+      "assets/reference-layout-wY0BKNpq.js",
+      "assets/DocumentWorkspace-C9hVYQoO.js",
+      "assets/index-EgDJt23x.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
       "assets/draft-math-runtime-C7umrvKo.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/print-layout-DoXgGL94.js",
+    "file": "assets/reference-layout-wY0BKNpq.js",
     "entry": false,
-    "bytes": 8586,
+    "bytes": 4225,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -287,20 +288,19 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/reference-layout-DUVkcX3b.js",
-      "assets/DocumentWorkspace-Aazm3t13.js",
-      "assets/index-DNSwijQc.js",
-      "assets/draft-xml-runtime-CFkymArP.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
+      "assets/DocumentWorkspace-C9hVYQoO.js",
+      "assets/index-EgDJt23x.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
       "assets/draft-math-runtime-C7umrvKo.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/reference-layout-DUVkcX3b.js",
+    "file": "assets/paginated-pdf-OzmZlEBc.js",
     "entry": false,
-    "bytes": 4235,
+    "bytes": 796350,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -313,19 +313,19 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/DocumentWorkspace-Aazm3t13.js",
-      "assets/index-DNSwijQc.js",
-      "assets/draft-xml-runtime-CFkymArP.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/DocumentWorkspace-C9hVYQoO.js",
+      "assets/index-EgDJt23x.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
       "assets/draft-math-runtime-C7umrvKo.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/paginated-pdf-C4ongVA1.js",
+    "file": "assets/index-DMUpjcFb.js",
     "entry": false,
-    "bytes": 796349,
+    "bytes": 5695,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -338,19 +338,19 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/draft-xml-runtime-CFkymArP.js",
-      "assets/DocumentWorkspace-Aazm3t13.js",
-      "assets/index-DNSwijQc.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
+      "assets/DocumentWorkspace-C9hVYQoO.js",
+      "assets/index-EgDJt23x.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
       "assets/draft-math-runtime-C7umrvKo.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/export-CAqPbhqn.js",
+    "file": "assets/export-1wbgPMbK.js",
     "entry": false,
-    "bytes": 12459,
+    "bytes": 12460,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -363,11 +363,11 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/browser-BBJ3rJbX.js",
-      "assets/DocumentWorkspace-Aazm3t13.js",
-      "assets/index-DNSwijQc.js",
-      "assets/draft-xml-runtime-CFkymArP.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
+      "assets/browser-DGJMdpFZ.js",
+      "assets/DocumentWorkspace-C9hVYQoO.js",
+      "assets/index-EgDJt23x.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
       "assets/draft-math-runtime-C7umrvKo.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
@@ -464,7 +464,7 @@
     "dynamicImports": []
   },
   {
-    "file": "assets/worker-client-CePr8OJ1.js",
+    "file": "assets/worker-client-C-3s8jvN.js",
     "entry": false,
     "bytes": 767,
     "editor": false,
@@ -479,11 +479,11 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/index-DNSwijQc.js",
-      "assets/draft-xml-runtime-CFkymArP.js"
+      "assets/index-EgDJt23x.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js"
     ],
     "dynamicImports": [
-      "assets/import-CdA7Mhv2.js"
+      "assets/import-BEVBMah3.js"
     ]
   },
   {
@@ -649,7 +649,7 @@
     "dynamicImports": []
   },
   {
-    "file": "assets/prism-D7fhOkP7.js",
+    "file": "assets/prism-DqHPJ3Mo.js",
     "entry": false,
     "bytes": 19605,
     "editor": false,
@@ -664,14 +664,14 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/draft-xml-runtime-CFkymArP.js"
+      "assets/draft-xml-runtime-Di-hrRl1.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/index-D49I_UZQ.js",
+    "file": "assets/browser-DGJMdpFZ.js",
     "entry": false,
-    "bytes": 35000,
+    "bytes": 15172,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -681,22 +681,13 @@
     "gridWorkbook": false,
     "gridXlsx": false,
     "gridFormula": false,
-    "gridZip": false,
+    "gridZip": true,
     "gridWasm": false,
-    "imports": [
-      "assets/browser-BBJ3rJbX.js",
-      "assets/draft-xml-runtime-CFkymArP.js",
-      "assets/DocumentWorkspace-Aazm3t13.js",
-      "assets/math-BkvQeszB.js",
-      "assets/index-DNSwijQc.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
-      "assets/draft-math-runtime-C7umrvKo.js",
-      "assets/draft-paste-sanitizer-DowdsyMd.js"
-    ],
+    "imports": [],
     "dynamicImports": []
   },
   {
-    "file": "assets/math-BkvQeszB.js",
+    "file": "assets/math-BAaUBEKY.js",
     "entry": false,
     "bytes": 4276,
     "editor": false,
@@ -712,14 +703,14 @@
     "gridWasm": false,
     "imports": [
       "assets/draft-math-runtime-C7umrvKo.js",
-      "assets/draft-xml-runtime-CFkymArP.js"
+      "assets/draft-xml-runtime-Di-hrRl1.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/import-CdA7Mhv2.js",
+    "file": "assets/index-BTvR7_PT.js",
     "entry": false,
-    "bytes": 10608,
+    "bytes": 35327,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -732,20 +723,21 @@
     "gridZip": false,
     "gridWasm": false,
     "imports": [
-      "assets/browser-BBJ3rJbX.js",
-      "assets/draft-xml-runtime-CFkymArP.js",
-      "assets/DocumentWorkspace-Aazm3t13.js",
-      "assets/index-DNSwijQc.js",
-      "assets/WorkspaceChrome-CELr_ijS.js",
+      "assets/browser-DGJMdpFZ.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/DocumentWorkspace-C9hVYQoO.js",
+      "assets/math-BAaUBEKY.js",
+      "assets/index-EgDJt23x.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
       "assets/draft-math-runtime-C7umrvKo.js",
       "assets/draft-paste-sanitizer-DowdsyMd.js"
     ],
     "dynamicImports": []
   },
   {
-    "file": "assets/browser-BBJ3rJbX.js",
+    "file": "assets/import-BEVBMah3.js",
     "entry": false,
-    "bytes": 12429,
+    "bytes": 10609,
     "editor": false,
     "docx": false,
     "mammoth": false,
@@ -755,9 +747,17 @@
     "gridWorkbook": false,
     "gridXlsx": false,
     "gridFormula": false,
-    "gridZip": true,
+    "gridZip": false,
     "gridWasm": false,
-    "imports": [],
+    "imports": [
+      "assets/browser-DGJMdpFZ.js",
+      "assets/draft-xml-runtime-Di-hrRl1.js",
+      "assets/DocumentWorkspace-C9hVYQoO.js",
+      "assets/index-EgDJt23x.js",
+      "assets/RibbonMenuButton-DTSZVI6j.js",
+      "assets/draft-math-runtime-C7umrvKo.js",
+      "assets/draft-paste-sanitizer-DowdsyMd.js"
+    ],
     "dynamicImports": []
   },
   {
