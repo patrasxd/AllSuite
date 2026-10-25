@@ -1,5 +1,33 @@
-import { test, expect, type Download } from '@playwright/test'
+import { gridCommand } from './helpers/grid-command'
+import { test, expect, type Download, type Locator } from '@playwright/test'
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate'
+
+function parseTestCellAddress(address: string) {
+  const match = /^([A-Z]+)(\d+)$/i.exec(address)
+  if (!match) throw new Error(`Invalid test cell address: ${address}`)
+  const column = [...match[1].toUpperCase()].reduce((value, letter) => value * 26 + letter.charCodeAt(0) - 64, 0)
+  return { row: Number(match[2]), column }
+}
+
+async function moveGridToCell(grid: Locator, address: string) {
+  const target = parseTestCellAddress(address)
+  await grid.focus()
+  await grid.press('Control+Home')
+  for (let row = 1; row < target.row; row += 1) await grid.press('ArrowDown')
+  for (let column = 1; column < target.column; column += 1) await grid.press('ArrowRight')
+}
+
+async function selectGridRange(grid: Locator, rangeAddress: string) {
+  const [startAddress, endAddress = startAddress] = rangeAddress.split(':')
+  const start = parseTestCellAddress(startAddress)
+  const end = parseTestCellAddress(endAddress)
+  await moveGridToCell(grid, startAddress)
+  const rowKey = end.row < start.row ? 'Shift+ArrowUp' : 'Shift+ArrowDown'
+  const columnKey = end.column < start.column ? 'Shift+ArrowLeft' : 'Shift+ArrowRight'
+  for (let row = start.row; row !== end.row; row += end.row < start.row ? -1 : 1) await grid.press(rowKey)
+  for (let column = start.column; column !== end.column; column += end.column < start.column ? -1 : 1)
+    await grid.press(columnKey)
+}
 
 const simpleXlsxFixture = () =>
   zipSync(
@@ -162,22 +190,20 @@ test('@smoke Grid edits formulas and literal text, and undoes a bulk row inserti
   const editor = page.getByRole('textbox', { name: 'Edit cell A1' })
   await expect(editor).toBeFocused()
   await editor.fill('=1+1')
-  await editor.press('Enter')
+  await editor.press('Control+Enter')
   await expect(page.getByRole('textbox', { name: 'Formula bar' })).toHaveValue('=1+1')
   await expect(page.getByRole('gridcell', { name: 'A1, empty' })).toBeVisible()
 
   const formulaBar = page.getByRole('textbox', { name: 'Formula bar' })
   await formulaBar.fill("'=1+1")
-  await formulaBar.press('Enter')
+  await formulaBar.press('Control+Enter')
   await expect(page.getByRole('gridcell', { name: 'A1, =1+1' })).toBeVisible()
   await grid.press('F2')
   const literalEditor = page.getByRole('textbox', { name: 'Edit cell A1' })
   await expect(literalEditor).toHaveValue("'=1+1")
-  await literalEditor.press('Enter')
+  await literalEditor.press('Control+Enter')
 
-  const nameBox = page.getByRole('textbox', { name: 'Name box' })
-  await nameBox.fill('A1:A2')
-  await nameBox.press('Enter')
+  await selectGridRange(grid, 'A1:A2')
   await formulaBar.fill('bulk')
   await formulaBar.press('Control+Enter')
   await page.locator('[data-row-header="1"]').click({ button: 'right' })
@@ -193,7 +219,7 @@ test('@smoke Grid preview edits use the shared dirty and beforeunload guards', a
   await page.goto('./#/grid')
   const formulaBar = page.getByRole('textbox', { name: 'Formula bar' })
   await formulaBar.fill('=SUM(A1:A4)')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Back to AllSuite' }).click()
@@ -225,23 +251,19 @@ test('@smoke Grid recalculates a visible formula after editing its precedent', a
     'content',
     /script-src 'self';/,
   )
-  const nameBox = page.getByRole('textbox', { name: 'Name box' })
   const formulaBar = page.getByRole('textbox', { name: 'Formula bar' })
 
   await formulaBar.fill('5')
   await formulaBar.press('Enter')
-  await nameBox.fill('B1')
-  await nameBox.press('Enter')
+  await moveGridToCell(page.getByRole('grid'), 'B1')
   await formulaBar.fill('=A1*2')
   await formulaBar.press('Enter')
   await expect(page.getByRole('gridcell', { name: 'B1, 10' })).toBeVisible()
 
-  await nameBox.fill('A1')
-  await nameBox.press('Enter')
+  await moveGridToCell(page.getByRole('grid'), 'A1')
   await formulaBar.fill('8')
   await formulaBar.press('Enter')
-  await nameBox.fill('B1')
-  await nameBox.press('Enter')
+  await moveGridToCell(page.getByRole('grid'), 'B1')
   await expect(page.getByRole('gridcell', { name: 'B1, 16' })).toBeVisible()
   await expect(formulaBar).toHaveValue('=A1*2')
   expect(externalRequests).toEqual([])
@@ -253,26 +275,24 @@ test('@smoke Grid localizes formula help and formatting without changing numeric
   await page.addInitScript(() => localStorage.setItem('allsuite:locale', 'en'))
   await page.goto('./#/grid')
 
-  const nameBox = page.getByRole('textbox', { name: 'Name box' })
   const formulaBar = page.getByRole('textbox', { name: 'Formula bar' })
   await formulaBar.fill('=SUMA(1,5;2,5)')
   await formulaBar.press('Enter')
   await expect(page.getByRole('gridcell', { name: 'A1, 4' })).toBeVisible()
 
-  await nameBox.fill('B1')
-  await nameBox.press('Enter')
+  await moveGridToCell(page.getByRole('grid'), 'B1')
   await formulaBar.fill('=COUNT(A1)')
   await formulaBar.press('Enter')
   await expect(page.getByRole('gridcell', { name: 'B1, 1' })).toBeVisible()
 
-  await nameBox.fill('A1')
-  await nameBox.press('Enter')
+  await moveGridToCell(page.getByRole('grid'), 'A1')
   await page.getByRole('combobox', { name: 'Number format' }).selectOption('pln')
   await expect(page.locator('#grid-cell-A1')).toContainText(/PLN|zł/u)
   await expect(page.getByRole('gridcell', { name: 'B1, 1' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Open preferences menu' }).click()
   await page.getByRole('button', { name: 'Polski', exact: true }).click()
+  await page.keyboard.press('Escape')
   const polishFormulaBar = page.getByRole('textbox', { name: 'Pasek formuły' })
   await expect(polishFormulaBar).toHaveValue('=SUMA(1,5;2,5)')
   await expect(page.locator('#grid-cell-A1')).toContainText(/4/u)
@@ -297,8 +317,8 @@ test('@smoke Grid exports an XLSX download and clears dirty state after initiati
   await expect(page.locator('.grid-app')).toHaveAttribute('data-dirty', 'true')
 
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
-  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
+  await (await gridCommand(page, 'Save')).click()
   const download = await downloadPromise
   expect(download.suggestedFilename()).toBe('Book1.xlsx')
   await expect(page.locator('.grid-app')).not.toHaveAttribute('data-dirty', 'true')
@@ -310,10 +330,10 @@ test('@smoke Grid Save As downloads a workbook when the file picker is unavailab
     Object.defineProperty(window, 'showSaveFilePicker', { configurable: true, value: undefined })
   })
   await page.goto('./#/grid')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
 
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Save As', exact: true }).click()
+  await (await gridCommand(page, 'Save As')).click()
   const download = await downloadPromise
 
   expect(download.suggestedFilename()).toBe('Book1.xlsx')
@@ -327,21 +347,20 @@ test('@smoke Grid saves, reopens, edits and saves an XLSX copy through the no-pi
     Object.defineProperty(window, 'showSaveFilePicker', { configurable: true, value: undefined })
   })
   await page.goto('./#/grid')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
-  await page.getByRole('button', { name: 'New', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
+  await (await gridCommand(page, 'New')).click()
 
-  const nameBox = page.getByRole('textbox', { name: 'Name box' })
   const formulaBar = page.getByRole('textbox', { name: 'Formula bar' })
+  const grid = page.getByRole('grid', { name: 'Spreadsheet grid' })
   const setCell = async (address: string, value: string) => {
-    await nameBox.fill(address)
-    await nameBox.press('Enter')
+    await moveGridToCell(grid, address)
     await formulaBar.fill(value)
     await formulaBar.press('Enter')
   }
   const openFallbackFile = async (name: string, buffer: Buffer) => {
     const chooserPromise = page.waitForEvent('filechooser')
-    await page.getByRole('tab', { name: 'File', exact: true }).click()
-    await page.getByRole('button', { name: 'Open', exact: true }).click()
+    await page.getByRole('button', { name: 'File', exact: true }).click()
+    await (await gridCommand(page, 'Open')).click()
     const chooser = await chooserPromise
     await chooser.setFiles({
       name,
@@ -361,8 +380,8 @@ test('@smoke Grid saves, reopens, edits and saves an XLSX copy through the no-pi
   await expect(page.getByRole('gridcell', { name: 'B1, 7' })).toBeVisible({ timeout: 20_000 })
 
   const firstDownloadPromise = page.waitForEvent('download')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
-  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
+  await (await gridCommand(page, 'Save')).click()
   const firstDownload = await firstDownloadPromise
   const firstBytes = await readDownloadBytes(firstDownload)
   expect(firstBytes.byteLength).toBeGreaterThan(100)
@@ -373,15 +392,14 @@ test('@smoke Grid saves, reopens, edits and saves an XLSX copy through the no-pi
   await confirmOpen()
   await expect(page.getByRole('gridcell', { name: 'A1, 5' })).toBeVisible()
   await expect(page.getByRole('gridcell', { name: 'B1, 7' })).toBeVisible()
-  await nameBox.fill('B1')
-  await nameBox.press('Enter')
+  await moveGridToCell(grid, 'B1')
   await expect(formulaBar).toHaveValue('=SUM(A1,2)')
 
   await setCell('A1', '8')
   await expect(page.getByRole('gridcell', { name: 'B1, 10' })).toBeVisible()
   const saveAsDownloadPromise = page.waitForEvent('download')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
-  await page.getByRole('button', { name: 'Save As', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
+  await (await gridCommand(page, 'Save As')).click()
   const saveAsDownload = await saveAsDownloadPromise
   const saveAsBytes = await readDownloadBytes(saveAsDownload)
   expect(saveAsDownload.suggestedFilename()).toMatch(/\.xlsx$/i)
@@ -454,8 +472,8 @@ test('@smoke Grid requires Save As before overwriting a source with chart and pi
     })
   }, fixtureBase64)
   await page.goto('./#/grid')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
-  await page.getByRole('button', { name: 'Open', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
+  await (await gridCommand(page, 'Open')).click()
   const importReview = page.getByRole('dialog', { name: 'Workbook compatibility check' })
   await expect(importReview).toBeVisible()
   await importReview.getByRole('button', { name: 'Open workbook' }).click()
@@ -464,8 +482,8 @@ test('@smoke Grid requires Save As before overwriting a source with chart and pi
   const formulaBar = page.getByRole('textbox', { name: 'Formula bar' })
   await formulaBar.fill('edited with preserved parts')
   await formulaBar.press('Enter')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
-  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
+  await (await gridCommand(page, 'Save')).click()
 
   const saveReview = page.getByRole('dialog', { name: 'Workbook save review' })
   await expect(saveReview).toBeVisible()
@@ -522,9 +540,7 @@ test('@smoke Grid preflights XLSX parts before replacing the in-memory workbook'
   await confirm
   await expect(page.getByRole('tab', { name: 'Imported' })).toBeVisible()
   await expect(page.getByRole('gridcell', { name: 'A1, opened from xlsx' })).toBeVisible()
-  const nameBox = page.getByRole('textbox', { name: 'Name box' })
-  await nameBox.fill('A2')
-  await nameBox.press('Enter')
+  await moveGridToCell(page.getByRole('grid', { name: 'Spreadsheet grid' }), 'A2')
   await expect(formulaBar).toHaveValue('=1+1')
   await expect(page.getByRole('gridcell', { name: 'A2, 2' })).toBeVisible()
   await expect(page.locator('.grid-app')).not.toHaveAttribute('data-dirty', 'true')
@@ -562,9 +578,7 @@ test('@smoke Grid retains unsupported formula caches and inert external links af
   await expect(review).toContainText('External links are inert')
   await expect(review).toContainText('Custom XML is retained')
   await review.getByRole('button', { name: 'Open workbook', exact: true }).click()
-  const nameBox = page.getByRole('textbox', { name: 'Name box' })
-  await nameBox.fill('A2')
-  await nameBox.press('Enter')
+  await moveGridToCell(page.getByRole('grid', { name: 'Spreadsheet grid' }), 'A2')
   await expect(page.getByRole('textbox', { name: 'Formula bar' })).toHaveValue('=_xlfn.UNKNOWN([1]Data!A1)')
   await expect(page.getByRole('gridcell', { name: 'A2, 37' })).toBeVisible()
   expect(remoteRequests).toEqual([])
@@ -580,17 +594,17 @@ test('@smoke Grid inherits the shared e-ink theme and reduced-motion setting', a
   await expect(page.locator('.grid-app')).toHaveAttribute('data-theme', 'e-ink-dark')
 })
 
-test('@smoke Grid navigates, selects name-box ranges, grows lazily and virtualizes both axes', async ({ page }) => {
+test('@smoke Grid navigates, selects keyboard ranges, grows lazily and virtualizes both axes', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('./#/grid')
   const grid = page.getByRole('grid', { name: 'Spreadsheet grid' })
+  const nameBox = page.getByRole('textbox', { name: 'Name box' })
   await grid.focus()
   await grid.press('ArrowRight')
   await grid.press('Shift+ArrowDown')
   await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-B2')
   await expect(page.locator('#grid-cell-B2')).toHaveAttribute('aria-selected', 'true')
 
-  const nameBox = page.getByRole('textbox', { name: 'Name box' })
   await nameBox.fill('A1:D20')
   await nameBox.press('Enter')
   await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-D20')
@@ -621,10 +635,12 @@ test('@smoke Grid supports drag ranges and row, column and corner header selecti
   await page.mouse.move(endBounds!.x + endBounds!.width / 2, endBounds!.y + endBounds!.height / 2)
   await page.mouse.up()
   await expect(page.getByRole('textbox', { name: 'Name box' })).toHaveValue('A1:C3')
+  await expect(page.locator('[data-cell-address="C3"]')).toHaveAttribute('data-range-edges', 'bottom right')
   await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-C3')
 
   await page.locator('[data-row-header="3"]').click()
   await expect(page.getByRole('textbox', { name: 'Name box' })).toHaveValue('A3:Z3')
+  await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-Z3')
   await page.locator('.grid-sheet-scroll').evaluate((element) => {
     element.scrollLeft = 0
     element.dispatchEvent(new Event('scroll'))
@@ -632,8 +648,10 @@ test('@smoke Grid supports drag ranges and row, column and corner header selecti
   await expect(page.locator('[data-column-header="2"]')).toBeVisible()
   await page.locator('[data-column-header="2"]').click()
   await expect(page.getByRole('textbox', { name: 'Name box' })).toHaveValue('B1:B100')
+  await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-B100')
   await page.locator('[data-select-all="true"]').click()
   await expect(page.getByRole('textbox', { name: 'Name box' })).toHaveValue('A1:AP200')
+  await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-AP200')
 })
 
 test('@smoke Grid supports touch selection and keeps the formula bar available on mobile', async ({ browser }) => {
@@ -656,7 +674,7 @@ test('@smoke Grid supports touch selection and keeps the formula bar available o
   await expect(formulaBar).toBeVisible()
   await expect(formulaBar).toHaveAttribute('inputmode', 'text')
   await formulaBar.fill('touch value')
-  await formulaBar.press('Enter')
+  await formulaBar.press('Control+Enter')
   await expect(mobilePage.locator('#grid-cell-B2')).toContainText('touch value')
   await mobilePage.getByRole('button', { name: 'Move selection right' }).tap()
   await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-C2')
@@ -707,6 +725,7 @@ test('@smoke Grid supports touch selection and keeps the formula bar available o
     buttons: 0,
   })
   await expect(mobilePage.getByRole('textbox', { name: 'Name box' })).toHaveValue('A2:C3')
+  await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-C3')
 
   await context.close()
 })
@@ -832,14 +851,12 @@ test('@smoke Grid keeps named keyboard editing and the workspace visible across 
   }
 
   await page.setViewportSize({ width: 1280, height: 800 })
-  const nameBox = page.getByRole('textbox', { name: 'Name box' })
   const formulaBar = page.getByRole('textbox', { name: 'Formula bar' })
   const grid = page.getByRole('grid', { name: 'Spreadsheet grid' })
-  await nameBox.fill('B2')
-  await nameBox.press('Enter')
+  await moveGridToCell(grid, 'B2')
   await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-B2')
   await formulaBar.fill('=SUM(1,2)')
-  await formulaBar.press('Enter')
+  await formulaBar.press('Control+Enter')
   await expect(page.getByRole('gridcell', { name: 'B2, 3' })).toBeVisible()
   await expect(formulaBar).toHaveValue('=SUM(1,2)')
 })

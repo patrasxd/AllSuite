@@ -127,7 +127,11 @@ export function editorExtensions({
         },
         {
           types: ['doc'],
-          attributes: { columns: { default: 1 }, comments: { default: null } },
+          attributes: {
+            columns: { default: 1 },
+            comments: { default: null },
+            coreProperties: { default: null, rendered: false },
+          },
         },
       ]
     },

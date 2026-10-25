@@ -2,7 +2,8 @@ import { Extension, type Editor } from '@tiptap/core'
 import type { Node as PMNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
-import { pageGeometry, placeOnPage, paragraphRuns } from '../engine/pagination'
+import { pageGeometry, paragraphRuns } from '../engine/pagination'
+import { COLUMN_GAP, columnCount, columnPosition, placeInColumn } from '../engine/columns'
 import { readPageSetup } from '../engine/page-setup'
 import { paragraphFormat, readStyles } from '../engine/styles'
 import { textBlockChange } from './text-block-change'
@@ -245,6 +246,12 @@ export const Pagination = Extension.create<{ onPages: (pages: number) => void }>
             const scrollTop = scroll.scrollTop
             try {
               const setup = readPageSetup({ attrs: view.state.doc.attrs })
+              const columns = paper.classList.contains('draft-paper--columns')
+                ? columnCount({ attrs: view.state.doc.attrs })
+                : 1
+              const bodyWidth = (setup.width - setup.left - setup.right) / 15 - 2
+              const columnWidth = (bodyWidth - (columns - 1) * COLUMN_GAP) / columns
+              view.dom.style.width = columns > 1 ? `${columnWidth}px` : ''
               const css = getComputedStyle(paper)
               const geometry = pageGeometry(
                 setup.height / 15,
@@ -252,9 +259,16 @@ export const Pagination = Extension.create<{ onPages: (pages: number) => void }>
                 Number.parseFloat(css.getPropertyValue('--draft-margin-bottom')) || setup.bottom / 15,
               )
               const zoom = Number.parseFloat(getComputedStyle(paper.closest('.draft-page')!).zoom) || 1
+              const placeOnPage = (
+                top: number,
+                bottom: number,
+                offset: number,
+                geometry: Parameters<typeof placeInColumn>[3],
+                force?: 'always' | 'boundary',
+                header = 0,
+              ) => placeInColumn(top, bottom, offset, geometry, columns, force, header)
               view.dispatch(view.state.tr.setMeta(key, DecorationSet.empty).setMeta('addToHistory', false))
-              // CSS columns balance a continuous flow. Keep that view usable until a
-              // section/column fragmentation engine can paginate it faithfully.
+              // Unsupported object documents retain their continuous editing view.
               if (!paper.classList.contains('draft-paper--paged')) {
                 stableHeights = new WeakMap()
                 return
@@ -428,14 +442,86 @@ export const Pagination = Extension.create<{ onPages: (pages: number) => void }>
                 }
               }
               if (corrected) view.dispatch(view.state.tr.setMeta(key, decorations()).setMeta('addToHistory', false))
+              if (columns > 1) {
+                // The existing paginator measures a narrow continuous lane. Project its
+                // virtual pages into physical columns using view-only decorations.
+                const projected: Decoration[] = []
+                const measured = measure(view, zoom)
+                for (const block of measured) {
+                  const node = view.state.doc.nodeAt(block.pos)
+                  if (!node?.isTextblock) continue
+                  const lines = (block.lines || []).filter((line) => !line.force)
+                  const first = lines[0]
+                  if (!first) continue
+                  const laneAt = (line: Anchor) => Math.max(0, Math.floor((line.glyph + 0.5) / geometry.pitch))
+                  const firstLane = laneAt(first)
+                  const transform = (lane: number) => {
+                    const shift = columnPosition(lane, columns, columnWidth + COLUMN_GAP, geometry.pitch)
+                    return `position:relative;left:${shift.x}px;top:${shift.y}px`
+                  }
+                  if (lines.every((line) => laneAt(line) === firstLane)) {
+                    projected.push(
+                      Decoration.node(block.pos, block.pos + node.nodeSize, { style: transform(firstLane) }),
+                    )
+                  } else {
+                    for (let i = 0; i < lines.length;) {
+                      const lane = laneAt(lines[i])
+                      let last = i + 1
+                      while (last < lines.length && laneAt(lines[last]) === lane) last++
+                      const from = i === 0 ? block.pos + 1 : lines[i].pos()
+                      const to = last < lines.length ? lines[last].pos() : block.pos + node.nodeSize - 1
+                      if (to > from) projected.push(Decoration.inline(from, to, { style: transform(lane) }))
+                      i = last
+                    }
+                  }
+                }
+                view.state.doc.descendants((node, pos) => {
+                  if (node.type.name !== 'listItem') return true
+                  const paragraph = measured.find((block) => block.pos === pos + 1)
+                  if (!paragraph?.lines?.length) return true
+                  const lane = Math.max(0, Math.floor((paragraph.lines[0].glyph + 0.5) / geometry.pitch))
+                  const shift = columnPosition(lane, columns, columnWidth + COLUMN_GAP, geometry.pitch)
+                  const parent = view.state.doc.resolve(pos).parent
+                  let index = 0
+                  parent.forEach((child, offset) => {
+                    if (offset < pos - view.state.doc.resolve(pos).start()) index++
+                  })
+                  const marker =
+                    parent.type.name === 'orderedList' ? `${Number(parent.attrs.start || 1) + index}.` : '•'
+                  projected.push(Decoration.node(pos, pos + node.nodeSize, { 'data-column-marker': 'true' }))
+                  projected.push(
+                    Decoration.widget(
+                      pos + 2,
+                      () => {
+                        const span = document.createElement('span')
+                        span.className = 'draft-column-marker'
+                        span.textContent = marker
+                        const whole = paragraph.lines!.every(
+                          (line) => Math.floor((line.glyph + 0.5) / geometry.pitch) === lane,
+                        )
+                        span.style.cssText = `display:inline-block;width:0;white-space:nowrap;overflow:visible;position:relative;left:${whole ? -24 : shift.x - 24}px;top:${whole ? 0 : shift.y}px`
+                        return span
+                      },
+                      { side: -1 },
+                    ),
+                  )
+                  return true
+                })
+                view.dispatch(
+                  view.state.tr
+                    .setMeta(key, decorations().add(view.state.doc, projected))
+                    .setMeta('addToHistory', false),
+                )
+              }
               stableHeights = new WeakMap()
-              view.state.doc.descendants((node, pos) => {
-                if (!node.isTextblock) return true
-                const dom = view.nodeDOM(pos)
-                if (dom instanceof HTMLElement) stableHeights.set(node, dom.getBoundingClientRect().height / zoom)
-                return false
-              })
-              const next = Math.max(1, Math.floor((Math.max(0, end) - 0.5) / geometry.pitch) + 1)
+              if (columns === 1)
+                view.state.doc.descendants((node, pos) => {
+                  if (!node.isTextblock) return true
+                  const dom = view.nodeDOM(pos)
+                  if (dom instanceof HTMLElement) stableHeights.set(node, dom.getBoundingClientRect().height / zoom)
+                  return false
+                })
+              const next = Math.max(1, Math.ceil((Math.floor((Math.max(0, end) - 0.5) / geometry.pitch) + 1) / columns))
               if (next !== pages) {
                 pages = next
                 onPages(pages)

@@ -1,0 +1,56 @@
+export const DELIMITED_COPY = {
+  en: {
+    import: 'Import CSV/TSV',
+    preview: 'CSV/TSV preview',
+    delimiter: 'Delimiter',
+    comma: 'Comma',
+    semicolon: 'Semicolon',
+    tab: 'Tab',
+    header: 'First row',
+    keep: 'Keep as data',
+    skip: 'Skip header row',
+    typing: 'Value types',
+    text: 'Text only',
+    scalars: 'Numbers and booleans',
+    policy:
+      'Text only is the default. Empty fields become blank. Optional conversion recognizes canonical decimal numbers and TRUE/FALSE only. Leading zeros, dates, whitespace and formula-looking text stay literal. UTF-8 only; at most 4 MB, 1,000,000 characters and 10,000 cells. Preview shows up to 20 rows and 10 columns. Skipping the header removes that row.',
+    losses:
+      'Derived file: current sheet values only, including hidden rows. Sheet names, styles, rich types and formulas are not retained. Dates become serial numbers. Only fresh formula results can be exported. CSV quoting does not prevent other spreadsheet apps from executing formula-looking text; Grid always imports it literally.',
+    invalid:
+      'Invalid, oversized or unsupported CSV/TSV. Choose a matching delimiter and UTF-8 file; rows must have equal widths.',
+    accept: 'Import workbook',
+    cancel: 'Cancel',
+    export: 'Export CSV/TSV',
+    exportFile: 'Export file',
+    format: 'File format',
+    ready: 'CSV/TSV imported. Save as XLSX to save this workbook.',
+    exported: 'Derived file exported. XLSX save status unchanged.',
+  },
+  pl: {
+    import: 'Importuj CSV/TSV',
+    preview: 'Podgląd CSV/TSV',
+    delimiter: 'Separator',
+    comma: 'Przecinek',
+    semicolon: 'Średnik',
+    tab: 'Tabulator',
+    header: 'Pierwszy wiersz',
+    keep: 'Zachowaj jako dane',
+    skip: 'Pomiń nagłówek',
+    typing: 'Typy wartości',
+    text: 'Tylko tekst',
+    scalars: 'Liczby i wartości logiczne',
+    policy:
+      'Domyślnie tylko tekst. Puste pola stają się puste. Opcjonalna konwersja rozpoznaje wyłącznie liczby dziesiętne z kropką i TRUE/FALSE. Zera wiodące, daty, odstępy i tekst przypominający formuły pozostają tekstem. Tylko UTF-8; do 4 MB, 1 000 000 znaków i 10 000 komórek. Podgląd: do 20 wierszy i 10 kolumn. Pominięcie nagłówka usuwa ten wiersz.',
+    losses:
+      'Plik pochodny: tylko wartości bieżącego arkusza, także ukryte wiersze. Nazwy arkuszy, style, typy i formuły nie są zachowywane. Daty stają się numerami seryjnymi. Eksport obejmuje tylko aktualne wyniki formuł. Cudzysłowy CSV nie zapobiegają uruchamianiu tekstu formuł w innych programach; Grid zawsze importuje go dosłownie.',
+    invalid:
+      'Nieprawidłowy, zbyt duży lub nieobsługiwany CSV/TSV. Wybierz właściwy separator i plik UTF-8; wiersze muszą mieć równą szerokość.',
+    accept: 'Importuj skoroszyt',
+    cancel: 'Anuluj',
+    export: 'Eksportuj CSV/TSV',
+    exportFile: 'Eksportuj plik',
+    format: 'Format pliku',
+    ready: 'Zaimportowano CSV/TSV. Zapisz jako XLSX, aby zapisać skoroszyt.',
+    exported: 'Wyeksportowano plik pochodny. Stan zapisu XLSX bez zmian.',
+  },
+}

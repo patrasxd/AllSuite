@@ -13,18 +13,20 @@ export function NavigationPanel({
   editor,
   locale,
   open,
+  embedded = false,
   onClose,
 }: {
   editor: Editor
   locale: Locale
   open: boolean
+  embedded?: boolean
   onClose: () => void
 }) {
   const t =
     locale === 'pl'
       ? {
           title: 'Konspekt',
-          empty: 'Nagłówki dokumentu pojawią się tutaj.',
+          empty: 'Zastosuj style nagłówków na karcie Narzędzia główne, aby utworzyć konspekt dokumentu.',
           collapse: 'Zwiń',
           expand: 'Rozwiń',
           close: 'Zamknij konspekt',
@@ -34,7 +36,7 @@ export function NavigationPanel({
         }
       : {
           title: 'Outline',
-          empty: 'Document headings will appear here.',
+          empty: 'Apply heading styles from Home to build your document outline.',
           collapse: 'Collapse',
           expand: 'Expand',
           close: 'Close outline',
@@ -113,9 +115,11 @@ export function NavigationPanel({
   const content = (
     <nav aria-label={t.title} className="draft-navigation-list">
       {!visible.length && <Text variant="caption">{t.empty}</Text>}
-      <Text variant="caption" className="draft-outline-hint">
-        {t.reorderHint}
-      </Text>
+      {visible.length > 0 && (
+        <Text variant="caption" className="draft-outline-hint">
+          {t.reorderHint}
+        </Text>
+      )}
       <ol role="tree" aria-label={t.title}>
         {visible.map((target) => {
           const index = state.targets.indexOf(target)
@@ -164,7 +168,7 @@ export function NavigationPanel({
                 )}
                 <Button
                   size="sm"
-                  variant={active === target.id ? 'primary' : 'ghost'}
+                  variant={active === target.id ? 'secondary' : 'ghost'}
                   aria-current={active === target.id ? 'location' : undefined}
                   tooltip={
                     locale === 'pl' ? `Przejdź do sekcji „${target.label}”.` : `Jump to the “${target.label}” section.`
@@ -209,6 +213,7 @@ export function NavigationPanel({
       </ol>
     </nav>
   )
+  if (embedded) return content
   if (phone)
     return (
       <Dialog open={open} onClose={onClose} title={t.title} className="draft-navigation-drawer">

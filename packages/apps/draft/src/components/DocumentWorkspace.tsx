@@ -1,7 +1,9 @@
 import { TableTools } from './TableTools'
 import { LinkDialog, ReferencesDialog, ReferenceTools } from './ReferenceTools'
+import { TaskPane } from '../../../../ui/src/TaskPane'
 import { NavigationPanel } from './NavigationPanel'
 import { exportLabels } from './ExportMenu'
+import { HeaderFooterDialog } from './HeaderFooterDialog'
 import { PageSetupDialog, pageLabels } from './PageSetupDialog'
 import {
   DEFAULT_PAGE_SETUP,
@@ -25,7 +27,6 @@ import {
   ButtonTooltipProvider,
   Dialog,
   FullBleedLayout,
-  StatsHeader,
   Text,
   WorkspaceStatusBar,
   WorkspaceStatusItem,
@@ -35,6 +36,7 @@ import {
 import { editorExtensions } from '../editor/extensions'
 import { setFormattingMarks } from '../editor/formatting-marks'
 import { setDocumentColumns } from '../editor/paragraph-commands'
+import { supportsColumnLayout } from '../engine/columns'
 import { sanitizeClipboardHTML } from '../editor/paste'
 import { copySelection, pasteFromClipboard, pasteImageFromClipboard } from '../editor/clipboard'
 import { insertImageContent } from '../editor/image-insertion'
@@ -56,6 +58,7 @@ import {
   writeToHandle,
   type FileHandle,
 } from '../engine/files'
+import { EditorHeaderContent } from '../../../../ui/src/EditorChrome'
 import { EditorToolbar } from './EditorToolbar'
 import { PageCanvas } from './PageCanvas'
 import { PrintPreview, printLabels, type PreviewDocument } from './PrintPreview'
@@ -92,17 +95,26 @@ export default function DocumentWorkspace({
   const t = translations[locale]
   const [dirty, setDirty] = useState(false)
   const [fileName, setFileName] = useState('Untitled')
+  const [headerActions, setHeaderActions] = useState<HTMLSpanElement | null>(null)
   const [fileHandle, setFileHandle] = useState<FileHandle>()
   const [documentLanguage, setDocumentLanguage] = useState<string>()
   const [pendingImport, setPendingImport] = useState<ImportResult & { name: string; handle?: FileHandle }>()
   const [busy, setBusy] = useState<'opening' | 'saving' | null>(null)
+  // A synchronous guard also covers shortcuts and same-event requests before React renders.
+  const fileOperation = useRef<'opening' | 'saving' | null>(null)
+  const revision = useRef(0)
+  const sourceFile = useRef<{ name: string; handle?: FileHandle; acknowledge: boolean }>()
+  const languageRef = useRef(documentLanguage || locale)
+  languageRef.current = documentLanguage || locale
   const [exporting, setExporting] = useState(false)
   const [preview, setPreview] = useState<PreviewDocument | null>(null)
   const exportAbort = useRef(new AbortController())
   const printWindows = useRef(new Set<Window>())
   const [progress, setProgress] = useState<number>()
   const [zoom, setZoom] = useState<import('../engine/page-view').PageZoom>(100)
-  const [pageView, setPageView] = useState<import('../engine/page-view').PageView>('print')
+  const [pageView, setPageView] = useState<import('../engine/page-view').PageView>(() =>
+    window.matchMedia?.('(max-width: 599px), (max-width: 899px) and (max-height: 499px)').matches ? 'web' : 'print',
+  )
   const [currentPage, setCurrentPage] = useState(1)
   const [pages, setPages] = useState(1)
   const [pageSetup, updatePageSetup] = useState<PageSetup>({ ...DEFAULT_PAGE_SETUP })
@@ -112,17 +124,27 @@ export default function DocumentWorkspace({
   const [paragraphDialog, setParagraphDialog] = useState(false)
   const [linkDialog, setLinkDialog] = useState(false)
   const [referencesDialog, setReferencesDialog] = useState(false)
-  const [navigation, setNavigation] = useState(false)
+  const [taskPane, setTaskPane] = useState<'find' | 'replace' | 'headings' | 'comments' | 'review' | null>(null)
+  const navigation = taskPane === 'headings'
+  const commentsOpen = taskPane === 'comments'
+  const suggestionsOpen = taskPane === 'review'
+  const findMode = taskPane === 'find' || taskPane === 'replace' ? taskPane : null
+  const [documentGeneration, setDocumentGeneration] = useState(0)
+  function togglePane(pane: NonNullable<typeof taskPane>) {
+    setTaskPane((current) => (current === pane ? null : pane))
+  }
+  function closeTaskPane() {
+    setTaskPane(null)
+    editorRef.current?.commands.focus()
+  }
   const [focusMode, setFocusMode] = useState(false)
-  const [commentsOpen, setCommentsOpen] = useState(false)
-  const [suggestionsOpen, setSuggestionsOpen] = useState(false)
   const [trackChanges, setTrackChanges] = useState(false)
   const [suggestionAuthor, setSuggestionAuthor] = useState('Guest')
   const [currentSuggestions, setCurrentSuggestions] = useState<SuggestionSummary[]>([])
   const [commentAuthor, setCommentAuthor] = useState('')
+  const [composeCommentRequest, setComposeCommentRequest] = useState(0)
   const [includeCommentsInPDF, setIncludeCommentsInPDF] = useState(false)
   const [currentComments, setCurrentComments] = useState<CommentThread[]>([])
-  const [findMode, setFindMode] = useState<'find' | 'replace' | null>(null)
   const [symbolDialog, setSymbolDialog] = useState<'symbols' | 'emoji' | null>(null)
   const [equationDialog, setEquationDialog] = useState(false)
   const [codeBlockDialog, setCodeBlockDialog] = useState(false)
@@ -150,7 +172,15 @@ export default function DocumentWorkspace({
     ...safeGetJSON('allsuite:draft:view-preferences', {}),
   }))
   const [notice, setNotice] = useState<
-    'clipboardError' | 'imagePasteHint' | 'fileError' | 'exportError' | 'printBlocked' | 'printColumns' | null
+    | 'clipboardError'
+    | 'imagePasteHint'
+    | 'fileError'
+    | 'sourceProtected'
+    | 'sourceUnverified'
+    | 'exportError'
+    | 'printBlocked'
+    | 'printColumns'
+    | null
   >(null)
   const [counts, setCounts] = useState({
     document: countText(''),
@@ -211,11 +241,12 @@ export default function DocumentWorkspace({
       requestImageEdit: () => setImageAltDialog(true),
       requestComment: () => {
         if (editorRef.current) rememberCommentSelection(editorRef.current)
-        setCommentsOpen(true)
+        setComposeCommentRequest((value) => value + 1)
+        setTaskPane('comments')
       },
       toggleComments: () => {
         if (editorRef.current) rememberCommentSelection(editorRef.current)
-        setCommentsOpen((current) => !current)
+        togglePane('comments')
       },
       getSuggestionAuthor: () => suggestionAuthorRef.current,
       getLocale: () => currentLocale.current,
@@ -228,7 +259,7 @@ export default function DocumentWorkspace({
         'aria-label': t.editor,
         'aria-multiline': 'true',
         spellcheck: 'true',
-        lang: locale,
+        lang: documentLanguage || locale,
       },
       transformPastedHTML: sanitizeClipboardHTML,
       handlePaste: (view, event) => {
@@ -295,6 +326,7 @@ export default function DocumentWorkspace({
       },
     },
     onUpdate: ({ editor: current, transaction }) => {
+      revision.current++
       setDirty(true)
       dirtyCallback.current?.(true)
       updateCounts(current)
@@ -335,7 +367,7 @@ export default function DocumentWorkspace({
       .setDocAttribute('comments', serializeCommentThreads([...comments, thread]))
     editor.view.dispatch(transaction)
     commentSelection.current = null
-    setCommentsOpen(true)
+    setTaskPane('comments')
   }
   function focusComment(id: string) {
     if (!editor) return
@@ -422,16 +454,11 @@ export default function DocumentWorkspace({
   useEffect(() => {
     setHeader?.(
       focusMode ? null : (
-        <StatsHeader
-          items={[
-            { key: 'words', label: t.words, value: counts.document.words },
-            { key: 'characters', label: t.characters, value: counts.document.charactersWithSpaces },
-          ]}
-        />
+        <EditorHeaderContent filename={fileName} dirty={dirty} locale={locale} actionsRef={setHeaderActions} />
       ),
     )
     return () => setHeader?.(null)
-  }, [setHeader, focusMode, counts.document.words, counts.document.charactersWithSpaces, t.words, t.characters])
+  }, [setHeader, focusMode, fileName, dirty, locale])
   useEffect(() => {
     if (!focusMode) return
     const leaveFocus = (event: KeyboardEvent) => {
@@ -453,7 +480,13 @@ export default function DocumentWorkspace({
     window.addEventListener('beforeunload', guard)
     return () => window.removeEventListener('beforeunload', guard)
   }, [hasUnsavedChanges])
-  function replaceDocument(result: ImportResult & { name: string; handle?: FileHandle }) {
+  function replaceDocument(result: ImportResult & { name: string; handle?: FileHandle }, imported = false) {
+    revision.current++
+    setDocumentGeneration((value) => value + 1)
+    setComposeCommentRequest(0)
+    sourceFile.current = imported
+      ? { name: result.name, handle: result.handle, acknowledge: /\.(docx|odt)$/i.test(result.name) }
+      : undefined
     imageAbort.current.abort()
     imageAbort.current = new AbortController()
     imageJobs.current = 0
@@ -462,8 +495,9 @@ export default function DocumentWorkspace({
     setImageAltDialog(false)
     setLinkDialog(false)
     setReferencesDialog(false)
-    setCommentsOpen(false)
+    setTaskPane(null)
     commentSelection.current = null
+    setInitialStoryTarget(undefined)
     setPageSetupDialog(false)
     // A replacement recreates pagination's plugin view, whose initial count is one.
     // Reset the React chrome too: an empty document does not emit a count change.
@@ -480,13 +514,15 @@ export default function DocumentWorkspace({
     )
     syncComments(editor, true)
     syncSuggestions(editor)
-    setSuggestionsOpen(false)
+    setTaskPane(null)
     setSuggestionTracking(editor, trackChanges)
     setFormattingMarks(editor, preferences.showFormattingMarks)
     editor.commands.setTextSelection(1)
     updateCounts(editor)
     setFileName(result.name)
-    setFileHandle(result.handle)
+    // Import is semantic conversion. Never reuse the original destination, even
+    // when its unsupported-content scanner found no known feature to report.
+    setFileHandle(imported ? undefined : result.handle)
     setDocumentLanguage(normalizeDocumentLanguage(result.language))
     setColumns(Number(result.document.attrs?.columns) || 1)
     updatePageSetup(readPageSetup(result.document))
@@ -496,12 +532,17 @@ export default function DocumentWorkspace({
   function changeDocumentLanguage(value: string) {
     const normalized = normalizeDocumentLanguage(value)
     if (!normalized || normalized === documentLanguage) return
+    revision.current++
+    languageRef.current = normalized
     setDocumentLanguage(normalized)
     setDirty(true)
     dirtyCallback.current?.(true)
   }
   async function openDocument() {
+    if (fileOperation.current || exporting || pendingImport || starterTemplatePickerOpen) return
     if (hasUnsavedChanges && !window.confirm(t.discardChanges)) return
+    fileOperation.current = 'opening'
+    const openingRevision = revision.current
     try {
       setBusy('opening')
       setProgress(0)
@@ -509,55 +550,105 @@ export default function DocumentWorkspace({
       const selected = await chooseFile()
       if (!selected) return
       const result = await readDocument(selected.file, selected.handle, setProgress)
+      if (exportAbort.current.signal.aborted) return
+      if (revision.current !== openingRevision && !window.confirm(t.discardChanges)) return
       if (result.unsupported.length) setPendingImport(result)
-      else replaceDocument(result)
+      else replaceDocument(result, true)
     } catch {
       setNotice('fileError')
     } finally {
+      fileOperation.current = null
       setBusy(null)
       setProgress(undefined)
     }
   }
   function newDocument() {
+    if (fileOperation.current || exporting || pendingImport) return
     if (hasUnsavedChanges && !window.confirm(t.discardChanges)) return
     setStarterTemplatePickerOpen(true)
   }
   function chooseBlankDocument() {
+    if (fileOperation.current) return
     replaceDocument({ document: emptyDocument(), name: 'Untitled', unsupported: [] })
     setStarterTemplatePickerOpen(false)
   }
   function chooseStarterTemplate(id: StarterTemplateId) {
+    if (fileOperation.current) return
     const template = createStarterTemplate(id, locale)
     replaceDocument({ document: template.document, name: template.fileName, unsupported: [] })
     setStarterTemplatePickerOpen(false)
   }
   async function saveDocument(saveAs = false) {
+    if (fileOperation.current || exporting || pendingImport || starterTemplatePickerOpen) return
+    fileOperation.current = 'saving'
+    const signal = exportAbort.current.signal
+    const savedRevision = revision.current
+    const savedLanguage = languageRef.current
+    const source = sourceFile.current
     try {
       setBusy('saving')
       setNotice(null)
+      if (source?.acknowledge && !window.confirm(t.lossySaveCopy)) return
       const snapshot = editor.getJSON()
       const { prepareReferenceExport } = await import('../browser/reference-layout')
-      const updated = await prepareReferenceExport(snapshot as DraftDocument, exportAbort.current.signal)
+      const updated = await prepareReferenceExport(snapshot as DraftDocument, signal)
       const { exportDocx } = await import('../engine/docx/export')
-      const blob = await exportDocx(updated, documentLanguage || locale)
+      const blob = await exportDocx(updated, savedLanguage)
+      if (signal.aborted) return
       let handle = fileHandle
-      if (saveAs || !handle) handle = await chooseSaveHandle(docxName(fileName))
+      const suggested =
+        source && /\.(docx|odt)$/i.test(source.name) && !fileHandle
+          ? docxName(source.name).replace(/\.docx$/i, '-copy.docx')
+          : docxName(fileName)
+      if (saveAs || !handle) {
+        try {
+          handle = await chooseSaveHandle(suggested)
+        } catch (error) {
+          if ((error as DOMException).name === 'AbortError') return
+          throw error
+        }
+      }
+      if (signal.aborted) return
       if (handle) {
+        if (
+          source &&
+          (handle === source.handle ||
+            handle.name.toLowerCase() === source.name.toLowerCase() ||
+            (source.handle?.isSameEntry && (await source.handle.isSameEntry(handle))))
+        ) {
+          setNotice('sourceProtected')
+          return
+        }
+        // Without native source identity, a renamed original could be any
+        // existing file. Establish a separate copy in an empty destination.
+        if (source && !source.handle?.isSameEntry && handle !== fileHandle && (await handle.getFile()).size > 0) {
+          setNotice('sourceUnverified')
+          return
+        }
+        if (signal.aborted) return
         await writeToHandle(handle, blob)
+        if (signal.aborted) return
         setFileHandle(handle)
         setFileName(handle.name)
-      } else download(blob, docxName(fileName))
-      if (JSON.stringify(editor.getJSON()) === JSON.stringify(snapshot)) {
+      } else download(blob, suggested)
+      if (source) source.acknowledge = false
+      if (
+        revision.current === savedRevision &&
+        languageRef.current === savedLanguage &&
+        JSON.stringify(editor.getJSON()) === JSON.stringify(snapshot)
+      ) {
         setDirty(false)
         dirtyCallback.current?.(false)
       }
     } catch {
       setNotice('fileError')
     } finally {
+      fileOperation.current = null
       setBusy(null)
     }
   }
   async function exportDocument(format: ExportFormat | 'print' | 'preview') {
+    if (fileOperation.current || exporting || pendingImport || starterTemplatePickerOpen) return
     const signal = exportAbort.current.signal
     let snapshot = editor.getJSON() as DraftDocument
     const sourceDocument = editor.state.doc
@@ -582,19 +673,6 @@ export default function DocumentWorkspace({
       }
       if (format === 'pdf' || format === 'print' || format === 'preview') {
         const browser = await import('../browser/export')
-        if (columns !== 1) {
-          if (format !== 'print') throw new Error('printColumns')
-          // Continuous multi-column documents retain their existing semantic print path.
-          const engine = await import('../engine/export')
-          const fonts = await browser.loadExportFonts(snapshot, signal)
-          await browser.printHTML(
-            target!,
-            engine.exportPDF(snapshot, { ...options, fonts, fontLicense: browser.fontLicense }),
-            signal,
-            close,
-          )
-          return
-        }
         const { capturePrintLayout } = await import('../browser/print-layout')
         const includeComments = format === 'preview' || format === 'print' || (format === 'pdf' && includeCommentsInPDF)
         const value =
@@ -692,7 +770,7 @@ export default function DocumentWorkspace({
       }
       if (key === 'f' || key === 'h') {
         event.preventDefault()
-        setFindMode(key === 'h' ? 'replace' : 'find')
+        setTaskPane(key === 'h' ? 'replace' : 'find')
       }
     }
     window.addEventListener('keydown', keyboardUtilities)
@@ -711,13 +789,11 @@ export default function DocumentWorkspace({
     }
   }
   function enterFocusMode() {
-    setNavigation(false)
-    setCommentsOpen(false)
-    setSuggestionsOpen(false)
-    setFindMode(null)
+    setTaskPane(null)
     setParagraphDialog(false)
     setLinkDialog(false)
     setReferencesDialog(false)
+    setInitialStoryTarget(undefined)
     setPageSetupDialog(false)
     setSymbolDialog(null)
     setEquationDialog(false)
@@ -737,7 +813,8 @@ export default function DocumentWorkspace({
   const characterStatusLabel =
     `${t.charactersWithSpaces}: ${counts.document.charactersWithSpaces}; ` +
     `${t.charactersWithoutSpaces}: ${counts.document.charactersWithoutSpaces}`
-  const hasPageStatus = columns === 1 && pageView === 'print'
+  const hasPageStatus =
+    pageView === 'print' && (columns === 1 || supportsColumnLayout(editor.getJSON() as DraftDocument))
   const visibleCurrentPage = Math.min(currentPage, pages)
   const pageStatusLabel = hasPageStatus
     ? locale === 'pl'
@@ -771,7 +848,7 @@ export default function DocumentWorkspace({
         />
       )}
       <FullBleedLayout
-        className={`draft-workspace${preview ? ' draft-workspace--preview-hidden' : ''}${focusMode ? ' draft-workspace--focus' : ''}`}
+        className={`allsuite-editor-workspace draft-workspace${preview ? ' draft-workspace--preview-hidden' : ''}${focusMode ? ' draft-workspace--focus' : ''}`}
         footer={
           focusMode ? undefined : (
             <WorkspaceStatusBar
@@ -786,7 +863,14 @@ export default function DocumentWorkspace({
               <WorkspaceStatusItem>
                 {t.words}: {counts.document.words}
               </WorkspaceStatusItem>
-              <WorkspaceStatusItem title={characterStatusLabel} aria-label={characterStatusLabel}>
+              <WorkspaceStatusItem className="draft-status-detail" title={t.documentLanguage}>
+                {documentLanguage || (locale === 'pl' ? 'pl-PL' : 'en-US')}
+              </WorkspaceStatusItem>
+              <WorkspaceStatusItem
+                className="draft-status-detail"
+                title={characterStatusLabel}
+                aria-label={characterStatusLabel}
+              >
                 {locale === 'pl' ? 'Znaki (ze spacjami / bez spacji)' : 'Chars (with / without spaces)'}:{' '}
                 {counts.document.charactersWithSpaces} / {counts.document.charactersWithoutSpaces}
               </WorkspaceStatusItem>
@@ -812,6 +896,7 @@ export default function DocumentWorkspace({
         />
         {!focusMode && (
           <EditorToolbar
+            headerActions={headerActions}
             editor={editor}
             locale={locale}
             zoom={zoom}
@@ -828,6 +913,7 @@ export default function DocumentWorkspace({
                 setPageSetupDialog(true)
             }}
             onPageSetup={() => setPageSetupDialog(true)}
+            onHeaderFooter={() => setInitialStoryTarget('header:default')}
             onNew={newDocument}
             onOpen={() => {
               void openDocument()
@@ -838,7 +924,7 @@ export default function DocumentWorkspace({
             onSaveAs={() => {
               void saveDocument(true)
             }}
-            saving={busy === 'saving' || exporting}
+            saving={busy !== null || exporting}
             onExport={(format) => {
               void exportDocument(format)
             }}
@@ -864,8 +950,8 @@ export default function DocumentWorkspace({
               setDocumentColumns(editor, value)
               setColumns(value)
             }}
-            onFind={() => setFindMode('find')}
-            onReplace={() => setFindMode('replace')}
+            onFind={() => togglePane('find')}
+            onReplace={() => togglePane('replace')}
             onSymbols={() => setSymbolDialog('symbols')}
             onEmoji={() => setSymbolDialog('emoji')}
             onImage={() => setImageDialog(true)}
@@ -873,7 +959,7 @@ export default function DocumentWorkspace({
             onCodeBlock={() => setCodeBlockDialog(true)}
             onLink={() => setLinkDialog(true)}
             onReferences={() => setReferencesDialog(true)}
-            onNavigation={() => setNavigation((current) => !current)}
+            onNavigation={() => togglePane('headings')}
             showNavigation={navigation}
             onFocusMode={enterFocusMode}
             documentLanguage={documentLanguage || locale}
@@ -882,7 +968,7 @@ export default function DocumentWorkspace({
             commentCount={currentComments.length}
             onToggleCommentsInPDF={() => setIncludeCommentsInPDF((current) => !current)}
             includeCommentsInPDF={includeCommentsInPDF}
-            onToggleComments={() => setCommentsOpen((current) => !current)}
+            onToggleComments={() => togglePane('comments')}
             trackChanges={trackChanges}
             suggestionsOpen={suggestionsOpen}
             suggestionCount={currentSuggestions.length}
@@ -890,13 +976,11 @@ export default function DocumentWorkspace({
               setTrackChanges(enabled)
               setSuggestionTracking(editor, enabled)
             }}
-            onToggleSuggestions={() => {
-              setCommentsOpen(false)
-              setSuggestionsOpen((current) => !current)
-            }}
+            onToggleSuggestions={() => togglePane('review')}
             onAddComment={() => {
               rememberCommentSelection(editor)
-              setCommentsOpen(true)
+              setComposeCommentRequest((value) => value + 1)
+              setTaskPane('comments')
             }}
             onClipboard={(action) => {
               void clipboard(action)
@@ -936,15 +1020,6 @@ export default function DocumentWorkspace({
             {imageLabels[locale].error}
           </Alert>
         )}
-        {!focusMode && findMode && (
-          <FindReplacePanel
-            editor={editor}
-            locale={locale}
-            mode={findMode}
-            onModeChange={setFindMode}
-            onClose={() => setFindMode(null)}
-          />
-        )}
         {!focusMode && notice && (
           <Alert variant="info" onClose={() => setNotice(null)}>
             {notice === 'printColumns' ? printLabels[locale].columns : t[notice]}
@@ -959,13 +1034,9 @@ export default function DocumentWorkspace({
         {!focusMode && busy === 'saving' && <Alert variant="info">{t.saving}</Alert>}
         {!focusMode && exporting && <Text role="status">{exportLabels[locale].preparing}</Text>}
         <div className="draft-content-region">
-          {!focusMode && (
-            <NavigationPanel editor={editor} locale={locale} open={navigation} onClose={() => setNavigation(false)} />
-          )}
           <PageCanvas
             onEditStories={(kind, variant) => {
               setInitialStoryTarget(`${kind}:${variant}`)
-              setPageSetupDialog(true)
             }}
             editor={editor}
             page={pageSetup}
@@ -982,36 +1053,74 @@ export default function DocumentWorkspace({
             comments={currentComments}
             onSelectComment={focusComment}
           />
-          {!focusMode && commentsOpen && (
-            <CommentsPanel
-              editor={editor}
-              locale={locale}
-              threads={currentComments}
-              author={commentAuthor}
-              onAuthorChange={setCommentAuthor}
-              canComment={Boolean(commentSelection.current)}
-              onAdd={addComment}
-              onReply={addReply}
-              onToggleResolved={toggleCommentResolved}
-              onClose={() => setCommentsOpen(false)}
-            />
-          )}
-          {!focusMode && suggestionsOpen && (
-            <SuggestionsPanel
-              editor={editor}
-              locale={locale}
-              suggestions={currentSuggestions}
-              author={suggestionAuthor}
-              tracking={trackChanges}
-              onAuthorChange={setSuggestionAuthor}
-              onTrackingChange={(enabled) => {
-                setTrackChanges(enabled)
-                setSuggestionTracking(editor, enabled)
-              }}
-              onResolve={(ids, decision) => resolveSuggestions(editor, ids, decision)}
-              onClose={() => setSuggestionsOpen(false)}
-            />
-          )}
+          <TaskPane
+            open={!focusMode && taskPane !== null}
+            title={
+              commentsOpen
+                ? t.comments
+                : suggestionsOpen
+                  ? t.reviewChanges
+                  : locale === 'pl'
+                    ? 'Nawigacja'
+                    : 'Navigation'
+            }
+            closeLabel={
+              commentsOpen
+                ? t.closeComments
+                : suggestionsOpen
+                  ? t.closeReviewChanges
+                  : locale === 'pl'
+                    ? 'Zamknij nawigację'
+                    : 'Close navigation'
+            }
+            focusKey={taskPane || ''}
+            onClose={closeTaskPane}
+          >
+            <div hidden={commentsOpen || suggestionsOpen}>
+              <FindReplacePanel
+                key={documentGeneration}
+                editor={editor}
+                locale={locale}
+                mode={navigation ? 'headings' : findMode || 'find'}
+                active={(Boolean(findMode) || navigation) && !focusMode}
+                embedded
+                onModeChange={setTaskPane}
+                onClose={closeTaskPane}
+              >
+                <NavigationPanel editor={editor} locale={locale} open={navigation} embedded onClose={closeTaskPane} />
+              </FindReplacePanel>
+            </div>
+            <div hidden={!commentsOpen}>
+              <CommentsPanel
+                key={documentGeneration}
+                editor={editor}
+                locale={locale}
+                threads={currentComments}
+                author={commentAuthor}
+                onAuthorChange={setCommentAuthor}
+                canComment={
+                  Boolean(commentSelection.current) ||
+                  Boolean(editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to).trim())
+                }
+                composeRequest={composeCommentRequest}
+                onStart={() => rememberCommentSelection(editor)}
+                onAdd={addComment}
+                onReply={addReply}
+                onToggleResolved={toggleCommentResolved}
+              />
+            </div>
+            <div hidden={!suggestionsOpen}>
+              <SuggestionsPanel
+                editor={editor}
+                locale={locale}
+                suggestions={currentSuggestions}
+                author={suggestionAuthor}
+                tracking={trackChanges}
+                onAuthorChange={setSuggestionAuthor}
+                onResolve={(ids, decision) => resolveSuggestions(editor, ids, decision)}
+              />
+            </div>
+          </TaskPane>
           {focusMode && (
             <Button className="draft-focus-exit" size="md" variant="outline" onClick={leaveFocusMode}>
               {locale === 'pl' ? 'Zakończ tryb skupienia' : 'Exit focus mode'}
@@ -1026,17 +1135,26 @@ export default function DocumentWorkspace({
             onClose={() => setParagraphDialog(false)}
           />
         )}
+        {!focusMode && initialStoryTarget && (
+          <HeaderFooterDialog
+            page={pageSetup}
+            locale={locale}
+            initialTarget={initialStoryTarget}
+            isEink={isEink}
+            styleDefinitions={editor.state.doc.attrs.styleDefinitions}
+            onClose={() => setInitialStoryTarget(undefined)}
+            onApply={(page) => setPageSetup(editor, page)}
+          />
+        )}
         {!focusMode && pageSetupDialog && (
           <PageSetupDialog
-            isEink={isEink}
-            initialStoryTarget={initialStoryTarget}
-            styleDefinitions={editor.state.doc.attrs.styleDefinitions}
             page={pageSetup}
+            onEditStories={() => setInitialStoryTarget('header:default')}
             locale={locale}
             open={pageSetupDialog}
             onClose={() => {
-              setPageSetupDialog(false)
               setInitialStoryTarget(undefined)
+              setPageSetupDialog(false)
             }}
             onApply={(page) => setPageSetup(editor, page)}
           />
@@ -1091,7 +1209,7 @@ export default function DocumentWorkspace({
                 </Button>
                 <Button
                   onClick={() => {
-                    if (pendingImport) replaceDocument(pendingImport)
+                    if (pendingImport && !fileOperation.current) replaceDocument(pendingImport, true)
                     setPendingImport(undefined)
                   }}
                 >

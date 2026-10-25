@@ -1,7 +1,26 @@
 import { describe, expect, it, vi } from 'vitest'
-import { docxName, readDocument, writeToHandle, type FileHandle } from './index'
+import { docxName, chooseSaveHandle, readDocument, writeToHandle, type FileHandle } from './index'
 
 describe('memory-only file adapters', () => {
+  it('propagates native picker cancellation instead of requesting download fallback', async () => {
+    const cancellation = new DOMException('User canceled', 'AbortError')
+    vi.stubGlobal('showSaveFilePicker', vi.fn().mockRejectedValue(cancellation))
+    try {
+      await expect(chooseSaveHandle('draft.docx')).rejects.toBe(cancellation)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('requests download fallback only when the picker is unavailable', async () => {
+    vi.stubGlobal('showSaveFilePicker', undefined)
+    try {
+      await expect(chooseSaveHandle('draft.docx')).resolves.toBeUndefined()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('reads text documents without a file handle or browser storage', async () => {
     const result = await readDocument({ name: 'notes.md', text: async () => '# Notes\nBody' } as File)
     expect(result.handle).toBeUndefined()

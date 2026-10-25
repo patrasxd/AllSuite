@@ -41,8 +41,8 @@ export function getXlsxCopy(locale: 'en' | 'pl') {
       ? 'Zapisano wcześniejszą wersję. Nowsze zmiany pozostają niezapisane.'
       : 'The earlier snapshot was saved. Newer edits remain unsaved.',
     saveAsDifferentFile: isPolish
-      ? 'Wybierz nową nazwę pliku. Zapisz jako nie może nadpisać pliku źródłowego.'
-      : 'Choose a new filename. Save As cannot overwrite the source file.',
+      ? 'Wybierz inny plik. Bez możliwości porównania ze źródłem wymagany jest nowy pusty plik XLSX. Zapisz jako nie może nadpisać pliku źródłowego.'
+      : 'Choose a different file. Without source identity, select a new empty XLSX file. Save As cannot overwrite the source file.',
     saveFormulaWarning: isPolish
       ? 'Niektóre formuły nie zostały przeliczone przez Grid. Zachowano ich wyrażenia i wyniki z pamięci podręcznej; zgodny program może przeliczyć je po otwarciu.'
       : 'Some formulas were not recalculated by Grid. Their expressions and cached results were kept; a compatible app may recalculate them on open.',
@@ -139,9 +139,13 @@ function formatSaveEntry(isPolish: boolean, entry: XlsxSaveDiffEntry): string {
         'unsafe-part-preserved': `Czesc zachowano, ale zmiany moga uniewaznic jej zaleznosci${part}.`,
         'formula-not-recalculated': `Grid nie przeliczyl lokalnie ${entry.count ?? 0} formul; zachowano ich wyniki podreczne.`,
         'formula-cache-stale': `${entry.count ?? 0} wynikow formul jest nieaktualnych; zachowano znane wartosci i wlaczono przeliczenie przy otwarciu.`,
+        'formula-structure-unsafe':
+          'Grid nie aktualizuje odwolan formul po zmianie wierszy lub kolumn. Cofnij te operacje przed zapisem.',
         'output-invalid': 'Wynikowy pakiet XLSX jest nieprawidlowy.',
         'unsupported-sheet-feature': 'Zmiana arkusza wymaga funkcji, ktorych Grid nie moze bezpiecznie zaktualizowac.',
         'unsupported-style': 'Ten styl nie moze byc bezpiecznie zapisany.',
+        'unsupported-table-header':
+          'Grid nie aktualizuje nazw kolumn tabeli. Cofnij zmiany wartosci naglowkow tabeli przed zapisem.',
         'save-as-required': 'Utworz nowy plik, aby uniknac nadpisania skoroszytu z ryzykownymi zmianami.',
       }
     : {
@@ -152,9 +156,13 @@ function formatSaveEntry(isPolish: boolean, entry: XlsxSaveDiffEntry): string {
         'unsafe-part-preserved': `Part was retained, but edits may invalidate its dependencies${part}.`,
         'formula-not-recalculated': `Grid did not recalculate ${entry.count ?? 0} formulas locally; cached results were retained.`,
         'formula-cache-stale': `${entry.count ?? 0} formula caches are stale; known values were kept and recalculation on open was requested.`,
+        'formula-structure-unsafe':
+          'Grid cannot update formula references after row or column changes. Undo those operations before saving.',
         'output-invalid': 'The resulting XLSX package is invalid.',
         'unsupported-sheet-feature': 'This sheet change needs feature updates Grid cannot safely make.',
         'unsupported-style': 'This style cannot be written safely.',
+        'unsupported-table-header':
+          'Grid cannot update native table column names. Undo table header value changes before saving.',
         'save-as-required': 'Create a new file to avoid overwriting a workbook with risky changes.',
       }
   return messages[entry.code]

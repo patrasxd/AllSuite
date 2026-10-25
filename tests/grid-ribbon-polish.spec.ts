@@ -1,0 +1,102 @@
+import { test, expect } from '@playwright/test'
+
+test('clipboard split primary uses values; options retain formula commands and keyboard dismissal', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('./#/grid')
+  const grid = page.getByRole('grid', { name: 'Spreadsheet grid', exact: true })
+  await expect(grid).toBeVisible()
+  const formula = page.getByRole('textbox', { name: 'Formula bar', exact: true })
+  await formula.fill('42')
+  await formula.press('Control+Enter')
+  const address = page.getByRole('textbox', { name: 'Name box', exact: true })
+  await address.fill('A1')
+  await address.press('Enter')
+  await page.getByRole('tab', { name: 'Home', exact: true }).click()
+  await page.getByRole('button', { name: 'Copy', exact: true }).click()
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('42')
+  await expect(page.getByRole('button', { name: 'Copy options', exact: true })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  )
+  await address.fill('B1')
+  await address.press('Enter')
+  await page.getByRole('button', { name: 'Paste', exact: true }).click()
+  await expect(page.locator('[data-cell-address="B1"]')).toHaveText('42')
+  for (const mode of ['Copy', 'Paste']) {
+    const trigger = page.getByRole('button', { name: `${mode} options`, exact: true })
+    await trigger.focus()
+    await trigger.press('Enter')
+    await expect(page.getByRole('button', { name: `${mode} values`, exact: true })).toBeFocused()
+    await page.keyboard.press('ArrowDown')
+    await expect(page.getByRole('button', { name: `${mode} formulas`, exact: true })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(trigger).toBeFocused()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  }
+})
+
+test('command disclosure supports directional entry, boundaries, Tab and outside dismissal', async ({ page }) => {
+  await page.goto('./#/grid')
+  await page.getByRole('tab', { name: 'Home', exact: true }).click()
+  const trigger = page.getByRole('button', { name: 'Copy options', exact: true })
+  const first = page.getByRole('button', { name: 'Copy values', exact: true })
+  const last = page.getByRole('button', { name: 'Copy formulas', exact: true })
+  await trigger.focus()
+  await trigger.press('ArrowUp')
+  await expect(last).toBeFocused()
+  await last.press('Home')
+  await expect(first).toBeFocused()
+  await first.press('End')
+  await expect(last).toBeFocused()
+  await last.press('ArrowDown')
+  await expect(first).toBeFocused()
+  await first.press('Tab')
+  await expect(last).toBeFocused()
+  await last.press('Tab')
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByRole('combobox', { name: 'Font', exact: true })).toBeFocused()
+  await trigger.click()
+  await page.getByRole('textbox', { name: 'Name box', exact: true }).click()
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  await trigger.press('ArrowDown')
+  await expect(first).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(trigger).toBeFocused()
+  await trigger.click()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(page.locator('.allsuite-ribbon-menu__items')).toHaveCount(0)
+  await expect(page.getByRole('tab', { name: 'Home', exact: true })).toBeFocused()
+  await page.getByRole('button', { name: 'Clipboard', exact: true }).click()
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await expect(page.locator('.allsuite-ribbon-menu__items')).toHaveCount(0)
+  await expect(page.getByRole('tab', { name: 'Home', exact: true })).toBeFocused()
+})
+
+test('phone freeze disclosure stays within viewport with touch targets', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('./#/grid')
+  await page.getByRole('tab', { name: 'View', exact: true }).click()
+  await page.getByRole('button', { name: 'Freeze panes', exact: true }).click()
+  const menu = page.locator('.grid-command-menu__items')
+  const bounds = (await menu.boundingBox())!
+  expect(bounds.x).toBeGreaterThanOrEqual(0)
+  expect(bounds.y).toBeGreaterThanOrEqual(0)
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(390)
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(844)
+  const row = page.getByRole('button', { name: 'Freeze first row', exact: true })
+  expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  await row.click()
+  await expect(row).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: 'Freeze first column', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Freeze first column', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await page.getByRole('button', { name: 'Unfreeze panes', exact: true }).click()
+  await expect(row).toHaveAttribute('aria-pressed', 'false')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'Freeze panes', exact: true })).toBeFocused()
+})

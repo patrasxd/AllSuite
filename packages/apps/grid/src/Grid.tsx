@@ -1,9 +1,16 @@
+import { ChartObject } from './ChartObject'
+import { ChartDialog, CHART_COPY, chartErrorMessage } from './Chart'
+import { ChartError } from './engine/workbook/chart'
+import { ChartIcon } from './RibbonIcons'
+import { editWorkbookRows, editWorkbookColumns, prepareFormulaPasteInWorker } from './engine/formulas/row-structure'
+import { copyFormulas, formulaCopyText, pasteFormulaBlock, type FormulaCopy } from './engine/editing/formula-clipboard'
 import {
   memo,
   useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type FocusEvent,
@@ -15,9 +22,16 @@ import {
   type PointerEvent,
   type RefObject,
 } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
+import { createPortal } from 'react-dom'
 import {
   Button,
+  CopyIcon,
+  CheckIcon,
+  PasteIcon,
+  UploadIcon,
+  DownloadIcon,
+  EraserIcon,
   ButtonTooltipProvider,
   Dialog,
   FilePlusIcon,
@@ -25,7 +39,6 @@ import {
   FullBleedLayout,
   IconButton,
   Input,
-  RedoIcon,
   SearchIcon,
   SaveAsIcon,
   SaveIcon,
@@ -33,16 +46,26 @@ import {
   Text,
   TextArea,
   ThemeContext,
-  ToolbarPager as ControlsBar,
+  ControlsBar,
   ToolbarGroup,
-  UndoIcon,
   WorkspaceStatusBar,
   WorkspaceStatusItem,
   WorkspaceSheetTabs,
-  WorkspaceTabs,
 } from '@all/ui'
 import type { AppComponentProps } from './types'
 import { GRID_COPY } from './i18n'
+import { DELIMITED_COPY } from './delimited-copy'
+import { DelimitedPreview } from './DelimitedPreview'
+import { SortDialog, SORT_COPY } from './SortDialog'
+import { FilterDialog, FILTER_COPY } from './FilterDialog'
+import { TableDialog, TABLE_COPY } from './TableDialog'
+import { filteredRows, isRowHidden, visibleRow } from './engine/workbook/filter'
+import { frozenAxes } from './engine/workbook/freeze'
+import { frozenAxisPosition, frozenAxisClip, includeFrozenIndex } from './engine/viewport/freeze'
+import { sortedRangeCells } from './engine/workbook/sort'
+import type { CellRange } from './engine/workbook'
+import { decodeDelimitedFile, DELIMITED_MAX_BYTES, exportDelimitedSheet } from './engine/editing/delimited'
+import type { Delimiter } from './engine/editing/clipboard'
 import { getGridButtonTooltip, getGridSheetTabTooltip } from './button-tooltips'
 import {
   AddressError,
@@ -63,6 +86,14 @@ import {
 } from './engine/workbook'
 import { FormulaCalculationClient } from './engine/formulas/worker-client'
 import { formatCellDisplay, getCellEditText, getCellEntryText, inferCellValue } from './engine/editing/cell-input'
+import {
+  copyValues,
+  parseValuesTsv,
+  pasteValues,
+  valuesToTsv,
+  verifiedClipboardCopy,
+  type ValueBlock,
+} from './engine/editing/clipboard'
 import {
   adjustDecimalPlaces,
   isDateNumberFormat,
@@ -98,7 +129,61 @@ import {
   VIEWPORT_GROW_BUFFER,
   type ViewportSize,
 } from './engine/viewport/viewport'
+import {
+  EditorActionCluster,
+  EditorHeaderContent,
+  EditorNavigation,
+  type EditorActions,
+} from '../../../ui/src/EditorChrome'
+import { RibbonMenuButton as CommandMenu } from '../../../ui/src/RibbonMenuButton'
+import {
+  TableIcon,
+  InsertRowIcon,
+  InsertColumnIcon,
+  FreezeIcon,
+  FunctionIcon,
+  SortIcon,
+  FilterIcon,
+  WrapIcon,
+} from './RibbonIcons'
 import './grid.css'
+import './ribbon.css'
+
+const MOBILE_COMMANDS_QUERY = '(max-width: 599px), (max-width: 899px) and (max-height: 499px)'
+function useMobileCommands(restoreMenuFocus = false) {
+  const [mobile, setMobile] = useState(() => window.matchMedia?.(MOBILE_COMMANDS_QUERY).matches ?? false)
+  useEffect(() => {
+    const media = window.matchMedia?.(MOBILE_COMMANDS_QUERY)
+    if (!media) return
+    // CSS can hide the focused node before the media change event arrives.
+    // Remember focus entry so the handoff also works in that browser ordering.
+    let menuHadFocus = false
+    const rememberFocus = (event: Event) => {
+      menuHadFocus = event.target instanceof Element && Boolean(event.target.closest('.allsuite-ribbon-menu__items'))
+    }
+    const update = () => {
+      const menuFocused =
+        restoreMenuFocus && (menuHadFocus || document.activeElement?.closest('.allsuite-ribbon-menu__items'))
+      menuHadFocus = false
+      setMobile(media.matches)
+      if (menuFocused) {
+        // The responsive ribbon replaces its controls. Keep keyboard users at
+        // the selected tab when their focused disclosure is removed.
+        requestAnimationFrame(() => {
+          if (document.activeElement === document.body)
+            document.querySelector<HTMLElement>('.grid-command-navigation [aria-selected="true"]')?.focus()
+        })
+      }
+    }
+    if (restoreMenuFocus) document.addEventListener('focusin', rememberFocus)
+    media.addEventListener('change', update)
+    return () => {
+      document.removeEventListener('focusin', rememberFocus)
+      media.removeEventListener('change', update)
+    }
+  }, [restoreMenuFocus])
+  return mobile
+}
 
 const ROW_HEADER_WIDTH = 48
 const DEFAULT_ROW_HEIGHT = 32
@@ -108,6 +193,7 @@ const MAX_ROW_HEIGHT = 160
 const MIN_COLUMN_WIDTH = 56
 const MAX_COLUMN_WIDTH = 480
 const MAX_FILL_CELLS = 10_000
+const VALUES_CLIPBOARD_TYPE = 'web application/x-allsuite-grid-values-token'
 const SAVE_PROGRESS_DISPLAY_DELAY_MS = 300
 const IMPORT_CATEGORY_ORDER: CompatibilityCategory[] = [
   'supported',
@@ -186,6 +272,7 @@ interface CellEditorProps {
 
 interface SavePickerHandle {
   name: string
+  getFile?: () => Promise<File>
   createWritable: () => Promise<FilePickerWritable>
   isSameEntry?: (other: SavePickerHandle) => Promise<boolean>
 }
@@ -262,6 +349,9 @@ function styleForCell(
 }
 
 interface GridCellProps {
+  onFilter?: () => void
+  filterLabel?: string
+  tableRole?: 'header' | 'band' | 'body'
   address: string
   row: number
   column: number
@@ -285,6 +375,9 @@ interface GridCellProps {
 }
 
 const GridCell = memo(function GridCell({
+  onFilter,
+  filterLabel,
+  tableRole,
   address,
   row,
   column,
@@ -310,6 +403,7 @@ const GridCell = memo(function GridCell({
     <div
       className={`grid-cell${selected ? ' grid-cell--selected' : ''}${active ? ' grid-cell--active' : ''}${value.includes('\n') ? ' grid-cell--multiline' : ''}${editor ? ' grid-cell--editing' : ''}`}
       role="gridcell"
+      data-table-role={tableRole}
       aria-label={`${address}, ${value || emptyLabel}`}
       aria-colindex={column + 1}
       aria-selected={selected}
@@ -351,6 +445,24 @@ const GridCell = memo(function GridCell({
       ) : (
         value
       )}
+      {onFilter && !editor && (
+        <Button
+          className="grid-table-filter"
+          variant="secondary"
+          size="sm"
+          aria-label={filterLabel}
+          onPointerDown={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation()
+            onFilter()
+          }}
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="m5 8 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+        </Button>
+      )}
     </div>
   )
 })
@@ -378,8 +490,76 @@ function getSelectionAddresses(selection: GridSelection, limit = 10_000): string
   return [...addresses]
 }
 
-export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) {
+function getSelectedCellCount(ranges: GridSelection['ranges']): number {
+  const events = ranges.flatMap((range, id) => [
+    { row: range.start.row, id, start: range.start.column, end: range.end.column, active: true },
+    { row: range.end.row + 1, id, start: range.start.column, end: range.end.column, active: false },
+  ])
+  events.sort((left, right) => left.row - right.row)
+
+  const activeRanges = new Map<number, { start: number; end: number }>()
+  let selectedCellCount = 0
+  let previousRow = events[0]?.row ?? 0
+  let index = 0
+
+  while (index < events.length) {
+    const row = events[index].row
+    if (row > previousRow && activeRanges.size > 0) {
+      const intervals = [...activeRanges.values()].sort((left, right) => left.start - right.start)
+      let selectedColumns = 0
+      let lastColumn = 0
+      for (const interval of intervals) {
+        if (interval.start > lastColumn) {
+          selectedColumns += interval.end - interval.start + 1
+          lastColumn = interval.end
+        } else if (interval.end > lastColumn) {
+          selectedColumns += interval.end - lastColumn
+          lastColumn = interval.end
+        }
+      }
+      selectedCellCount += (row - previousRow) * selectedColumns
+    }
+
+    while (index < events.length && events[index].row === row) {
+      const event = events[index]
+      if (event.active) activeRanges.set(event.id, { start: event.start, end: event.end })
+      else activeRanges.delete(event.id)
+      index += 1
+    }
+    previousRow = row
+  }
+
+  return selectedCellCount
+}
+
+function getSelectionSummary(selection: GridSelection, cells: ReadonlyMap<string, Cell>) {
+  const numbers: number[] = []
+  for (const [address, cell] of cells) {
+    if (!isSelected(selection, parseCellAddress(address))) continue
+    const value = cell.value.kind === 'formula' ? cell.value.formula.cachedResult : cell.value
+    const number = value.kind === 'number' ? value.value : value.kind === 'date' ? value.serial : null
+    if (number !== null && Number.isFinite(number)) numbers.push(number)
+  }
+
+  numbers.sort((left, right) => left - right)
+  if (numbers.length === 0) {
+    return { cells: getSelectedCellCount(selection.ranges), sum: null, average: null, median: null }
+  }
+
+  const sum = numbers.reduce((total, number) => total + number, 0)
+  const middle = Math.floor(numbers.length / 2)
+  const median = numbers.length % 2 === 0 ? (numbers[middle - 1] + numbers[middle]) / 2 : numbers[middle]
+  return {
+    cells: getSelectedCellCount(selection.ranges),
+    sum,
+    average: sum / numbers.length,
+    median,
+  }
+}
+
+export function Grid({ locale, isEink = false, setIsDirty, setHeader }: AppComponentProps) {
   const copy = GRID_COPY[locale]
+  const delimitedCopy = DELIMITED_COPY[locale]
   const theme = useContext(ThemeContext)
   const [session] = useState(() => new WorkbookSession(createWorkbook({ firstSheetName: 'Sheet1' })))
   const [activeSheetId, setActiveSheetId] = useState(session.workbook.activeSheetId)
@@ -397,9 +577,102 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   const [zoom, setZoom] = useState(100)
   const [editDraft, setEditDraftState] = useState<EditDraft | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
-  const [commandTab, setCommandTab] = useState<'file' | 'format'>('format')
-  const [notice, setNotice] = useState(copy.initialStatus)
+  const [commandTab, setCommandTab] = useState<'home' | 'data' | 'insert' | 'view' | 'table'>('home')
+  const [mobileMore, setMobileMore] = useState(false)
+  const mobileMoreTrigger = useRef<HTMLButtonElement>(null)
+  const appElement = useRef<HTMLDivElement>(null)
+  const mobileMoreOpen = useRef(false)
+  const mobileMoreBack = useRef(false)
+  mobileMoreOpen.current = mobileMore
+  const [headerActions, setHeaderActions] = useState<HTMLSpanElement | null>(null)
+  const closeMobileMore = useCallback(() => {
+    setMobileMore(false)
+    requestAnimationFrame(() => mobileMoreTrigger.current?.focus())
+  }, [])
+  useEffect(() => {
+    if (window.history.state?.gridRibbonMore) {
+      const state = { ...window.history.state }
+      delete state.gridRibbonMore
+      window.history.replaceState(state, '')
+    }
+    // Register on mount, before a dirty workbook activates the shell exit guard.
+    // Window-target listeners run in registration order, including capture listeners.
+    const back = (event: PopStateEvent) => {
+      if (!mobileMoreOpen.current && !mobileMoreBack.current) return
+      event.stopImmediatePropagation()
+      mobileMoreBack.current = false
+      if (mobileMoreOpen.current) closeMobileMore()
+    }
+    window.addEventListener('popstate', back, true)
+    return () => window.removeEventListener('popstate', back, true)
+  }, [closeMobileMore])
+  useEffect(() => {
+    if (!mobileMore) return
+    // A same-URL UI entry lets phone Back dismiss More before the shell's dirty exit guard.
+    window.history.pushState({ ...window.history.state, gridRibbonMore: true }, '')
+    const key = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape' || (event.target as Element)?.closest('.allsuite-ribbon-menu__items, [role="dialog"]'))
+        return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      closeMobileMore()
+    }
+    const outside = (event: globalThis.PointerEvent) => {
+      const target = event.target as Element
+      // Shell navigation owns its route transition; do not race it with a UI-history back.
+      if (
+        target?.closest('.grid-app') &&
+        !target.closest('.grid-command-panel, .grid-mobile-dock, .allsuite-ribbon-menu__items')
+      )
+        setMobileMore(false)
+    }
+    document.addEventListener('keydown', key)
+    document.addEventListener('pointerdown', outside)
+    const frame = requestAnimationFrame(() =>
+      document.querySelector<HTMLButtonElement>('.grid-command-panel:not([hidden]) .grid-more-heading button')?.focus(),
+    )
+    return () => {
+      cancelAnimationFrame(frame)
+      document.removeEventListener('keydown', key)
+      document.removeEventListener('pointerdown', outside)
+      if (window.history.state?.gridRibbonMore) {
+        mobileMoreBack.current = true
+        window.history.back()
+      }
+    }
+  }, [mobileMore, closeMobileMore])
+  const mobileCommands = useMobileCommands(true)
+  useLayoutEffect(() => {
+    const viewport = window.visualViewport
+    const element = appElement.current
+    if (!mobileCommands || !viewport || !element) return
+    const fit = () => {
+      if (viewport.scale !== 1) return
+      const available = Math.max(0, viewport.height + viewport.offsetTop - element.getBoundingClientRect().top)
+      element.style.setProperty('--grid-visible-height', `${available}px`)
+    }
+    fit()
+    viewport.addEventListener('resize', fit)
+    viewport.addEventListener('scroll', fit)
+    return () => {
+      viewport.removeEventListener('resize', fit)
+      viewport.removeEventListener('scroll', fit)
+      element.style.removeProperty('--grid-visible-height')
+    }
+  }, [mobileCommands])
+  useEffect(() => {
+    if (!mobileCommands) setMobileMore(false)
+  }, [mobileCommands])
+  const [filterColumn, setFilterColumn] = useState<number | undefined>()
+  const [notice, setNotice] = useState('')
   const [pendingImport, setPendingImport] = useState<XlsxImportPreflight | null>(null)
+  const [pendingDelimited, setPendingDelimited] = useState<{ name: string; text: string } | null>(null)
+  const [sortRange, setSortRange] = useState<CellRange | null>(null)
+  const [filterRange, setFilterRange] = useState<CellRange | null>(null)
+  const [chartDialog, setChartDialog] = useState<{ range: CellRange; editing: boolean } | null>(null)
+  const [tableRange, setTableRange] = useState<CellRange | null>(null)
+  const [delimitedExport, setDelimitedExport] = useState(false)
+  const [exportDelimiter, setExportDelimiter] = useState<Delimiter>(',')
   const [importProgress, setImportProgress] = useState<XlsxImportProgress | null>(null)
   const [pendingSave, setPendingSave] = useState<XlsxExportResult | null>(null)
   const [exportProgress, setExportProgress] = useState<XlsxExportProgress | null>(null)
@@ -417,6 +690,16 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   const scrollElement = useRef<HTMLDivElement | null>(null)
   const gridElement = useRef<HTMLDivElement | null>(null)
   const formulaInputElement = useRef<HTMLTextAreaElement | null>(null)
+  const valuesClipboard = useRef<{
+    token: string
+    text: string
+    values: ValueBlock
+    formulas?: FormulaCopy
+    workbook: typeof session.workbook
+  } | null>(null)
+  const clipboardBusy = useRef(false)
+  const clipboardContext = useRef({ selection, activeSheetId })
+  clipboardContext.current = { selection, activeSheetId }
   const formulaFunctionCursor = useRef<number | null>(null)
   const cellEditorElement = useRef<HTMLTextAreaElement | null>(null)
   const contextMenuElement = useRef<HTMLDivElement | null>(null)
@@ -428,6 +711,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   const exportProgressTimerRef = useRef<number | null>(null)
   const saveCheckpointRef = useRef<WorkbookSaveCheckpoint | null>(null)
   const currentSaveHandleRef = useRef<SavePickerHandle | null>(null)
+  const importedSourceRef = useRef<{ name: string; handle: FilePickerHandle | null } | null>(null)
   const pendingOpenHandleRef = useRef<FilePickerHandle | null>(null)
   const pendingSaveAsHandleRef = useRef<SavePickerHandle | null>(null)
   const currentFileNameRef = useRef('Book1.xlsx')
@@ -435,13 +719,24 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   const openRequestId = useRef(0)
   const appTheme = isEink ? (theme?.isDark ? 'e-ink-dark' : 'e-ink-light') : theme?.theme
   const columnHeaderHeight = coarsePointer ? 44 : 36
-  const defaultRowHeight = coarsePointer ? 44 : DEFAULT_ROW_HEIGHT
+  const defaultRowHeight = coarsePointer || mobileCommands ? 44 : DEFAULT_ROW_HEIGHT
   const zoomScale = zoom / 100
   const sheet =
     session.workbook.sheetsById.get(activeSheetId) ?? session.workbook.sheetsById.get(session.workbook.activeSheetId)!
   const activeAddress = formatCellAddress(selection.active)
   const selectedRange = formatRangeAddress(selection.ranges[selection.ranges.length - 1])
   const activeCell = session.getCell(activeSheetId, selection.active)
+  // Workbook edits mutate the sparse cell map in place, so revision must invalidate this memo.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const selectionSummary = useMemo(() => getSelectionSummary(selection, sheet.cells), [selection, sheet, revision])
+  const selectionCountFormatter = useMemo(
+    () => new Intl.NumberFormat(locale === 'pl' ? 'pl-PL' : 'en-US', { maximumFractionDigits: 0 }),
+    [locale],
+  )
+  const selectionNumberFormatter = useMemo(
+    () => new Intl.NumberFormat(locale === 'pl' ? 'pl-PL' : 'en-US', { maximumSignificantDigits: 12 }),
+    [locale],
+  )
   const currentEditDraft =
     editDraft?.sheetId === activeSheetId &&
     editDraft.address.row === selection.active.row &&
@@ -452,12 +747,27 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   const activeCellText = currentEditDraft?.text ?? formatCellDisplay(activeCell, locale, session.workbook.dateSystem)
   const draftIsDirty = Boolean(editDraft && editDraft.text !== editDraft.initialText)
   const dirty = session.isDirty || draftIsDirty
+  const workbookName = currentFileNameRef.current
+  useEffect(() => {
+    setHeader?.(
+      <EditorHeaderContent filename={workbookName} dirty={dirty} locale={locale} actionsRef={setHeaderActions} />,
+    )
+    return () => setHeader?.(null)
+  }, [setHeader, workbookName, dirty, locale])
 
-  useEffect(() => session.subscribe(() => setRevision((current) => current + 1)), [session])
+  useEffect(
+    () =>
+      session.subscribe((event) => {
+        if (event.kind === 'replace') valuesClipboard.current = null
+        setRevision((current) => current + 1)
+      }),
+    [session],
+  )
 
-  useEffect(() => setNotice(copy.initialStatus), [copy.initialStatus])
+  // Reconcile before paint so a deferred selection effect cannot overwrite freshly typed range text.
+  useLayoutEffect(() => setNameBoxValue(selectedRange), [selectedRange])
 
-  useEffect(() => setNameBoxValue(selectedRange), [selectedRange])
+  useEffect(() => setNotice(''), [locale])
 
   useEffect(() => {
     const calculation = new FormulaCalculationClient(session)
@@ -494,6 +804,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
 
   const getRowHeight = useCallback(
     (zeroBasedRow: number) => {
+      if (isRowHidden(sheet, zeroBasedRow + 1)) return 0
       if (resizePreview?.axis === 'row' && resizePreview.index === zeroBasedRow + 1) return resizePreview.size
       const customHeight = sheet.rowMetadata.get(zeroBasedRow + 1)?.height
       return customHeight
@@ -530,11 +841,26 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     })
   }, [])
 
+  const frozen = frozenAxes(sheet)
+  const frozenHeight = frozen.rows ? getScaledRowHeight(0) : 0
+  const frozenWidth = frozen.columns ? getScaledColumnWidth(0) : 0
+  const rowRangeExtractor = useCallback(
+    (range: Parameters<typeof defaultRangeExtractor>[0]) =>
+      includeFrozenIndex(defaultRangeExtractor(range), frozen.rows),
+    [frozen.rows],
+  )
+  const columnRangeExtractor = useCallback(
+    (range: Parameters<typeof defaultRangeExtractor>[0]) =>
+      includeFrozenIndex(defaultRangeExtractor(range), frozen.columns),
+    [frozen.columns],
+  )
   const rowVirtualizer = useVirtualizer({
     count: viewportSize.rows,
     getScrollElement: () => scrollElement.current,
     estimateSize: getScaledRowHeight,
     overscan: 6,
+    rangeExtractor: rowRangeExtractor,
+    scrollPaddingStart: frozenHeight,
     scrollPaddingEnd: columnHeaderHeight * zoomScale,
     initialRect: { width: 960, height: 480 },
   })
@@ -544,10 +870,12 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     estimateSize: getScaledColumnWidth,
     horizontal: true,
     overscan: 4,
+    rangeExtractor: columnRangeExtractor,
+    scrollPaddingStart: frozenWidth,
     scrollPaddingEnd: ROW_HEADER_WIDTH * zoomScale,
     initialRect: { width: 960, height: 480 },
   })
-  const virtualRows = rowVirtualizer.getVirtualItems()
+  const virtualRows = rowVirtualizer.getVirtualItems().filter((row) => !isRowHidden(sheet, row.index + 1))
   const virtualColumns = columnVirtualizer.getVirtualItems()
 
   useLayoutEffect(() => {
@@ -578,9 +906,28 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     ensureViewport(selection.active.row, selection.active.column)
   }, [selection.active, ensureViewport])
 
+  useLayoutEffect(() => {
+    if (isRowHidden(sheet, selection.active.row)) {
+      setSelection(createSelection({ ...selection.active, row: visibleRow(sheet, selection.active.row, 1) }))
+    }
+  }, [sheet, sheet.rowMetadata, selection.active])
+
+  const revealedCell = useRef('')
   useEffect(() => {
-    rowVirtualizer.scrollToIndex(selection.active.row - 1, { align: 'auto' })
-    columnVirtualizer.scrollToIndex(selection.active.column - 1, { align: 'auto' })
+    // Growing the scroll window must not snap back to an unchanged active cell.
+    // A navigation beyond the current window waits for ensureViewport to extend it.
+    const target = `${activeSheetId}:${selection.active.row}:${selection.active.column}`
+    if (
+      revealedCell.current === target ||
+      selection.active.row > viewportSize.rows ||
+      selection.active.column > viewportSize.columns
+    )
+      return
+    revealedCell.current = target
+    if (!(frozen.rows && selection.active.row === 1))
+      rowVirtualizer.scrollToIndex(selection.active.row - 1, { align: 'auto' })
+    if (!(frozen.columns && selection.active.column === 1))
+      columnVirtualizer.scrollToIndex(selection.active.column - 1, { align: 'auto' })
   }, [
     selection.active.row,
     selection.active.column,
@@ -588,6 +935,9 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     viewportSize.columns,
     rowVirtualizer,
     columnVirtualizer,
+    frozen.rows,
+    frozen.columns,
+    activeSheetId,
   ])
 
   const updateEditDraft = (next: EditDraft | null) => {
@@ -819,6 +1169,14 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   }
 
   const updateSelection = (next: GridSelection) => {
+    if (isRowHidden(sheet, next.active.row)) {
+      const row = visibleRow(sheet, next.active.row, next.active.row < selection.active.row ? -1 : 1)
+      next = selectCell(
+        next,
+        { ...next.active, row },
+        { extend: next.ranges.some((r) => r.start.row !== r.end.row || r.start.column !== r.end.column) },
+      )
+    }
     const current = editDraftRef.current
     const targetChanged =
       current &&
@@ -828,7 +1186,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     if (targetChanged && !commitEdit()) return
     setSelection(next)
     ensureViewport(next.active.row, next.active.column)
-    setNotice(copy.ready)
+    setNotice('')
   }
 
   const handleNameBoxKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -874,6 +1232,22 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   useEffect(() => {
     if (pendingSave) saveDialogElement.current?.focus({ preventScroll: true })
   }, [pendingSave])
+
+  useLayoutEffect(() => {
+    const menu = contextMenuElement.current
+    const canvas = scrollElement.current?.getBoundingClientRect()
+    const origin = menu?.closest('.grid-app')?.getBoundingClientRect()
+    if (!contextMenu || !menu || !canvas || !origin) return
+    // Keep every action inside the canvas stacking area, above the sheet footer.
+    const top = Math.max(8, canvas.top + 8)
+    const bottom = Math.min(window.innerHeight - 8, canvas.bottom - 8)
+    menu.style.maxHeight = `${Math.max(44, bottom - top)}px`
+    const bounds = menu.getBoundingClientRect()
+    // Layout containment makes the app the fixed-position containing block.
+    // Pointer/canvas coordinates are viewport coordinates; remove that origin.
+    menu.style.top = `${Math.max(top, Math.min(contextMenu.y, bottom - bounds.height)) - origin.top}px`
+    menu.style.left = `${Math.max(canvas.left + 8, Math.min(contextMenu.x, canvas.right - bounds.width - 8)) - origin.left}px`
+  }, [contextMenu])
 
   const openContextMenuAt = (x: number, y: number, eventTarget?: HTMLElement | null) => {
     if (editDraftRef.current && !commitEdit()) return
@@ -994,6 +1368,98 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     updateSelection(selectCell(selection, next))
   }
 
+  const performValuesClipboard = async (mode: 'copy' | 'paste', formulaMode = false) => {
+    if (clipboardBusy.current || editDraftRef.current) return
+    clipboardBusy.current = true
+    const checkpoint = session.createSaveCheckpoint()
+    const initial = clipboardContext.current
+    setContextMenu(null)
+    try {
+      if (initial.selection.ranges.length !== 1) throw new Error('Disjoint selection')
+      if (mode === 'copy') {
+        valuesClipboard.current = null
+        const formulas = formulaMode
+          ? copyFormulas(session, initial.activeSheetId, initial.selection.ranges)
+          : undefined
+        const values = formulaMode ? [] : copyValues(session, initial.activeSheetId, initial.selection.ranges)
+        const text = formulas ? formulaCopyText(formulas) : valuesToTsv(values)
+        const token =
+          typeof ClipboardItem !== 'undefined' &&
+          ClipboardItem.supports?.(VALUES_CLIPBOARD_TYPE) &&
+          typeof navigator.clipboard.write === 'function' &&
+          typeof navigator.clipboard.read === 'function'
+            ? crypto.randomUUID()
+            : null
+        if (formulaMode && !token) throw new Error('Verified clipboard transport unavailable')
+        if (token) {
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              'text/plain': new Blob([text], { type: 'text/plain' }),
+              [VALUES_CLIPBOARD_TYPE]: new Blob([token], { type: 'application/x-allsuite-grid-values-token' }),
+            }),
+          ])
+        } else await navigator.clipboard.writeText(text)
+        if (session.workbook !== checkpoint.workbook) throw new Error('Workbook replaced')
+        if (token) valuesClipboard.current = { token, text, values, formulas, workbook: checkpoint.workbook }
+        setNotice(formulaMode ? copy.formulasCopied : copy.valuesCopied)
+      } else {
+        let text: string
+        let token: string | null = null
+        if (typeof navigator.clipboard.read === 'function') {
+          // Both representations must come from one clipboard read/item, never a text-only match.
+          const [item] = await navigator.clipboard.read()
+          if (!item?.types.includes('text/plain')) throw new Error('Missing clipboard text')
+          text = await (await item.getType('text/plain')).text()
+          if (item.types.includes(VALUES_CLIPBOARD_TYPE))
+            token = await (await item.getType(VALUES_CLIPBOARD_TYPE)).text()
+        } else text = await navigator.clipboard.readText()
+        const current = session.createSaveCheckpoint()
+        if (
+          current.workbook !== checkpoint.workbook ||
+          current.token !== checkpoint.token ||
+          clipboardContext.current.selection !== initial.selection ||
+          clipboardContext.current.activeSheetId !== initial.activeSheetId ||
+          editDraftRef.current
+        )
+          throw new Error('Target changed')
+        const internal = valuesClipboard.current
+        // Windows clipboard normalizes LF to CRLF, including quoted multiline fields.
+        const verified = verifiedClipboardCopy(internal, token, text, session.workbook)
+        let range
+        const start = initial.selection.ranges[0].start
+        if (formulaMode) {
+          if (!verified || !internal?.formulas) throw new Error('Unverified formula clipboard')
+          const revision = session.currentRevision
+          const rows = await prepareFormulaPasteInWorker(
+            session.workbook,
+            initial.activeSheetId,
+            start,
+            internal.formulas,
+          )
+          if (
+            session.workbook !== checkpoint.workbook ||
+            session.currentRevision !== revision ||
+            clipboardContext.current.selection !== initial.selection ||
+            clipboardContext.current.activeSheetId !== initial.activeSheetId ||
+            editDraftRef.current
+          )
+            throw new Error('Target changed during formula preflight')
+          range = pasteFormulaBlock(session, initial.activeSheetId, start, rows)
+        } else {
+          const values = verified && !internal?.formulas ? internal!.values : parseValuesTsv(text)
+          range = pasteValues(session, initial.activeSheetId, start, values)
+        }
+        updateSelection(selectRange(initial.selection, formatRangeAddress(range)))
+        setNotice(formulaMode ? copy.formulasPasted : copy.valuesPasted)
+      }
+    } catch {
+      setNotice(copy.clipboardRefused)
+    } finally {
+      clipboardBusy.current = false
+      if (!editDraftRef.current && session.workbook === checkpoint.workbook) focusGrid()
+    }
+  }
+
   const handleGridKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     // Nested resize sliders and editors keep their own keyboard and Tab behavior.
     if (event.target !== event.currentTarget) return
@@ -1003,6 +1469,11 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
       cancelEdit()
       return
     }
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      document.getElementById(`grid-command-${commandTab}`)?.focus()
+      return
+    }
     if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && editDraftRef.current) {
       event.preventDefault()
       if (commitEdit(true)) focusGrid()
@@ -1010,6 +1481,11 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     }
     const extend = event.shiftKey
     const meta = event.ctrlKey || event.metaKey
+    if (meta && ['c', 'v'].includes(event.key.toLowerCase())) {
+      event.preventDefault()
+      void performValuesClipboard(event.key.toLowerCase() === 'c' ? 'copy' : 'paste', event.altKey && event.shiftKey)
+      return
+    }
     const bounds = { rows: viewportSize.rows, columns: viewportSize.columns }
     const moves: Record<string, [number, number]> = {
       ArrowUp: [-1, 0],
@@ -1112,7 +1588,10 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     }
     if (event.key === 'Enter') {
       event.preventDefault()
-      if (commitEdit()) focusGrid()
+      if (commitEdit()) {
+        updateSelection(moveSelection(selection, event.shiftKey ? -1 : 1, 0, viewportSize))
+        focusGrid()
+      }
       return
     }
     if (event.key === 'Escape') {
@@ -1161,7 +1640,10 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     }
     if (event.key === 'Enter') {
       event.preventDefault()
-      if (commitEdit()) focusGrid()
+      if (commitEdit()) {
+        updateSelection(moveSelection(selection, event.shiftKey ? -1 : 1, 0, viewportSize))
+        focusGrid()
+      }
       return
     }
     if (event.key === 'Escape') {
@@ -1221,10 +1703,13 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   }
 
   const shouldPreserveDraftForOpen = (target: EventTarget | null): boolean => {
-    if (pendingImport || importProgress) return true
+    if (pendingImport || pendingDelimited || importProgress || sortRange || filterRange || tableRange || chartDialog)
+      return true
     return (
       target instanceof HTMLElement &&
       (target.hasAttribute('data-grid-open') ||
+        target.closest('.grid-file-menu, .allsuite-editor-header-actions') !== null ||
+        target.closest('.allsuite-ribbon-menu__items')?.getAttribute('aria-label') === copy.fileTab ||
         target.closest('.grid-file-input, .grid-formula-functions-trigger, .grid-formula-functions-dialog') !== null)
     )
   }
@@ -1245,34 +1730,42 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     openContextMenuAt(event.clientX, event.clientY, event.target as HTMLElement)
   }
 
-  const runContextMenuAction = (action: 'clear' | 'insert-row' | 'delete-row' | 'insert-column' | 'delete-column') => {
+  const runContextMenuAction = async (
+    action: 'clear' | 'insert-row' | 'delete-row' | 'insert-column' | 'delete-column',
+  ) => {
     const menu = contextMenu
     if (!menu || (editDraftRef.current && !commitEdit())) return
     try {
       if (action === 'clear') clearSelectionContents(menu.selection, menu.sheetId)
       if (action === 'insert-row')
-        session.insertRows(
+        await editWorkbookRows(
+          session,
           menu.sheetId,
           menu.targetType === 'row' ? menu.selection.ranges[0].start.row : menu.row,
           menu.rowCount,
         )
       if (action === 'delete-row')
-        session.deleteRows(
+        await editWorkbookRows(
+          session,
           menu.sheetId,
           menu.targetType === 'row' ? menu.selection.ranges[0].start.row : menu.row,
           menu.rowCount,
+          false,
         )
       if (action === 'insert-column')
-        session.insertColumns(
+        await editWorkbookColumns(
+          session,
           menu.sheetId,
           menu.targetType === 'column' ? menu.selection.ranges[0].start.column : menu.column,
           menu.columnCount,
         )
       if (action === 'delete-column')
-        session.deleteColumns(
+        await editWorkbookColumns(
+          session,
           menu.sheetId,
           menu.targetType === 'column' ? menu.selection.ranges[0].start.column : menu.column,
           menu.columnCount,
+          false,
         )
       if (action !== 'clear') {
         rowVirtualizer.measure()
@@ -1527,10 +2020,12 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     importTaskRef.current?.cancel()
     importTaskRef.current = null
     setPendingImport(null)
+    setPendingDelimited(null)
     setImportProgress(null)
     const workbook = createWorkbook({ firstSheetName: 'Sheet1' })
     session.replaceWorkbook(workbook)
     currentSaveHandleRef.current = null
+    importedSourceRef.current = null
     pendingOpenHandleRef.current = null
     currentFileNameRef.current = 'Book1.xlsx'
     updateEditDraft(null)
@@ -1561,7 +2056,20 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     importTaskRef.current?.cancel()
     importTaskRef.current = null
     setPendingImport(null)
+    setPendingDelimited(null)
     setImportProgress(null)
+    if (/\.(csv|tsv)$/i.test(file.name)) {
+      pendingOpenHandleRef.current = null
+      try {
+        if (file.size > DELIMITED_MAX_BYTES) throw new Error('File too large')
+        const text = decodeDelimitedFile(new Uint8Array(await file.arrayBuffer()))
+        if (requestId !== openRequestId.current) return
+        setPendingDelimited({ name: file.name, text })
+      } catch {
+        if (requestId === openRequestId.current) setNotice(delimitedCopy.invalid)
+      }
+      return
+    }
     if (!isSupportedXlsxFileName(file.name)) {
       pendingOpenHandleRef.current = null
       setNotice(copy.openUnsupported)
@@ -1618,6 +2126,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     pendingOpenHandleRef.current = null
     setImportProgress(null)
     setPendingImport(null)
+    setPendingDelimited(null)
     const pickerWindow = window as FilePickerWindow
     if (window.isSecureContext && typeof pickerWindow.showOpenFilePicker === 'function') {
       let file: File | undefined
@@ -1630,6 +2139,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
               description: 'XLSX workbook',
               accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] },
             },
+            { description: 'CSV/TSV (UTF-8)', accept: { 'text/csv': ['.csv'], 'text/tab-separated-values': ['.tsv'] } },
           ],
         })
         selectedHandle = handles[0] ?? null
@@ -1659,6 +2169,61 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     restoreEditFocus()
   }, [copy.importCancelled, restoreEditFocus])
 
+  const cancelDelimited = () => {
+    setPendingDelimited(null)
+    setNotice(copy.importCancelled)
+    restoreEditFocus()
+  }
+
+  const acceptDelimited = (workbook: ReturnType<typeof createWorkbook>) => {
+    const edit = editDraftRef.current
+    if ((session.isDirty || Boolean(edit && edit.text !== edit.initialText)) && !window.confirm(copy.confirmOpen))
+      return
+    invalidateSave()
+    openRequestId.current += 1
+    session.replaceWorkbook(workbook, { markDirty: true })
+    currentSaveHandleRef.current = null
+    importedSourceRef.current = null
+    pendingOpenHandleRef.current = null
+    currentFileNameRef.current = 'Book1.xlsx'
+    updateEditDraft(null)
+    closeContextMenu()
+    setActiveSheetId(workbook.activeSheetId)
+    setSelection(createSelection({ row: 1, column: 1 }))
+    setViewportSize({ rows: INITIAL_VIEWPORT_ROWS, columns: INITIAL_VIEWPORT_COLUMNS })
+    if (scrollElement.current) scrollElement.current.scrollTo({ top: 0, left: 0 })
+    setPendingDelimited(null)
+    setNotice(delimitedCopy.ready)
+    focusGrid()
+  }
+
+  const downloadDelimited = () => {
+    if (!commitEdit()) return
+    let url: string | null = null
+    let link: HTMLAnchorElement | null = null
+    try {
+      const bytes = exportDelimitedSheet(session, activeSheetId, exportDelimiter)
+      const extension = exportDelimiter === '\t' ? 'tsv' : 'csv'
+      url = URL.createObjectURL(
+        new Blob([bytes.slice().buffer as ArrayBuffer], {
+          type: extension === 'tsv' ? 'text/tab-separated-values;charset=utf-8' : 'text/csv;charset=utf-8',
+        }),
+      )
+      link = document.createElement('a')
+      link.href = url
+      link.download = `Sheet.${extension}`
+      document.body.appendChild(link)
+      link.click()
+      setDelimitedExport(false)
+      setNotice(delimitedCopy.exported)
+    } catch {
+      setNotice(delimitedCopy.invalid)
+    } finally {
+      link?.remove()
+      if (url) window.setTimeout(() => URL.revokeObjectURL(url!), 0)
+    }
+  }
+
   const acceptPreflight = () => {
     const result = pendingImport
     if (!result?.report.canOpen || !result.workbook) return
@@ -1675,6 +2240,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     const workbook = result.workbook
     session.replaceWorkbook(workbook)
     currentSaveHandleRef.current = pendingOpenHandleRef.current
+    importedSourceRef.current = { name: result.report.fileName, handle: pendingOpenHandleRef.current }
     pendingOpenHandleRef.current = null
     currentFileNameRef.current = result.report.fileName || 'Book1.xlsx'
     updateEditDraft(null)
@@ -1802,6 +2368,18 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
         return
       }
       if (!isCurrent()) return
+      const importedSource = importedSourceRef.current
+      if (saveAsNewFile && handle && importedSource) {
+        const sameSource = handle === importedSource.handle || handle.name === importedSource.name
+        const canCompare = Boolean(importedSource.handle && handle.isSameEntry)
+        const isAlias = canCompare && (await handle.isSameEntry!(importedSource.handle!))
+        const destination = !canCompare && handle.getFile ? await handle.getFile() : null
+        if (sameSource || isAlias || (!canCompare && (!destination || destination.size !== 0))) {
+          setNotice(copy.saveAsDifferentFile)
+          return
+        }
+      }
+      if (!isCurrent()) return
       if (handle) {
         writable = await handle.createWritable()
         if (!isCurrent()) {
@@ -1861,6 +2439,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     if (saving || pendingSave || saveCheckpointRef.current) return
     if (editDraftRef.current && !commitEdit()) return
     const checkpoint = session.createSaveCheckpoint()
+    const snapshot = structuredClone(session.workbook)
     saveCheckpointRef.current = checkpoint
     const isCurrent = () => saveCheckpointRef.current === checkpoint && checkpoint.workbook === session.workbook
     setPendingSave(null)
@@ -1891,7 +2470,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
     setNotice(copy.saveProgress(copy.savePhaseInspect, 0))
     setSaving(true)
     try {
-      const task = startXlsxExport(session.workbook, currentFileNameRef.current, (progress) => {
+      const task = startXlsxExport(snapshot, currentFileNameRef.current, (progress) => {
         if (isCurrent()) setExportProgress(progress)
       })
       exportTaskRef.current = task
@@ -1983,38 +2562,623 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
           .includes(formulaFunctionQuery),
       )
     : formulaFunctions
-  const commandTabs = ['file', 'format'] as const
-  const commandLabels = { file: copy.fileTab, format: copy.formatTab }
-  const historyControls = (
-    <ToolbarGroup label={copy.historyGroup} caption={copy.historyGroup}>
-      <IconButton
-        aria-label={copy.undoShortcut}
-        title={copy.undoShortcut}
-        icon={<UndoIcon />}
-        size="sm"
-        variant="outline"
-        aria-keyshortcuts="Control+Z Meta+Z"
-        disabled={!historyState.canUndo}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={performUndo}
-      />
-      <IconButton
-        aria-label={copy.redoShortcut}
-        title={copy.redoShortcut}
-        icon={<RedoIcon />}
-        size="sm"
-        variant="outline"
-        aria-keyshortcuts="Control+Y Control+Shift+Z Meta+Y Meta+Shift+Z"
-        disabled={!historyState.canRedo}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={performRedo}
-      />
-    </ToolbarGroup>
+  const commandTabs = [
+    'home',
+    'insert',
+    'data',
+    'view',
+    ...(sheet.tables.some(
+      (table) =>
+        selection.active.row >= table.range.start.row &&
+        selection.active.row <= table.range.end.row &&
+        selection.active.column >= table.range.start.column &&
+        selection.active.column <= table.range.end.column,
+    )
+      ? ['table' as const]
+      : []),
+  ] as const
+  const commandLabels = {
+    file: copy.fileTab,
+    home: copy.homeTab,
+    data: copy.dataTab,
+    insert: copy.insertTab,
+    view: copy.viewTab,
+    table: copy.tableTab,
+  }
+  const selectedTable = sheet.tables.find(
+    (table) =>
+      selection.active.row >= table.range.start.row &&
+      selection.active.row <= table.range.end.row &&
+      selection.active.column >= table.range.start.column &&
+      selection.active.column <= table.range.end.column,
   )
+  useLayoutEffect(() => {
+    if (commandTab === 'table' && !selectedTable) {
+      setCommandTab('home')
+      setMobileMore(false)
+    }
+  }, [commandTab, selectedTable])
+  const currentChart = sheet.drawings.find((drawing) => drawing.chart)
+  const openChartDialog = () => {
+    if (editDraftRef.current || selection.ranges.length !== 1) {
+      setNotice(CHART_COPY[locale].errors.context)
+      return
+    }
+    setChartDialog({ range: structuredClone(selection.ranges[0]), editing: false })
+  }
+  const chartCommand = (
+    <Button
+      className="grid-command-large"
+      variant="outline"
+      size="sm"
+      disabled={saving || Boolean(currentChart)}
+      aria-label={CHART_COPY[locale].command}
+      tooltip={CHART_COPY[locale].help}
+      onClick={openChartDialog}
+    >
+      <ChartIcon />
+      {CHART_COPY[locale].command}
+    </Button>
+  )
+  const openTableDialog = () => {
+    const range = selection.ranges[0]
+    if (editDraftRef.current || selection.ranges.length !== 1 || range.end.row <= range.start.row) {
+      setNotice(TABLE_COPY[locale].selectionHelp)
+      return
+    }
+    setTableRange(structuredClone(range))
+  }
+  const convertTable = (tableId: string) => {
+    try {
+      if (editDraftRef.current) throw new Error('Finish editing')
+      session.execute({ type: 'convert-table', sheetId: activeSheetId, tableId })
+      focusGrid()
+    } catch {
+      setNotice(TABLE_COPY[locale].refused)
+    }
+  }
+  const freezeControls = (
+    [
+      [copy.freezeFirstRow, !frozen.rows, frozen.columns, frozen.rows],
+      [copy.freezeFirstColumn, frozen.rows, !frozen.columns, frozen.columns],
+      [copy.unfreezePanes, false, false, undefined],
+    ] as const
+  ).map(([label, rows, columns, pressed]) => (
+    <Button
+      key={label}
+      variant="secondary"
+      size="sm"
+      icon={pressed ? <CheckIcon /> : <FreezeIcon />}
+      aria-pressed={pressed}
+      disabled={saving}
+      onPointerDown={(event) => {
+        if (editDraftRef.current) event.preventDefault()
+      }}
+      onClick={() => {
+        try {
+          if (editDraftRef.current) throw new Error('Finish editing')
+          session.execute({ type: 'set-frozen-panes', sheetId: activeSheetId, rows, columns })
+        } catch {
+          setNotice(copy.freezeRefused)
+        }
+      }}
+    >
+      {label}
+    </Button>
+  ))
+  const editorActions: EditorActions = {
+    undo: performUndo,
+    redo: performRedo,
+    save: () => void requestWorkbookSave(false),
+    canUndo: historyState.canUndo,
+    canRedo: historyState.canRedo,
+    saving,
+    labels: { undo: copy.undoShortcut, redo: copy.redoShortcut, save: copy.saveQuickAction, group: copy.historyGroup },
+    onSavePointerDown: (event) => {
+      if (editDraftRef.current) event.preventDefault()
+    },
+  }
 
+  const fileCommands = (
+    <>
+      <Button variant="outline" size="sm" icon={<FilePlusIcon />} onClick={createNewWorkbook}>
+        {copy.newWorkbook}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        icon={<FolderOpenIcon />}
+        data-grid-open="true"
+        onPointerDown={(event) => {
+          if (editDraftRef.current) event.preventDefault()
+        }}
+        onClick={() => void requestWorkbookOpen()}
+      >
+        {copy.openWorkbook}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        icon={<SaveIcon />}
+        aria-keyshortcuts="Control+S Meta+S"
+        disabled={saving}
+        onPointerDown={(event) => {
+          if (editDraftRef.current) event.preventDefault()
+        }}
+        onClick={() => void requestWorkbookSave(false)}
+      >
+        {copy.saveWorkbook}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        icon={<SaveAsIcon />}
+        disabled={saving}
+        onPointerDown={(event) => {
+          if (editDraftRef.current) event.preventDefault()
+        }}
+        onClick={() => void requestWorkbookSave(true)}
+      >
+        {copy.saveWorkbookAs}
+      </Button>
+      <Button
+        icon={<UploadIcon />}
+        variant="outline"
+        size="sm"
+        data-grid-open="true"
+        disabled={saving}
+        onPointerDown={(event) => {
+          if (editDraftRef.current) event.preventDefault()
+        }}
+        onClick={() => void requestWorkbookOpen()}
+      >
+        {delimitedCopy.import}
+      </Button>
+      <Button
+        icon={<DownloadIcon />}
+        variant="outline"
+        size="sm"
+        disabled={saving}
+        onClick={() => {
+          if (commitEdit()) setDelimitedExport(true)
+        }}
+      >
+        {delimitedCopy.export}
+      </Button>
+    </>
+  )
+  const boldCommand = (
+    <Button
+      variant="outline"
+      size="sm"
+      aria-label={copy.bold}
+      aria-pressed={Boolean(activeCell?.style?.font?.bold)}
+      onClick={() => toggleSelectedFont('bold')}
+    >
+      <strong aria-hidden="true">B</strong>
+    </Button>
+  )
+  const italicCommand = (
+    <Button
+      variant="outline"
+      size="sm"
+      aria-label={copy.italic}
+      aria-pressed={Boolean(activeCell?.style?.font?.italic)}
+      onClick={() => toggleSelectedFont('italic')}
+    >
+      <em aria-hidden="true">I</em>
+    </Button>
+  )
+  const clipboardItems = (mode: 'copy' | 'paste') =>
+    [false, true].map((formulas) => (
+      <Button
+        key={String(formulas)}
+        variant="outline"
+        size="sm"
+        icon={formulas ? <FunctionIcon /> : mode === 'copy' ? <CopyIcon /> : <PasteIcon />}
+        aria-keyshortcuts={`${formulas ? 'Control+Alt+Shift+' : 'Control+'}${mode === 'copy' ? 'C' : 'V'}`}
+        onPointerDown={(event) => {
+          if (editDraftRef.current) event.preventDefault()
+        }}
+        onClick={() => void performValuesClipboard(mode, formulas)}
+      >
+        {mode === 'copy'
+          ? formulas
+            ? copy.copyFormulas
+            : copy.copyValues
+          : formulas
+            ? copy.pasteFormulas
+            : copy.pasteValues}
+      </Button>
+    ))
+  const insertTableCommand = (
+    <Button
+      className="grid-command-large"
+      variant="outline"
+      size="sm"
+      disabled={saving}
+      aria-label={TABLE_COPY[locale].create}
+      tooltip={`${TABLE_COPY[locale].create}: ${TABLE_COPY[locale].selectionHelp}`}
+      onClick={openTableDialog}
+    >
+      <TableIcon />
+      {copy.tableTab}
+    </Button>
+  )
+  const sortCommand = (
+    <Button
+      className="grid-command-large"
+      variant="outline"
+      size="sm"
+      data-grid-open
+      disabled={
+        saving || session.workbook.sheetOrder.some((id) => session.workbook.sheetsById.get(id)!.tables.length > 0)
+      }
+      onClick={() => {
+        try {
+          if (editDraftRef.current || selection.ranges.length !== 1) throw new Error('Incomplete selection')
+          const range = selection.ranges[0]
+          sortedRangeCells(session.workbook, sheet, {
+            range,
+            keyColumn: range.start.column,
+            direction: 'ascending',
+            headers: false,
+          })
+          setSortRange(structuredClone(range))
+        } catch {
+          setNotice(SORT_COPY[locale].refused)
+        }
+      }}
+    >
+      <SortIcon />
+      {SORT_COPY[locale].title}
+    </Button>
+  )
+  const filterCommand = (
+    <Button
+      variant="outline"
+      size="sm"
+      data-grid-open
+      disabled={saving}
+      onClick={() => {
+        try {
+          if (editDraftRef.current || selection.ranges.length !== 1) throw new Error('Incomplete selection')
+          const range =
+            (commandTab === 'table' ? selectedTable?.range : undefined) ??
+            sheet.autoFilter?.range ??
+            selection.ranges[0]
+          filteredRows(session.workbook, sheet, range, sheet.autoFilter?.criteria ?? [])
+          setFilterColumn(undefined)
+          setFilterRange(structuredClone(range))
+        } catch {
+          setNotice(FILTER_COPY[locale].refused)
+        }
+      }}
+    >
+      <FilterIcon />
+      {sheet.autoFilter?.criteria?.length ? FILTER_COPY[locale].active : FILTER_COPY[locale].title}
+    </Button>
+  )
+  const clearFilterCommand = sheet.autoFilter && (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={saving || !sheet.autoFilter.criteria?.length}
+      onClick={() => {
+        try {
+          if (editDraftRef.current) throw new Error('Finish editing')
+          session.execute({
+            type: 'set-auto-filter',
+            sheetId: activeSheetId,
+            range: sheet.autoFilter!.range,
+            criteria: [],
+          })
+          focusGrid()
+        } catch {
+          setNotice(FILTER_COPY[locale].refused)
+        }
+      }}
+    >
+      <EraserIcon />
+      {FILTER_COPY[locale].clear}
+    </Button>
+  )
+  const convertCommand = (
+    <Button
+      className="grid-command-large"
+      variant="outline"
+      size="sm"
+      disabled={saving}
+      tooltip={selectedTable?.ownership === 'simple' ? TABLE_COPY[locale].convertHelp : TABLE_COPY[locale].refused}
+      onClick={() => selectedTable && convertTable(selectedTable.id)}
+    >
+      <TableIcon />
+      {TABLE_COPY[locale].convert}
+    </Button>
+  )
+  const freezeCommand = (
+    <CommandMenu
+      variant="outline"
+      presentation={mobileCommands ? 'compact' : 'large'}
+      keepOpen
+      label={copy.freezePanes}
+      icon={<FreezeIcon />}
+    >
+      {freezeControls}
+    </CommandMenu>
+  )
+  const filterCommands = (
+    <>
+      {filterCommand}
+      {clearFilterCommand}
+    </>
+  )
+  const ribbonContents = {
+    home: (
+      <>
+        <ToolbarGroup label={copy.clipboardGroup} caption={copy.clipboardGroup}>
+          {(['paste', 'copy'] as const).map((mode) => (
+            <CommandMenu
+              variant="outline"
+              key={mode}
+              presentation={mode === 'paste' ? 'large' : 'compact'}
+              label={locale === 'pl' ? (mode === 'copy' ? 'Kopiuj' : 'Wklej') : mode === 'copy' ? 'Copy' : 'Paste'}
+              icon={mode === 'copy' ? <CopyIcon /> : <PasteIcon />}
+              optionsLabel={
+                locale === 'pl'
+                  ? mode === 'copy'
+                    ? 'Opcje kopiowania'
+                    : 'Opcje wklejania'
+                  : mode === 'copy'
+                    ? 'Copy options'
+                    : 'Paste options'
+              }
+              primaryAction={() => void performValuesClipboard(mode)}
+              onPrimaryPointerDown={(event) => {
+                if (editDraftRef.current) event.preventDefault()
+              }}
+            >
+              {clipboardItems(mode)}
+            </CommandMenu>
+          ))}
+        </ToolbarGroup>
+        <ToolbarGroup className="grid-ribbon-font" label={copy.fontGroup} caption={copy.fontGroup}>
+          <div className="grid-ribbon-row">
+            <Select
+              density="compact"
+              options={[]}
+              aria-label={copy.fontFamily}
+              value={activeCell?.style?.font?.name ?? 'default'}
+              onChange={(event) =>
+                setSelectedFontFamily(event.currentTarget.value === 'default' ? '' : event.currentTarget.value)
+              }
+            >
+              {activeCell?.style?.font?.name &&
+                !['Arial', 'Aptos', 'Calibri', 'Inter', 'Times New Roman', 'Verdana'].includes(
+                  activeCell.style.font.name,
+                ) && <option value={activeCell.style.font.name}>{activeCell.style.font.name}</option>}
+              <option value="default">{copy.defaultFont}</option>
+              {['Arial', 'Aptos', 'Calibri', 'Inter', 'Times New Roman', 'Verdana'].map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+            <Select
+              className="grid-font-size"
+              density="compact"
+              options={[]}
+              aria-label={copy.fontSize}
+              value={String(activeCell?.style?.font?.size ?? 11)}
+              onChange={(event) => setSelectedFontSize(event.currentTarget.value)}
+            >
+              {activeCell?.style?.font?.size &&
+                ![8, 9, 10, 11, 12, 14, 16, 18, 24, 36].includes(activeCell.style.font.size) && (
+                  <option value={activeCell.style.font.size}>{activeCell.style.font.size}</option>
+                )}
+              {[8, 9, 10, 11, 12, 14, 16, 18, 24, 36].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="grid-ribbon-row">
+            {boldCommand}
+            {italicCommand}
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={copy.underline}
+              aria-pressed={Boolean(activeCell?.style?.font?.underline)}
+              onClick={() => toggleSelectedFont('underline')}
+            >
+              <u aria-hidden="true">U</u>
+            </Button>
+
+            <label className="grid-format-color">
+              <span aria-hidden="true">A</span>
+              <input
+                type="color"
+                aria-label={copy.textColor}
+                value={activeCell?.style?.font?.color ?? '#202124'}
+                onChange={(event) => setSelectedTextColor(event.currentTarget.value)}
+              />
+            </label>
+            <label className="grid-format-color">
+              <span aria-hidden="true">▧</span>
+              <input
+                type="color"
+                aria-label={copy.fillColor}
+                value={activeCell?.style?.fill?.color ?? '#ffffff'}
+                onChange={(event) => setSelectedFillColor(event.currentTarget.value)}
+              />
+            </label>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<EraserIcon />}
+              aria-label={copy.clearFormats}
+              onClick={clearSelectedFormats}
+            ></Button>
+          </div>
+        </ToolbarGroup>
+        <ToolbarGroup className="grid-ribbon-alignment" label={copy.alignmentGroup} caption={copy.alignmentGroup}>
+          <Select
+            density="compact"
+            options={[]}
+            aria-label={copy.horizontalAlignment}
+            value={activeCell?.style?.alignment?.horizontal ?? 'general'}
+            onChange={(event) =>
+              event.currentTarget.value === 'general'
+                ? applySelectedStyles((style) => {
+                    if (style.alignment) delete style.alignment.horizontal
+                    return style
+                  })
+                : setSelectedAlignment(event.currentTarget.value as 'left' | 'center' | 'right')
+            }
+          >
+            <option value="general">{copy.automaticAlignment}</option>
+            <option value="left">{copy.alignLeft}</option>
+            <option value="center">{copy.alignCenter}</option>
+            <option value="right">{copy.alignRight}</option>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={copy.wrapText}
+            aria-pressed={Boolean(activeCell?.style?.alignment?.wrapText)}
+            onClick={toggleSelectedWrap}
+          >
+            <WrapIcon />
+            {copy.wrapText}
+          </Button>
+        </ToolbarGroup>
+        <ToolbarGroup className="grid-ribbon-number" label={copy.numberFormat} caption={copy.numberFormat}>
+          <Select
+            density="compact"
+            options={[]}
+            aria-label={copy.numberFormat}
+            value={activeFormatKey}
+            onChange={(event) => {
+              if (event.currentTarget.value !== 'custom')
+                setSelectedNumberFormat(event.currentTarget.value as NumberFormatKey)
+            }}
+          >
+            {currentNumberFormat && activeFormatKey === 'custom' && (
+              <option value="custom">{`${copy.formatPreset.number}: ${currentNumberFormat}`}</option>
+            )}
+            {(Object.keys(NUMBER_FORMAT_PRESETS) as NumberFormatKey[]).map((key) => (
+              <option key={key} value={key}>
+                {copy.formatPreset[key]}
+              </option>
+            ))}
+          </Select>
+          <div className="grid-ribbon-row">
+            <IconButton
+              variant="outline"
+              size="sm"
+              aria-label={copy.decreaseDecimals}
+              title={copy.decreaseDecimals}
+              icon={<DecimalPlacesIcon direction="decrease" separator={locale === 'pl' ? ',' : '.'} />}
+              disabled={isDateNumberFormat(activeCell?.style?.numberFormat)}
+              onClick={() => adjustSelectedDecimals(-1)}
+            />
+            <IconButton
+              variant="outline"
+              size="sm"
+              aria-label={copy.increaseDecimals}
+              title={copy.increaseDecimals}
+              icon={<DecimalPlacesIcon direction="increase" separator={locale === 'pl' ? ',' : '.'} />}
+              disabled={isDateNumberFormat(activeCell?.style?.numberFormat)}
+              onClick={() => adjustSelectedDecimals(1)}
+            />
+          </div>
+        </ToolbarGroup>
+        <ToolbarGroup className="grid-ribbon-cells" label={copy.cellsGroup} caption={copy.cellsGroup}>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<InsertRowIcon />}
+            onClick={async () => {
+              if (!commitEdit()) return
+              try {
+                await editWorkbookRows(session, activeSheetId, selection.active.row, 1)
+                rowVirtualizer.measure()
+                focusGrid()
+              } catch {
+                setNotice(copy.structureFailed)
+              }
+            }}
+          >
+            {copy.insertRows(1)}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<InsertColumnIcon />}
+            onClick={async () => {
+              if (!commitEdit()) return
+              try {
+                await editWorkbookColumns(session, activeSheetId, selection.active.column, 1)
+                columnVirtualizer.measure()
+                focusGrid()
+              } catch {
+                setNotice(copy.structureFailed)
+              }
+            }}
+          >
+            {copy.insertColumns(1)}
+          </Button>
+        </ToolbarGroup>
+      </>
+    ),
+    insert: (
+      <>
+        <ToolbarGroup label={copy.tablesGroup}>{insertTableCommand}</ToolbarGroup>
+        <ToolbarGroup label={CHART_COPY[locale].command}>{chartCommand}</ToolbarGroup>
+      </>
+    ),
+    view: <ToolbarGroup label={copy.viewTab}>{freezeCommand}</ToolbarGroup>,
+    data: (
+      <ToolbarGroup label={copy.dataTab} caption={copy.sortFilterGroup}>
+        {sortCommand}
+        <div className="grid-ribbon-stack">{filterCommands}</div>
+      </ToolbarGroup>
+    ),
+    table: (
+      <>
+        <ToolbarGroup label={copy.tableContext}>
+          {selectedTable && (
+            <span className="grid-table-context">
+              <strong>{selectedTable.name}</strong>
+              <span>{formatRangeAddress(selectedTable.range)}</span>
+            </span>
+          )}
+        </ToolbarGroup>
+        <ToolbarGroup label={FILTER_COPY[locale].title} caption={copy.filterGroup}>
+          <div className="grid-ribbon-stack">{filterCommands}</div>
+        </ToolbarGroup>
+        <ToolbarGroup label={TABLE_COPY[locale].convert}>{convertCommand}</ToolbarGroup>
+      </>
+    ),
+  }
+
+  const moreCommand = (
+    <Button
+      ref={mobileMoreTrigger}
+      variant="secondary"
+      aria-expanded={mobileMore}
+      aria-controls={mobileMore ? `grid-panel-${commandTab}` : undefined}
+      onClick={() => (mobileMore ? closeMobileMore() : setMobileMore(true))}
+    >
+      {copy.moreAction}
+    </Button>
+  )
   const appContent = (
     <div
       className="grid-app"
+      ref={appElement}
       style={
         {
           '--grid-zoom-scale': zoomScale,
@@ -2029,9 +3193,10 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
       data-theme={appTheme}
       data-dirty={dirty || undefined}
       data-range-selection={rangeDragMode || undefined}
+      data-mobile-more={mobileMore || undefined}
     >
       <FullBleedLayout
-        className="grid-workspace"
+        className="allsuite-editor-workspace grid-workspace"
         footer={
           <WorkspaceStatusBar
             start={
@@ -2067,24 +3232,90 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
             onZoom={setZoom}
             locale={locale}
             zoomLabel={copy.zoom}
+            end={
+              <div className="grid-selection-summary" role="group" aria-label={copy.selectionSummary}>
+                <WorkspaceStatusItem className="grid-selection-summary__item">
+                  <span>{copy.selectionCells}</span>
+                  <span className="grid-selection-summary__value">
+                    {selectionCountFormatter.format(selectionSummary.cells)}
+                  </span>
+                </WorkspaceStatusItem>
+                <WorkspaceStatusItem className="grid-selection-summary__item">
+                  <span>{copy.selectionSum}</span>
+                  <span className="grid-selection-summary__value">
+                    {selectionSummary.sum === null ? '—' : selectionNumberFormatter.format(selectionSummary.sum)}
+                  </span>
+                </WorkspaceStatusItem>
+                <WorkspaceStatusItem className="grid-selection-summary__item">
+                  <span>{copy.selectionAverage}</span>
+                  <span className="grid-selection-summary__value">
+                    {selectionSummary.average === null
+                      ? '—'
+                      : selectionNumberFormatter.format(selectionSummary.average)}
+                  </span>
+                </WorkspaceStatusItem>
+                <WorkspaceStatusItem className="grid-selection-summary__item">
+                  <span>{copy.selectionMedian}</span>
+                  <span className="grid-selection-summary__value">
+                    {selectionSummary.median === null ? '—' : selectionNumberFormatter.format(selectionSummary.median)}
+                  </span>
+                </WorkspaceStatusItem>
+              </div>
+            }
           >
-            <WorkspaceStatusItem role="status" aria-live="polite" aria-label={`${copy.selectedCell}: ${selectedRange}`}>
-              {notice || copy.ready} — {selectedRange}
-            </WorkspaceStatusItem>
+            {Boolean(sheet.autoFilter?.criteria?.length) && (
+              <WorkspaceStatusItem>{FILTER_COPY[locale].active}</WorkspaceStatusItem>
+            )}
+            {notice && (
+              <WorkspaceStatusItem role="status" aria-live="polite">
+                {notice}
+              </WorkspaceStatusItem>
+            )}
           </WorkspaceStatusBar>
         }
       >
-        <WorkspaceTabs
-          label={copy.toolbarLabel}
-          items={commandTabs.map((tab) => ({
-            id: tab,
-            label: commandLabels[tab],
-            tooltip: getGridButtonTooltip(locale, commandLabels[tab]),
-            tabId: `grid-command-${tab}`,
-            panelId: `grid-panel-${tab}`,
-          }))}
-          activeId={commandTab}
-          onChange={(tab) => setCommandTab(tab as (typeof commandTabs)[number])}
+        <EditorNavigation
+          className="grid-command-navigation"
+          aria-label={copy.toolbarLabel}
+          onKeyDown={(event) => {
+            if (
+              mobileCommands &&
+              event.key === 'Tab' &&
+              !event.shiftKey &&
+              (event.target as HTMLElement).getAttribute('role') === 'tab'
+            ) {
+              const first = document.querySelector<HTMLButtonElement>('.grid-mobile-dock button')
+              if (first) {
+                event.preventDefault()
+                first.focus()
+              }
+            }
+          }}
+          file={
+            !mobileCommands && (
+              <div className="grid-file-menu">
+                <CommandMenu label={copy.fileTab} variant="outline">
+                  {fileCommands}
+                </CommandMenu>
+              </div>
+            )
+          }
+          actions={editorActions}
+          tabs={{
+            label: copy.toolbarLabel,
+            items: commandTabs.map((tab) => ({
+              id: tab,
+              label: commandLabels[tab],
+              tooltip: getGridButtonTooltip(locale, commandLabels[tab]),
+              tabId: `grid-command-${tab}`,
+              panelId: `grid-panel-${tab}`,
+            })),
+            activeId: commandTab === 'table' && !selectedTable ? 'home' : commandTab,
+            onChange: (tab) => {
+              setCommandTab(tab as (typeof commandTabs)[number])
+              setMobileMore(false)
+            },
+          }}
         />
         <Dialog
           open={formulaFunctionsOpen}
@@ -2129,245 +3360,45 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
             )}
           </div>
         </Dialog>
-        <div
-          id="grid-panel-file"
-          className="grid-command-panel"
-          role="tabpanel"
-          aria-labelledby="grid-command-file"
-          hidden={commandTab !== 'file'}
-        >
-          <ControlsBar locale={locale} className="grid-toolbar" role="toolbar" aria-label={copy.toolbarLabel}>
-            <ToolbarGroup label={copy.workbookGroup} caption={copy.workbookGroup}>
-              <Button
-                variant="outline"
-                size="sm"
-                icon={<FolderOpenIcon />}
-                data-grid-open="true"
-                onPointerDown={(event) => {
-                  if (editDraftRef.current) event.preventDefault()
-                }}
-                onClick={() => void requestWorkbookOpen()}
+
+        {commandTabs.map((tab) => (
+          <div
+            key={`${tab}:${mobileCommands}`}
+            id={`grid-panel-${tab}`}
+            className={`grid-command-panel grid-panel-${tab}`}
+            role="tabpanel"
+            aria-labelledby={`grid-command-${tab}`}
+            hidden={commandTab !== tab || (mobileCommands && !mobileMore)}
+          >
+            {mobileCommands && (
+              <div className="grid-more-heading">
+                <strong>{commandLabels[tab]}</strong>
+                <Button variant="ghost" size="sm" onClick={closeMobileMore}>
+                  {copy.doneAction}
+                </Button>
+              </div>
+            )}
+            <div className="grid-ribbon-surface">
+              <ControlsBar
+                className={`allsuite-editor-toolbar grid-toolbar grid-${tab === 'home' ? 'format' : tab}-toolbar`}
+                role="toolbar"
+                aria-label={commandLabels[tab]}
               >
-                {copy.openWorkbook}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                icon={<SaveIcon />}
-                aria-keyshortcuts="Control+S Meta+S"
-                disabled={saving}
-                onPointerDown={(event) => {
-                  if (editDraftRef.current) event.preventDefault()
-                }}
-                onClick={() => void requestWorkbookSave(false)}
-              >
-                {copy.saveWorkbook}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                icon={<SaveAsIcon />}
-                disabled={saving}
-                onPointerDown={(event) => {
-                  if (editDraftRef.current) event.preventDefault()
-                }}
-                onClick={() => void requestWorkbookSave(true)}
-              >
-                {copy.saveWorkbookAs}
-              </Button>
-              <Button variant="outline" size="sm" icon={<FilePlusIcon />} onClick={createNewWorkbook}>
-                {copy.newWorkbook}
-              </Button>
-            </ToolbarGroup>
-            {commandTab === 'file' && historyControls}
-          </ControlsBar>
-        </div>
+                {ribbonContents[tab]}
+              </ControlsBar>
+            </div>
+          </div>
+        ))}
+
         <input
           ref={fileInputElement}
           className="grid-file-input"
           type="file"
-          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          accept=".xlsx,.csv,.tsv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/tab-separated-values"
           aria-label={copy.openWorkbook}
           onChange={handleFileInputChange}
           tabIndex={-1}
         />
-        <div
-          id="grid-panel-format"
-          className="grid-command-panel"
-          role="tabpanel"
-          aria-labelledby="grid-command-format"
-          hidden={commandTab !== 'format'}
-        >
-          <ControlsBar
-            locale={locale}
-            className="grid-toolbar grid-format-toolbar"
-            role="toolbar"
-            aria-label={copy.formatToolbar}
-          >
-            {commandTab === 'format' && historyControls}
-            <ToolbarGroup label={copy.numberFormat} caption={copy.numberFormat}>
-              <Select
-                density="compact"
-                options={[]}
-                aria-label={copy.numberFormat}
-                value={activeFormatKey}
-                onChange={(event) => {
-                  if (event.currentTarget.value !== 'custom')
-                    setSelectedNumberFormat(event.currentTarget.value as NumberFormatKey)
-                }}
-              >
-                {currentNumberFormat && activeFormatKey === 'custom' && (
-                  <option value="custom">{`${copy.formatPreset.number}: ${currentNumberFormat}`}</option>
-                )}
-                {(Object.keys(NUMBER_FORMAT_PRESETS) as NumberFormatKey[]).map((key) => (
-                  <option key={key} value={key}>
-                    {copy.formatPreset[key]}
-                  </option>
-                ))}
-              </Select>
-              <IconButton
-                variant="secondary"
-                size="sm"
-                aria-label={copy.decreaseDecimals}
-                title={copy.decreaseDecimals}
-                icon={<DecimalPlacesIcon direction="decrease" separator={locale === 'pl' ? ',' : '.'} />}
-                disabled={isDateNumberFormat(activeCell?.style?.numberFormat)}
-                onClick={() => adjustSelectedDecimals(-1)}
-              />
-              <IconButton
-                variant="secondary"
-                size="sm"
-                aria-label={copy.increaseDecimals}
-                title={copy.increaseDecimals}
-                icon={<DecimalPlacesIcon direction="increase" separator={locale === 'pl' ? ',' : '.'} />}
-                disabled={isDateNumberFormat(activeCell?.style?.numberFormat)}
-                onClick={() => adjustSelectedDecimals(1)}
-              />
-            </ToolbarGroup>
-            <ToolbarGroup label={copy.typographyGroup} caption={copy.typographyGroup}>
-              <Select
-                density="compact"
-                options={[]}
-                aria-label={copy.fontFamily}
-                value={activeCell?.style?.font?.name ?? 'default'}
-                onChange={(event) =>
-                  setSelectedFontFamily(event.currentTarget.value === 'default' ? '' : event.currentTarget.value)
-                }
-              >
-                {activeCell?.style?.font?.name &&
-                  !['Arial', 'Aptos', 'Calibri', 'Inter', 'Times New Roman', 'Verdana'].includes(
-                    activeCell.style.font.name,
-                  ) && <option value={activeCell.style.font.name}>{activeCell.style.font.name}</option>}
-                <option value="default">{copy.formatPreset.general}</option>
-                {['Arial', 'Aptos', 'Calibri', 'Inter', 'Times New Roman', 'Verdana'].map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                className="grid-font-size"
-                density="compact"
-                options={[]}
-                aria-label={copy.fontSize}
-                value={String(activeCell?.style?.font?.size ?? 11)}
-                onChange={(event) => setSelectedFontSize(event.currentTarget.value)}
-              >
-                {activeCell?.style?.font?.size &&
-                  ![8, 9, 10, 11, 12, 14, 16, 18, 24, 36].includes(activeCell.style.font.size) && (
-                    <option value={activeCell.style.font.size}>{activeCell.style.font.size}</option>
-                  )}
-                {[8, 9, 10, 11, 12, 14, 16, 18, 24, 36].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </Select>
-            </ToolbarGroup>
-            <ToolbarGroup label={copy.emphasisGroup} caption={copy.emphasisGroup}>
-              <Button
-                variant="secondary"
-                size="sm"
-                aria-label={copy.bold}
-                aria-pressed={Boolean(activeCell?.style?.font?.bold)}
-                onClick={() => toggleSelectedFont('bold')}
-              >
-                <strong aria-hidden="true">B</strong>
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                aria-label={copy.italic}
-                aria-pressed={Boolean(activeCell?.style?.font?.italic)}
-                onClick={() => toggleSelectedFont('italic')}
-              >
-                <em aria-hidden="true">I</em>
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                aria-label={copy.underline}
-                aria-pressed={Boolean(activeCell?.style?.font?.underline)}
-                onClick={() => toggleSelectedFont('underline')}
-              >
-                <u aria-hidden="true">U</u>
-              </Button>
-            </ToolbarGroup>
-            <ToolbarGroup label={copy.colorsGroup} caption={copy.colorsGroup}>
-              <label className="grid-format-color">
-                <span>{copy.textColor}</span>
-                <input
-                  type="color"
-                  aria-label={copy.textColor}
-                  value={activeCell?.style?.font?.color ?? '#202124'}
-                  onChange={(event) => setSelectedTextColor(event.currentTarget.value)}
-                />
-              </label>
-              <label className="grid-format-color">
-                <span>{copy.fillColor}</span>
-                <input
-                  type="color"
-                  aria-label={copy.fillColor}
-                  value={activeCell?.style?.fill?.color ?? '#ffffff'}
-                  onChange={(event) => setSelectedFillColor(event.currentTarget.value)}
-                />
-              </label>
-            </ToolbarGroup>
-            <ToolbarGroup label={copy.alignmentGroup} caption={copy.alignmentGroup}>
-              <Select
-                density="compact"
-                options={[]}
-                aria-label={copy.horizontalAlignment}
-                value={activeCell?.style?.alignment?.horizontal ?? 'general'}
-                onChange={(event) =>
-                  event.currentTarget.value === 'general'
-                    ? applySelectedStyles((style) => {
-                        if (style.alignment) delete style.alignment.horizontal
-                        return style
-                      })
-                    : setSelectedAlignment(event.currentTarget.value as 'left' | 'center' | 'right')
-                }
-              >
-                <option value="general">{copy.formatPreset.general}</option>
-                <option value="left">{copy.alignLeft}</option>
-                <option value="center">{copy.alignCenter}</option>
-                <option value="right">{copy.alignRight}</option>
-              </Select>
-              <Button
-                variant="secondary"
-                size="sm"
-                aria-label={copy.wrapText}
-                aria-pressed={Boolean(activeCell?.style?.alignment?.wrapText)}
-                onClick={toggleSelectedWrap}
-              >
-                {copy.wrapText}
-              </Button>
-              <Button variant="secondary" size="sm" aria-label={copy.clearFormats} onClick={clearSelectedFormats}>
-                {copy.clearFormats}
-              </Button>
-            </ToolbarGroup>
-          </ControlsBar>
-        </div>
 
         {importProgress && (
           <div className="grid-import-progress" role="group" aria-label={copy.importingWorkbook}>
@@ -2389,7 +3420,7 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
         )}
 
         {exportProgressVisible && exportProgress && (
-          <div className="grid-import-progress" role="group" aria-label={copy.saveWorkbook}>
+          <div className="grid-import-progress" role="group" aria-label={copy.saveQuickAction}>
             <Text as="span" variant="caption" role="status" aria-live="polite">
               {copy.saveProgress(
                 exportProgress.phase === 'inspect'
@@ -2400,10 +3431,141 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
                 exportProgress.percent,
               )}
             </Text>
-            <progress max={100} value={exportProgress.percent} aria-label={copy.saveWorkbook} />
+            <progress max={100} value={exportProgress.percent} aria-label={copy.saveQuickAction} />
           </div>
         )}
 
+        {pendingDelimited && (
+          <DelimitedPreview
+            key={pendingDelimited.name + pendingDelimited.text}
+            file={pendingDelimited}
+            locale={locale}
+            onCancel={cancelDelimited}
+            onImport={acceptDelimited}
+          />
+        )}
+        {chartDialog && (
+          <ChartDialog
+            sheet={sheet}
+            locale={locale}
+            range={chartDialog.range}
+            chart={chartDialog.editing ? currentChart?.chart : undefined}
+            onCancel={() => {
+              setChartDialog(null)
+              requestAnimationFrame(focusGrid)
+            }}
+            onApply={(chart) => {
+              try {
+                if (editDraftRef.current || (currentChart && !chartDialog.editing)) throw new ChartError('context')
+                session.execute({ type: 'set-chart', sheetId: activeSheetId, chart })
+                setChartDialog(null)
+                requestAnimationFrame(focusGrid)
+                return true
+              } catch {
+                return false
+              }
+            }}
+          />
+        )}
+        {tableRange && (
+          <TableDialog
+            sheet={sheet}
+            dateSystem={session.workbook.dateSystem}
+            range={tableRange}
+            locale={locale}
+            onCancel={() => {
+              setTableRange(null)
+              requestAnimationFrame(focusGrid)
+            }}
+            onCreate={(name) => {
+              try {
+                session.execute({ type: 'create-table', sheetId: activeSheetId, range: tableRange, name })
+                setTableRange(null)
+                requestAnimationFrame(focusGrid)
+                return true
+              } catch {
+                return false
+              }
+            }}
+          />
+        )}
+        {filterRange && (
+          <FilterDialog
+            initialColumn={filterColumn}
+            sheet={sheet}
+            range={filterRange}
+            locale={locale}
+            onCancel={() => {
+              setFilterRange(null)
+              focusGrid()
+            }}
+            onApply={(criteria) => {
+              try {
+                if (editDraftRef.current || saving) throw new Error('Finish editing')
+                session.execute({ type: 'set-auto-filter', sheetId: activeSheetId, range: filterRange, criteria })
+                setFilterRange(null)
+                if (isRowHidden(sheet, selection.active.row))
+                  updateSelection(createSelection({ ...selection.active, row: filterRange.start.row }))
+                focusGrid()
+              } catch {
+                setNotice(FILTER_COPY[locale].refused)
+              }
+            }}
+          />
+        )}
+        {sortRange && (
+          <SortDialog
+            range={sortRange}
+            locale={locale}
+            onCancel={() => {
+              setSortRange(null)
+              focusGrid()
+            }}
+            onApply={(options) => {
+              try {
+                if (
+                  editDraftRef.current ||
+                  selection.ranges.length !== 1 ||
+                  JSON.stringify(selection.ranges[0]) !== JSON.stringify(sortRange)
+                )
+                  throw new Error('Selection changed')
+                session.execute({ type: 'sort-range', sheetId: activeSheetId, ...options })
+                setSortRange(null)
+                focusGrid()
+              } catch {
+                setNotice(SORT_COPY[locale].refused)
+              }
+            }}
+          />
+        )}
+        <Dialog
+          open={delimitedExport}
+          title={delimitedCopy.export}
+          onClose={() => setDelimitedExport(false)}
+          closeLabel={delimitedCopy.cancel}
+          maxWidth="sm"
+          className="grid-delimited-dialog"
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setDelimitedExport(false)}>
+                {delimitedCopy.cancel}
+              </Button>
+              <Button onClick={downloadDelimited}>{delimitedCopy.exportFile}</Button>
+            </>
+          }
+        >
+          <p>{delimitedCopy.losses}</p>
+          <Select
+            options={[]}
+            aria-label={delimitedCopy.format}
+            value={exportDelimiter}
+            onChange={(event) => setExportDelimiter(event.currentTarget.value as Delimiter)}
+          >
+            <option value=",">CSV ({delimitedCopy.comma})</option>
+            <option value=";">CSV ({delimitedCopy.semicolon})</option>
+            <option value={'\t'}>TSV</option>
+          </Select>
+        </Dialog>
         {pendingImport && (
           <div className="grid-import-backdrop">
             <div
@@ -2569,192 +3731,382 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
           </Button>
         </div>
 
-        <div
-          id="grid-sheet-scroll"
-          className="grid-sheet-scroll"
-          ref={(element) => {
-            scrollElement.current = element
-            gridElement.current = element
-          }}
-          role="grid"
-          aria-label={copy.gridLabel}
-          aria-rowcount={viewportSize.rows + 1}
-          aria-colcount={viewportSize.columns + 1}
-          aria-multiselectable="true"
-          aria-activedescendant={activeVisible ? `grid-cell-${activeAddress}` : 'grid-active-cell-proxy'}
-          tabIndex={0}
-          onKeyDown={handleGridKeyDown}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerOver={handlePointerOver}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={cancelPointerGesture}
-          onLostPointerCapture={() => {
-            draggingSelection.current = false
-          }}
-          onDoubleClick={handleGridDoubleClick}
-          onContextMenu={handleGridContextMenu}
-        >
-          <div className="grid-sheet" style={{ width: gridWidth, height: gridHeight }}>
-            <div
-              className="grid-header-row"
-              role="row"
-              aria-rowindex={1}
-              style={{ width: gridWidth, height: scaledColumnHeaderHeight }}
-            >
+        {mobileCommands && (
+          <div
+            className="grid-mobile-dock"
+            data-command-tab={commandTab}
+            role="toolbar"
+            aria-label={copy.toolbarLabel}
+            onKeyDown={(event) => {
+              if (
+                event.key === 'Tab' &&
+                event.shiftKey &&
+                event.target === event.currentTarget.querySelector('button')
+              ) {
+                event.preventDefault()
+                document.getElementById(`grid-command-${commandTab}`)?.focus()
+              }
+            }}
+          >
+            {commandTab === 'home' ? (
+              <>
+                {boldCommand}
+                {italicCommand}
+                <CommandMenu label={copy.clipboardGroup} icon={<CopyIcon />}>
+                  {clipboardItems('copy')}
+                  {clipboardItems('paste')}
+                </CommandMenu>
+                {moreCommand}
+              </>
+            ) : commandTab === 'view' ? (
+              freezeCommand
+            ) : commandTab === 'insert' ? (
+              <>
+                {insertTableCommand}
+                {chartCommand}
+              </>
+            ) : (
+              <>
+                {commandTab !== 'table' && sortCommand}
+                <CommandMenu label={copy.filterGroup} icon={<FilterIcon />}>
+                  {filterCommands}
+                </CommandMenu>
+                {commandTab === 'table' && moreCommand}
+              </>
+            )}
+          </div>
+        )}
+        <span id="grid-navigation-help" hidden>
+          {copy.gridNavigationHelp}
+        </span>
+        <div className="grid-sheet-body">
+          <div
+            id="grid-sheet-scroll"
+            className="grid-sheet-scroll"
+            ref={(element) => {
+              scrollElement.current = element
+              gridElement.current = element
+            }}
+            role="grid"
+            aria-label={copy.gridLabel}
+            aria-describedby="grid-navigation-help"
+            aria-keyshortcuts="Escape"
+            aria-rowcount={viewportSize.rows + 1}
+            aria-colcount={viewportSize.columns + 1}
+            aria-multiselectable="true"
+            aria-activedescendant={activeVisible ? `grid-cell-${activeAddress}` : 'grid-active-cell-proxy'}
+            tabIndex={0}
+            onKeyDown={handleGridKeyDown}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerOver={handlePointerOver}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={cancelPointerGesture}
+            onLostPointerCapture={() => {
+              draggingSelection.current = false
+            }}
+            onDoubleClick={handleGridDoubleClick}
+            onContextMenu={handleGridContextMenu}
+          >
+            <div className="grid-sheet" style={{ width: gridWidth, height: gridHeight }}>
               <div
-                className="grid-corner"
-                role="columnheader"
-                aria-colindex={1}
-                aria-label={copy.cornerLabel}
-                data-select-all="true"
-                style={{ width: scaledRowHeaderWidth, height: scaledColumnHeaderHeight }}
-              />
-              {virtualColumns.map((item) => {
-                const column = item.index + 1
-                const label = columnNumberToName(column)
-                const selected = selection.ranges.some(
-                  (range) => column >= range.start.column && column <= range.end.column,
+                className="grid-header-row"
+                role="row"
+                aria-rowindex={1}
+                style={{ width: gridWidth, height: scaledColumnHeaderHeight }}
+              >
+                <div
+                  className="grid-corner"
+                  role="columnheader"
+                  aria-colindex={1}
+                  aria-label={copy.cornerLabel}
+                  data-select-all="true"
+                  style={{ width: scaledRowHeaderWidth, height: scaledColumnHeaderHeight }}
+                />
+                {virtualColumns.map((item) => {
+                  const column = item.index + 1
+                  const label = columnNumberToName(column)
+                  const selected = selection.ranges.some(
+                    (range) => column >= range.start.column && column <= range.end.column,
+                  )
+                  const size = getColumnWidth(item.index)
+                  const clipLeft = frozenAxisClip(
+                    item.index,
+                    item.start,
+                    columnVirtualizer.scrollOffset ?? 0,
+                    frozenWidth,
+                  )
+                  return (
+                    <div
+                      className={`grid-column-heading${selected ? ' grid-axis-selected' : ''}`}
+                      role="columnheader"
+                      aria-colindex={column + 1}
+                      aria-selected={selected}
+                      data-column-header={column}
+                      key={item.key}
+                      style={{
+                        left:
+                          scaledRowHeaderWidth +
+                          frozenAxisPosition(
+                            item.index,
+                            item.start,
+                            columnVirtualizer.scrollOffset ?? 0,
+                            frozen.columns,
+                          ),
+                        zIndex: frozen.columns && item.index === 0 ? 7 : undefined,
+                        clipPath: clipLeft > 0 ? `inset(0 0 0 ${clipLeft}px)` : undefined,
+                        width: item.size,
+                        height: scaledColumnHeaderHeight,
+                      }}
+                    >
+                      {label}
+                      <div
+                        className="grid-resize-handle grid-resize-handle--column"
+                        role="slider"
+                        aria-label={copy.resizeColumn(label)}
+                        aria-orientation="horizontal"
+                        aria-valuenow={Math.round(size)}
+                        aria-valuemin={MIN_COLUMN_WIDTH}
+                        aria-valuemax={MAX_COLUMN_WIDTH}
+                        tabIndex={0}
+                        data-resize-axis="column"
+                        data-resize-index={column}
+                        onKeyDown={(event) => handleResizeKeyDown(event, 'column', column, size)}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+
+              {virtualRows.map((rowItem) => {
+                const row = rowItem.index + 1
+                const rowSelected = selection.ranges.some((range) => row >= range.start.row && row <= range.end.row)
+                const rowSize = getRowHeight(rowItem.index)
+                const clipTop = frozenAxisClip(
+                  rowItem.index,
+                  rowItem.start,
+                  rowVirtualizer.scrollOffset ?? 0,
+                  frozenHeight,
                 )
-                const size = getColumnWidth(item.index)
                 return (
                   <div
-                    className={`grid-column-heading${selected ? ' grid-axis-selected' : ''}`}
-                    role="columnheader"
-                    aria-colindex={column + 1}
-                    aria-selected={selected}
-                    data-column-header={column}
-                    key={item.key}
+                    className="grid-virtual-row"
+                    role="row"
+                    aria-rowindex={row + 1}
+                    key={rowItem.key}
                     style={{
-                      left: scaledRowHeaderWidth + item.start,
-                      width: item.size,
-                      height: scaledColumnHeaderHeight,
+                      top:
+                        scaledColumnHeaderHeight +
+                        frozenAxisPosition(rowItem.index, rowItem.start, rowVirtualizer.scrollOffset ?? 0, frozen.rows),
+                      width: gridWidth,
+                      height: rowItem.size,
+                      zIndex: frozen.rows && rowItem.index === 0 ? 3 : undefined,
+                      clipPath: clipTop > 0 ? `inset(${clipTop}px 0 0 0)` : undefined,
                     }}
                   >
-                    {label}
                     <div
-                      className="grid-resize-handle grid-resize-handle--column"
-                      role="slider"
-                      aria-label={copy.resizeColumn(label)}
-                      aria-orientation="horizontal"
-                      aria-valuenow={Math.round(size)}
-                      aria-valuemin={MIN_COLUMN_WIDTH}
-                      aria-valuemax={MAX_COLUMN_WIDTH}
-                      tabIndex={0}
-                      data-resize-axis="column"
-                      data-resize-index={column}
-                      onKeyDown={(event) => handleResizeKeyDown(event, 'column', column, size)}
-                    />
+                      className={`grid-row-heading${rowSelected ? ' grid-axis-selected' : ''}`}
+                      role="rowheader"
+                      aria-colindex={1}
+                      aria-rowindex={row + 1}
+                      aria-selected={rowSelected}
+                      data-row-header={row}
+                      style={{ width: scaledRowHeaderWidth, height: rowItem.size }}
+                    >
+                      {row}
+                      <div
+                        className="grid-resize-handle grid-resize-handle--row"
+                        role="slider"
+                        aria-label={copy.resizeRow(row)}
+                        aria-orientation="vertical"
+                        aria-valuenow={Math.round(rowSize)}
+                        aria-valuemin={MIN_ROW_HEIGHT}
+                        aria-valuemax={MAX_ROW_HEIGHT}
+                        tabIndex={0}
+                        data-resize-axis="row"
+                        data-resize-index={row}
+                        onKeyDown={(event) => handleResizeKeyDown(event, 'row', row, rowSize)}
+                      />
+                    </div>
+                    {virtualColumns.map((columnItem) => {
+                      const column = columnItem.index + 1
+                      const address = addressAt(row, column)
+                      const key = cellAddressKey(address)
+                      const cell = session.getCell(activeSheetId, key)
+                      const nativeTable = sheet.tables.find(
+                        (table) =>
+                          table.ownership === 'simple' &&
+                          row >= table.range.start.row &&
+                          row <= table.range.end.row &&
+                          column >= table.range.start.column &&
+                          column <= table.range.end.column,
+                      )
+                      const tableRole = nativeTable
+                        ? row === nativeTable.range.start.row
+                          ? 'header'
+                          : (row - nativeTable.range.start.row) % 2
+                            ? 'band'
+                            : 'body'
+                        : undefined
+                      const cellEdit =
+                        editDraft?.sheetId === activeSheetId &&
+                        editDraft.address.row === row &&
+                        editDraft.address.column === column
+                          ? editDraft
+                          : null
+                      const text = cellEdit?.text ?? formatCellDisplay(cell, locale, session.workbook.dateSystem)
+                      const active = address.row === selection.active.row && address.column === selection.active.column
+                      const clipLeft = frozenAxisClip(
+                        columnItem.index,
+                        columnItem.start,
+                        columnVirtualizer.scrollOffset ?? 0,
+                        frozenWidth,
+                      )
+                      return (
+                        <div
+                          className="grid-cell-position"
+                          key={`${rowItem.key}:${columnItem.key}`}
+                          style={{
+                            left:
+                              scaledRowHeaderWidth +
+                              frozenAxisPosition(
+                                columnItem.index,
+                                columnItem.start,
+                                columnVirtualizer.scrollOffset ?? 0,
+                                frozen.columns,
+                              ),
+                            zIndex:
+                              cellEdit?.origin === 'cell'
+                                ? 4
+                                : frozen.columns && columnItem.index === 0
+                                  ? 1
+                                  : undefined,
+                            clipPath: clipLeft > 0 ? `inset(0 0 0 ${clipLeft}px)` : undefined,
+                            top: 0,
+                            width: columnItem.size,
+                            height: rowItem.size,
+                          }}
+                        >
+                          <GridCell
+                            address={key}
+                            row={row}
+                            column={column}
+                            value={text}
+                            selected={isSelected(selection, address)}
+                            rangeEdges={selectionEdges(selection, address)}
+                            active={active}
+                            {...styleForCell(cell)}
+                            tableRole={tableRole}
+                            filterLabel={`${FILTER_COPY[locale].title}: ${text || key}`}
+                            onFilter={
+                              tableRole === 'header' && nativeTable
+                                ? () => {
+                                    try {
+                                      if (editDraftRef.current) return
+                                      filteredRows(
+                                        session.workbook,
+                                        sheet,
+                                        nativeTable.range,
+                                        sheet.autoFilter?.criteria ?? [],
+                                      )
+                                      setFilterColumn(column)
+                                      setFilterRange(structuredClone(nativeTable.range))
+                                    } catch {
+                                      setNotice(FILTER_COPY[locale].refused)
+                                    }
+                                  }
+                                : undefined
+                            }
+                            emptyLabel={copy.emptyCell}
+                            editor={
+                              cellEdit?.origin === 'cell'
+                                ? {
+                                    value: cellEdit.text,
+                                    rows: Math.min(6, Math.max(1, cellEdit.text.split('\n').length)),
+                                    label: copy.cellEditor(key),
+                                    inputRef: cellEditorElement,
+                                    onChange: (value) => changeDraftText(value, 'cell'),
+                                    onKeyDown: handleCellEditorKeyDown,
+                                    onBlur: handleCellEditorBlur,
+                                  }
+                                : undefined
+                            }
+                          />
+                        </div>
+                      )
+                    })}
                   </div>
                 )
               })}
-            </div>
-
-            {virtualRows.map((rowItem) => {
-              const row = rowItem.index + 1
-              const rowSelected = selection.ranges.some((range) => row >= range.start.row && row <= range.end.row)
-              const rowSize = getRowHeight(rowItem.index)
-              return (
-                <div
-                  className="grid-virtual-row"
-                  role="row"
-                  aria-rowindex={row + 1}
-                  key={rowItem.key}
-                  style={{ top: scaledColumnHeaderHeight + rowItem.start, width: gridWidth, height: rowItem.size }}
-                >
-                  <div
-                    className={`grid-row-heading${rowSelected ? ' grid-axis-selected' : ''}`}
-                    role="rowheader"
-                    aria-colindex={1}
-                    aria-rowindex={row + 1}
-                    aria-selected={rowSelected}
-                    data-row-header={row}
-                    style={{ width: scaledRowHeaderWidth, height: rowItem.size }}
-                  >
-                    {row}
-                    <div
-                      className="grid-resize-handle grid-resize-handle--row"
-                      role="slider"
-                      aria-label={copy.resizeRow(row)}
-                      aria-orientation="vertical"
-                      aria-valuenow={Math.round(rowSize)}
-                      aria-valuemin={MIN_ROW_HEIGHT}
-                      aria-valuemax={MAX_ROW_HEIGHT}
-                      tabIndex={0}
-                      data-resize-axis="row"
-                      data-resize-index={row}
-                      onKeyDown={(event) => handleResizeKeyDown(event, 'row', row, rowSize)}
-                    />
-                  </div>
-                  {virtualColumns.map((columnItem) => {
-                    const column = columnItem.index + 1
-                    const address = addressAt(row, column)
-                    const key = cellAddressKey(address)
-                    const cell = session.getCell(activeSheetId, key)
-                    const cellEdit =
-                      editDraft?.sheetId === activeSheetId &&
-                      editDraft.address.row === row &&
-                      editDraft.address.column === column
-                        ? editDraft
-                        : null
-                    const text = cellEdit?.text ?? formatCellDisplay(cell, locale, session.workbook.dateSystem)
-                    const active = address.row === selection.active.row && address.column === selection.active.column
-                    return (
-                      <div
-                        className="grid-cell-position"
-                        key={`${rowItem.key}:${columnItem.key}`}
-                        style={{
-                          left: scaledRowHeaderWidth + columnItem.start,
-                          top: 0,
-                          width: columnItem.size,
-                          height: rowItem.size,
-                        }}
-                      >
-                        <GridCell
-                          address={key}
-                          row={row}
-                          column={column}
-                          value={text}
-                          selected={isSelected(selection, address)}
-                          rangeEdges={selectionEdges(selection, address)}
-                          active={active}
-                          {...styleForCell(cell)}
-                          emptyLabel={copy.emptyCell}
-                          editor={
-                            cellEdit?.origin === 'cell'
-                              ? {
-                                  value: cellEdit.text,
-                                  rows: Math.min(6, Math.max(1, cellEdit.text.split('\n').length)),
-                                  label: copy.cellEditor(key),
-                                  inputRef: cellEditorElement,
-                                  onChange: (value) => changeDraftText(value, 'cell'),
-                                  onKeyDown: handleCellEditorKeyDown,
-                                  onBlur: handleCellEditorBlur,
-                                }
-                              : undefined
-                          }
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            })}
-            {!activeVisible && (
-              <div className="grid-active-proxy-row" role="row" aria-rowindex={selection.active.row + 1}>
-                <div
-                  className="grid-active-cell-proxy"
-                  id="grid-active-cell-proxy"
-                  role="gridcell"
-                  aria-colindex={selection.active.column + 1}
-                  aria-selected="true"
-                  aria-label={activeDescription}
+              {currentChart?.chart && (
+                <ChartObject
+                  key={activeSheetId + currentChart.id}
+                  sheet={sheet}
+                  drawing={currentChart}
+                  rowSize={getScaledRowHeight}
+                  columnSize={getScaledColumnWidth}
+                  rows={viewportSize.rows}
+                  columns={viewportSize.columns}
+                  headerWidth={scaledRowHeaderWidth}
+                  headerHeight={scaledColumnHeaderHeight}
+                  scrollX={columnVirtualizer.scrollOffset ?? 0}
+                  scrollY={rowVirtualizer.scrollOffset ?? 0}
+                  frozenWidth={frozenWidth}
+                  frozenHeight={frozenHeight}
+                  onPlace={(range) => {
+                    if (saving || editDraftRef.current) return
+                    try {
+                      session.execute({ type: 'place-chart', sheetId: activeSheetId, chartId: currentChart.id, range })
+                      ensureViewport(range.end.row, range.end.column)
+                    } catch (error) {
+                      setNotice(chartErrorMessage(error, locale))
+                    }
+                  }}
+                  onReveal={(range) => {
+                    rowVirtualizer.scrollToIndex(range.start.row - 1, { align: 'start' })
+                    columnVirtualizer.scrollToIndex(range.start.column - 1, { align: 'start' })
+                  }}
+                  onHistory={(redo) => {
+                    if (!saving && !editDraftRef.current) {
+                      if (redo) session.redo()
+                      else session.undo()
+                    }
+                  }}
+                  locale={locale}
+                  disabled={saving}
+                  onEdit={() => {
+                    if (editDraftRef.current) {
+                      setNotice(CHART_COPY[locale].errors.context)
+                      return
+                    }
+                    setChartDialog({ range: currentChart.chart!.sourceRange, editing: true })
+                  }}
+                  onRemove={() => {
+                    try {
+                      if (editDraftRef.current) throw new ChartError('context')
+                      session.execute({ type: 'remove-chart', sheetId: activeSheetId, chartId: currentChart.id })
+                      focusGrid()
+                    } catch (error) {
+                      setNotice(chartErrorMessage(error, locale))
+                    }
+                  }}
                 />
-              </div>
-            )}
+              )}
+              {!activeVisible && (
+                <div className="grid-active-proxy-row" role="row" aria-rowindex={selection.active.row + 1}>
+                  <div
+                    className="grid-active-cell-proxy"
+                    id="grid-active-cell-proxy"
+                    role="gridcell"
+                    aria-colindex={selection.active.column + 1}
+                    aria-selected="true"
+                    aria-label={activeDescription}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
         {contextMenu && (
           <div
             ref={contextMenuElement}
@@ -2768,14 +4120,30 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
             <Button role="menuitem" variant="secondary" size="sm" onClick={() => runContextMenuAction('clear')}>
               {copy.clearContents}
             </Button>
-            <Button role="menuitem" variant="secondary" size="sm" disabled aria-disabled="true">
-              {copy.copyUnavailable}
+            <Button role="menuitem" variant="secondary" size="sm" onClick={() => void performValuesClipboard('copy')}>
+              {copy.copyValues}
             </Button>
             <Button role="menuitem" variant="secondary" size="sm" disabled aria-disabled="true">
               {copy.cutUnavailable}
             </Button>
-            <Button role="menuitem" variant="secondary" size="sm" disabled aria-disabled="true">
-              {copy.pasteUnavailable}
+            <Button role="menuitem" variant="secondary" size="sm" onClick={() => void performValuesClipboard('paste')}>
+              {copy.pasteValues}
+            </Button>
+            <Button
+              role="menuitem"
+              variant="secondary"
+              size="sm"
+              onClick={() => void performValuesClipboard('copy', true)}
+            >
+              {copy.copyFormulas}
+            </Button>
+            <Button
+              role="menuitem"
+              variant="secondary"
+              size="sm"
+              onClick={() => void performValuesClipboard('paste', true)}
+            >
+              {copy.pasteFormulas}
             </Button>
             <div className="grid-context-menu-divider" role="separator" />
             <Button role="menuitem" variant="secondary" size="sm" onClick={() => runContextMenuAction('insert-row')}>
@@ -2888,6 +4256,17 @@ export function Grid({ locale, isEink = false, setIsDirty }: AppComponentProps) 
   )
   return (
     <ButtonTooltipProvider locale={locale} resolveTooltip={(label) => getGridButtonTooltip(locale, label)}>
+      {mobileCommands &&
+        headerActions &&
+        createPortal(
+          <>
+            <CommandMenu label={copy.fileTab} variant="outline">
+              {fileCommands}
+            </CommandMenu>
+            <EditorActionCluster actions={editorActions} saveOnly />
+          </>,
+          headerActions,
+        )}
       {appContent}
     </ButtonTooltipProvider>
   )

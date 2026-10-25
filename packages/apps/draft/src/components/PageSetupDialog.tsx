@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button, Dialog, Input, Select, SettingsGroup, Text } from '@all/ui'
 import type { Locale } from '../types'
-import { translations } from '../i18n'
-import { mmToTwips, twipsToMM, validatePageSetup, type PageSetup } from '../engine/page-setup'
+import { mmToTwips, twipsToMM, validatePageSetup, PAGE_PRESETS, pagePreset, type PageSetup } from '../engine/page-setup'
 import { pageViewLabels } from '../engine/page-view'
-import { storiesFor, type Stories, type StoryKind, type StoryVariant } from '../engine/stories'
-import { StoryEditor, storyLabels } from './StoryEditor'
+import { DialogActions, DialogSections } from './DialogSections'
 
 export const pageLabels = {
   en: {
@@ -27,9 +25,11 @@ export const pageLabels = {
     none: 'None',
     pageTotal: 'Page / total',
     break: 'Page break',
-    hint: 'Pages update as you type. Edit rich headers, footers and fields below. Their measured height reserves body space on the sheets. Single-column preview, Print and PDF use the same page layout.',
+    hint: 'Pages update as you type. Edit rich headers, footers and fields below. Their measured height reserves body space on the sheets. Supported text columns, preview, Print and PDF use the same page layout.',
     columnsHint:
-      'Multiple columns use continuous editing. Switch to one column to see page divisions and a live page count.',
+      'This column document contains unsupported body objects. Use one column for measured pages, preview and PDF.',
+    pageSetupColumns:
+      'Custom column widths, spacing or separators are not supported; the converted copy uses equal-width columns with an 8.47 mm gap.',
     invalid:
       'Enter valid dimensions and margins with at least 25.4 mm of body space. Leave at least 6.35 mm between a printed header/footer and the body. Text is limited to 200 characters on one line.',
     pageSetupMultipleSections: 'Multiple sections: only the first page setup is retained.',
@@ -60,9 +60,11 @@ export const pageLabels = {
     none: 'Brak',
     pageTotal: 'Strona / liczba stron',
     break: 'Podział strony',
-    hint: 'Strony aktualizują się podczas pisania. Poniżej edytujesz nagłówki, stopki i pola. Ich zmierzona wysokość rezerwuje miejsce na kartkach. Podgląd, druk i PDF dokumentów jednokolumnowych używają tego samego układu stron.',
+    hint: 'Strony aktualizują się podczas pisania. Poniżej edytujesz nagłówki, stopki i pola. Ich zmierzona wysokość rezerwuje miejsce na kartkach. Obsługiwane kolumny tekstu, podgląd, druk i PDF używają tego samego układu stron.',
     columnsHint:
-      'Przy wielu kolumnach edycja jest ciągła. Wybierz jedną kolumnę, aby zobaczyć podział na strony i aktualną liczbę stron.',
+      'Ten dokument z kolumnami zawiera nieobsługiwane obiekty treści. Wybierz jedną kolumnę, aby uzyskać podział na strony, podgląd i PDF.',
+    pageSetupColumns:
+      'Niestandardowe szerokości, odstępy lub separatory kolumn nie są obsługiwane; przekonwertowana kopia ma równe kolumny z odstępem 8,47 mm.',
     invalid:
       'Podaj poprawne wymiary i marginesy z obszarem treści co najmniej 25,4 mm. Zostaw co najmniej 6,35 mm między drukowanym nagłówkiem/stopką a treścią. Tekst może mieć 200 znaków w jednym wierszu.',
     pageSetupMultipleSections: 'Wiele sekcji: zachowano tylko ustawienia pierwszej sekcji.',
@@ -79,76 +81,53 @@ export const pageLabels = {
 
 export function PageSetupDialog({
   page,
-  isEink,
-  styleDefinitions,
-  initialStoryTarget,
   locale,
   open,
   onClose,
   onApply,
+  onEditStories,
 }: {
   page: PageSetup
-  isEink?: boolean
-  styleDefinitions?: string
-  initialStoryTarget?: string
   locale: Locale
   open: boolean
   onClose: () => void
   onApply: (page: PageSetup) => boolean
+  onEditStories: () => void
 }) {
-  const t = translations[locale],
-    labels = pageLabels[locale]
-  const [values, setValues] = useState<Record<string, string>>({})
-  const [numbers, setNumbers] = useState(false)
+  const labels = pageLabels[locale],
+    view = pageViewLabels[locale]
+  const tr = (en: string, pl: string) => (locale === 'pl' ? pl : en)
+  const [tab, setTab] = useState('paper')
+  const [custom, setCustom] = useState(pagePreset(page) === 'custom')
+  const [orientation, setOrientation] = useState(page.orientation)
+  const keys = ['width', 'height', 'top', 'right', 'bottom', 'left', 'header', 'footer'] as const
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(keys.map((key) => [key, String(Math.round(twipsToMM(page[key]) * 100) / 100)])),
+  )
   const [invalid, setInvalid] = useState(false)
-  const [stories, setStories] = useState<Stories | undefined>()
-  const [storyTarget, setStoryTarget] = useState('header:default')
-  useEffect(() => {
-    if (!open) return
-    setValues(
-      Object.fromEntries(
-        Object.entries(page).map(([key, value]) => [
-          key,
-          typeof value === 'number'
-            ? String(
-                mmToTwips(Math.round(twipsToMM(value))) === value
-                  ? Math.round(twipsToMM(value))
-                  : Math.round(twipsToMM(value) * 100) / 100,
-              )
-            : String(value),
-        ]),
-      ),
-    )
-    setNumbers(page.pageNumbers)
-    setStories(initialStoryTarget ? storiesFor(page) : page.stories)
-    setStoryTarget(initialStoryTarget || 'header:default')
-    setInvalid(false)
-  }, [open, page, initialStoryTarget])
-  const field = (
-    key: 'width' | 'height' | 'top' | 'right' | 'bottom' | 'left' | 'header' | 'footer' | 'headerText' | 'footerText',
-  ) => (
+  const field = (key: (typeof keys)[number]) => (
     <Input
       label={labels[key]}
       density="compact"
       fullWidth
-      inputMode={key.endsWith('Text') ? 'text' : 'decimal'}
-      value={values[key] || ''}
-      maxLength={key.endsWith('Text') ? 200 : 12}
+      inputMode="decimal"
+      value={values[key]}
+      maxLength={12}
       onChange={(event) => setValues((current) => ({ ...current, [key]: event.target.value }))}
     />
   )
-  function apply() {
-    const candidate = {
-      ...page,
-      headerText: values.headerText || '',
-      footerText: values.footerText || '',
-      pageNumbers: numbers,
-      ...(stories ? { stories, headerText: '', footerText: '', pageNumbers: false } : {}),
-    }
-    for (const key of ['width', 'height', 'top', 'right', 'bottom', 'left', 'header', 'footer'] as const) {
-      const value = (values[key] || '').trim().replace(',', '.')
-      candidate[key] = /^\d+(?:\.\d+)?$/.test(value) ? mmToTwips(Number(value)) : NaN
-    }
+  // Preserve exact original twips when a field is untouched (presets include fractional mm).
+  const dimension = (key: (typeof keys)[number]) => {
+    if (values[key] === String(Math.round(twipsToMM(page[key]) * 100) / 100)) return page[key]
+    const text = values[key].trim().replace(',', '.')
+    return /^\d+(?:\.\d+)?$/.test(text) ? mmToTwips(Number(text)) : NaN
+  }
+  const candidate = {
+    ...page,
+    ...Object.fromEntries(keys.map((key) => [key, dimension(key)])),
+    orientation,
+  } as PageSetup
+  const apply = (edit = false) => {
     candidate.orientation = candidate.width > candidate.height ? 'landscape' : 'portrait'
     const valid = validatePageSetup(candidate)
     if (!valid || !onApply(valid)) {
@@ -156,187 +135,179 @@ export function PageSetupDialog({
       return
     }
     onClose()
+    if (edit) onEditStories()
   }
   return (
     <Dialog
       open={open}
       onClose={onClose}
       title={labels.title}
-      description={labels.hint}
-      className="draft-page-setup-modal"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            {t.cancel}
-          </Button>
-          <Button onClick={apply}>{t.apply}</Button>
-        </>
-      }
+      closeLabel={tr('Close dialog', 'Zamknij okno')}
+      description={tr(
+        'Paper, margins and header/footer positioning. Applies to the document.',
+        'Papier, marginesy i położenie nagłówka/stopki. Dotyczy całego dokumentu.',
+      )}
+      maxWidth="lg"
+      className="draft-settings-dialog"
+      footer={<DialogActions locale={locale} onClose={onClose} onApply={() => apply()} />}
     >
-      <div className="draft-paragraph-dialog">
-        <SettingsGroup label={labels.dimensions}>
-          <div className="draft-paragraph-fields draft-paragraph-fields--two">
-            {field('width')}
-            {field('height')}
-          </div>
-        </SettingsGroup>
-        <SettingsGroup label={labels.margins}>
-          <div className="draft-page-setup-margins">
-            <Select
-              aria-label={pageViewLabels[locale].marginPreset}
-              fullWidth
-              density="compact"
-              value={
-                ['20', '12.7', '25.4'].find((value) =>
-                  ['top', 'right', 'bottom', 'left'].every((key) => Number(values[key]) === Number(value)),
-                ) || 'custom'
-              }
-              options={[
-                { value: '20', label: pageViewLabels[locale].normal },
-                { value: '12.7', label: pageViewLabels[locale].narrow },
-                { value: '25.4', label: pageViewLabels[locale].wide },
-                { value: 'custom', label: pageViewLabels[locale].custom },
-              ]}
-              onChange={(event) => {
-                const value = event.target.value
-                if (value !== 'custom')
-                  setValues((current) => ({
-                    ...current,
-                    top: value,
-                    right: value,
-                    bottom: value,
-                    left: value,
-                    header: String(Math.min(Number(current.header) || 0, Number(value) - 6.35)),
-                    footer: String(Math.min(Number(current.footer) || 0, Number(value) - 6.35)),
-                  }))
-              }}
-            />
-            <div className="draft-paragraph-fields draft-paragraph-fields--two">
-              {field('top')}
-              {field('right')}
-              {field('bottom')}
-              {field('left')}
-            </div>
-          </div>
-        </SettingsGroup>
-        <SettingsGroup label={labels.bands}>
-          <div className="draft-page-setup-bands">
-            {!stories && (
+      <DialogSections
+        locale={locale}
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          ['paper', tr('Paper', 'Papier')],
+          ['margins', tr('Margins', 'Marginesy')],
+          ['position', tr('Position', 'Położenie')],
+        ]}
+      >
+        <div className="draft-dialog-page-grid">
+          <div className="draft-dialog-stack">
+            {tab === 'paper' && (
               <>
-                {field('headerText')}
-                {field('footerText')}
+                <SettingsGroup label={tr('Paper', 'Papier')}>
+                  <div className="draft-dialog-stack">
+                    <Select
+                      label={tr('Size', 'Rozmiar')}
+                      density="compact"
+                      fullWidth
+                      value={custom ? 'custom' : pagePreset(candidate)}
+                      options={[
+                        ...Object.keys(PAGE_PRESETS).map((value) => ({
+                          value,
+                          label: value === 'letter' ? 'Letter' : value === 'legal' ? 'Legal' : value.toUpperCase(),
+                        })),
+                        { value: 'custom', label: view.custom },
+                      ]}
+                      onChange={(event) => {
+                        const preset = event.target.value as keyof typeof PAGE_PRESETS
+                        setCustom(event.target.value === 'custom')
+                        if (PAGE_PRESETS[preset]) {
+                          const [w, h] = PAGE_PRESETS[preset]
+                          setValues((v) => ({
+                            ...v,
+                            width: String(twipsToMM(orientation === 'landscape' ? h : w)),
+                            height: String(twipsToMM(orientation === 'landscape' ? w : h)),
+                          }))
+                        }
+                      }}
+                    />
+                    <Select
+                      label={tr('Orientation', 'Orientacja')}
+                      density="compact"
+                      fullWidth
+                      value={orientation}
+                      options={[
+                        { value: 'portrait', label: tr('Portrait', 'Pionowa') },
+                        { value: 'landscape', label: tr('Landscape', 'Pozioma') },
+                      ]}
+                      onChange={(event) => {
+                        const next = event.target.value as PageSetup['orientation']
+                        if (next !== orientation) setValues((v) => ({ ...v, width: v.height, height: v.width }))
+                        setOrientation(next)
+                      }}
+                    />
+                  </div>
+                </SettingsGroup>
+                {custom && (
+                  <SettingsGroup label={labels.dimensions}>
+                    <div className="draft-dialog-two">
+                      {field('width')}
+                      {field('height')}
+                    </div>
+                  </SettingsGroup>
+                )}
               </>
             )}
-            <div className="draft-paragraph-fields draft-paragraph-fields--two">
-              {field('header')}
-              {field('footer')}
-            </div>
-            {!stories && (
-              <Select
-                label={labels.numbers}
-                density="compact"
-                fullWidth
-                value={numbers ? 'yes' : 'no'}
-                options={[
-                  { value: 'no', label: labels.none },
-                  { value: 'yes', label: labels.pageTotal },
-                ]}
-                onChange={(event) => setNumbers(event.target.value === 'yes')}
-              />
-            )}
-            {!stories && (
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  setStories(
-                    storiesFor({
-                      ...page,
-                      headerText: values.headerText || '',
-                      footerText: values.footerText || '',
-                      pageNumbers: numbers,
-                    }),
-                  )
-                }
-              >
-                {storyLabels[locale].edit}
-              </Button>
-            )}
-            {stories && (
-              <>
-                <p>{storyLabels[locale].hint}</p>
-                <Input
-                  label={storyLabels[locale].title}
-                  value={stories.title}
-                  maxLength={1000}
-                  onChange={(event) => setStories({ ...stories, title: event.target.value })}
-                />
-                <div className="draft-paragraph-fields draft-paragraph-fields--two">
-                  <label className="draft-story-option">
-                    <input
-                      type="checkbox"
-                      checked={stories.differentFirst}
-                      onChange={(event) => setStories({ ...stories, differentFirst: event.target.checked })}
-                    />
-                    {storyLabels[locale].first}
-                  </label>
-                  <label className="draft-story-option">
-                    <input
-                      type="checkbox"
-                      checked={stories.differentEven}
-                      onChange={(event) => setStories({ ...stories, differentEven: event.target.checked })}
-                    />
-                    {storyLabels[locale].even}
-                  </label>
-                  <Input
-                    label={storyLabels[locale].start}
-                    type="number"
-                    min={1}
-                    max={32767}
-                    value={stories.start}
-                    onChange={(event) => setStories({ ...stories, start: Number(event.target.value) })}
-                  />
+            {tab === 'margins' && (
+              <SettingsGroup label={labels.margins}>
+                <div className="draft-dialog-stack">
                   <Select
-                    label={storyLabels[locale].format}
-                    value={stories.format}
+                    label={view.marginPreset}
+                    density="compact"
+                    fullWidth
+                    value={
+                      ['20', '12.7', '25.4'].find((value) =>
+                        ['top', 'right', 'bottom', 'left'].every(
+                          (key) => Math.abs(Number(values[key]) - Number(value)) < 0.02,
+                        ),
+                      ) || 'custom'
+                    }
                     options={[
-                      { value: 'decimal', label: '1, 2, 3' },
-                      { value: 'lowerRoman', label: 'i, ii, iii' },
-                      { value: 'upperRoman', label: 'I, II, III' },
+                      { value: '20', label: view.normal },
+                      { value: '12.7', label: view.narrow },
+                      { value: '25.4', label: view.wide },
+                      { value: 'custom', label: view.custom },
                     ]}
-                    onChange={(event) => setStories({ ...stories, format: event.target.value as Stories['format'] })}
+                    onChange={(event) => {
+                      const value = event.target.value
+                      if (value !== 'custom')
+                        setValues((v) => ({
+                          ...v,
+                          top: value,
+                          right: value,
+                          bottom: value,
+                          left: value,
+                          header: String(Math.min(Number(v.header) || 0, Number(value) - 6.35)),
+                          footer: String(Math.min(Number(v.footer) || 0, Number(value) - 6.35)),
+                        }))
+                    }}
                   />
+                  <div className="draft-dialog-two">
+                    {field('top')}
+                    {field('bottom')}
+                    {field('left')}
+                    {field('right')}
+                  </div>
                 </div>
-                <Select
-                  aria-label={storyLabels[locale].edit}
-                  value={storyTarget}
-                  options={(['header', 'footer'] as const).flatMap((kind) =>
-                    (['default', 'first', 'even'] as const).map((variant) => ({
-                      value: `${kind}:${variant}`,
-                      label: `${storyLabels[locale][kind]} — ${storyLabels[locale][variant === 'default' ? 'default' : variant === 'first' ? 'firstPage' : 'evenPages']}`,
-                    })),
+              </SettingsGroup>
+            )}
+            {tab === 'position' && (
+              <>
+                <SettingsGroup label={tr('Distance from paper edge', 'Odległość od krawędzi papieru')}>
+                  <div className="draft-dialog-stack">
+                    {field('header')}
+                    {field('footer')}
+                  </div>
+                </SettingsGroup>
+                <p className="draft-dialog-muted">
+                  {tr(
+                    'Measures the header from the top edge and the footer from the bottom edge of the paper. Body margins are set in Margins. Content and page numbers have their own editor.',
+                    'Odległość nagłówka od górnej i stopki od dolnej krawędzi papieru. Marginesy treści ustawisz w zakładce Marginesy. Treść i numery stron mają osobny edytor.',
                   )}
-                  onChange={(event) => setStoryTarget(event.target.value)}
-                />
-                <StoryEditor
-                  isEink={isEink}
-                  styleDefinitions={styleDefinitions}
-                  key={`${open}:${storyTarget}`}
-                  locale={locale}
-                  content={stories[storyTarget.split(':')[0] as StoryKind][storyTarget.split(':')[1] as StoryVariant]}
-                  onChange={(content) =>
-                    setStories((current) => {
-                      if (!current) return current
-                      const [kind, variant] = storyTarget.split(':') as [StoryKind, StoryVariant]
-                      return { ...current, [kind]: { ...current[kind], [variant]: content } }
-                    })
-                  }
-                />
+                </p>
+                <Button size="sm" variant="outline" onClick={() => apply(true)}>
+                  {tr('Apply & edit header / footer', 'Zastosuj i edytuj nagłówek / stopkę')}
+                </Button>
               </>
             )}
           </div>
-        </SettingsGroup>
-        {invalid && <Text role="alert">{labels.invalid}</Text>}
-      </div>
+          <figure className="draft-paper-diagram">
+            <figcaption>{tr('Page proportions · schematic', 'Proporcje strony · schemat')}</figcaption>
+            <div style={{ aspectRatio: Number(values.width) / Number(values.height) || 0.707 }}>
+              <span
+                style={{
+                  inset: [values.top, values.right, values.bottom, values.left]
+                    .map(
+                      (v, i) =>
+                        Math.min(
+                          45,
+                          Math.max(0, (Number(v) / (Number(i % 2 ? values.width : values.height) || 1)) * 100),
+                        ) + '%',
+                    )
+                    .join(' '),
+                }}
+              >
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+            </div>
+          </figure>
+        </div>
+      </DialogSections>
+      {invalid && <Text role="alert">{labels.invalid}</Text>}
     </Dialog>
   )
 }

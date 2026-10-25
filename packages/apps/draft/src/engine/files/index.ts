@@ -6,6 +6,7 @@ import { prepareImportedImages } from '../image-processing'
 export type FileHandle = {
   kind: 'file'
   name: string
+  isSameEntry?: (other: FileHandle) => Promise<boolean>
   getFile: () => Promise<File>
   createWritable: () => Promise<{ write: (data: Blob) => Promise<void>; close: () => Promise<void> }>
 }
@@ -108,12 +109,9 @@ export async function readDocument(
 export async function chooseSaveHandle(suggestedName: string): Promise<FileHandle | undefined> {
   const picker = window as PickerWindow
   if (!picker.showSaveFilePicker) return undefined
-  try {
-    return await picker.showSaveFilePicker({ suggestedName, types: [types[0]] })
-  } catch (error) {
-    if ((error as DOMException).name === 'AbortError') return undefined
-    throw error
-  }
+  // Only an unavailable API requests a download. Cancellation must reach the
+  // caller so it can leave the current document unsaved without downloading.
+  return picker.showSaveFilePicker({ suggestedName, types: [types[0]] })
 }
 
 export async function writeToHandle(handle: FileHandle, blob: Blob) {

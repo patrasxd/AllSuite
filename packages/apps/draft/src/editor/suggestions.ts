@@ -1,5 +1,6 @@
 import { Extension, Mark } from '@tiptap/core'
 import { Plugin, PluginKey, type EditorState } from '@tiptap/pm/state'
+import { closeHistory, isHistoryTransaction } from '@tiptap/pm/history'
 import { Fragment, Slice, type Mark as ProseMirrorMark, type Node as ProseMirrorNode } from '@tiptap/pm/model'
 import type { Editor } from '@tiptap/core'
 
@@ -133,7 +134,8 @@ export function resolveSuggestions(editor: Editor, ids: string[], decision: Sugg
     const kind = revisionKind(mark)
     return (decision === 'accept' && kind === 'delete') || (decision === 'reject' && kind === 'insert')
   })
-  const transaction = state.tr
+  // A review decision is one undoable action, separate from the edit it resolves.
+  const transaction = closeHistory(state.tr)
   for (const target of targets) {
     if (deletions.includes(target)) continue
     const { from, to, mark } = target
@@ -169,7 +171,11 @@ function appendTrackedChanges(
   author: string,
 ) {
   const changed = transactions.filter((transaction) => transaction.docChanged)
-  if (!changed.length || changed.some((transaction) => transaction.getMeta(SuggestionTrackingKey)?.skip)) return null
+  if (
+    !changed.length ||
+    changed.some((transaction) => transaction.getMeta(SuggestionTrackingKey)?.skip || isHistoryTransaction(transaction))
+  )
+    return null
   const additions: Array<{ from: number; to: number; mark: ProseMirrorMark }> = []
   const removed: Array<{ from: number; slice: Slice }> = []
   const revisionAuthor = author.trim().slice(0, 200) || 'Guest'

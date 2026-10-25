@@ -14,6 +14,8 @@ import { storiesFor, storyVariant, resolveStory, storyLayout, type StoryKind } f
 import { renderHTMLBody } from '../engine/export/html'
 import { storyLabels } from './StoryEditor'
 import type { CommentThread } from '../engine/comments'
+import { supportsColumnLayout } from '../engine/columns'
+import type { DraftDocument } from '../engine/document-model'
 
 export function PageCanvas({
   editor,
@@ -49,7 +51,8 @@ export function PageCanvas({
   onSelectComment: (id: string) => void
 }) {
   const pane = useRef<HTMLElement>(null)
-  const paged = view === 'print' && columns === 1
+  const measuredColumns = columns > 1 && supportsColumnLayout(editor.getJSON() as DraftDocument)
+  const paged = view === 'print' && (columns === 1 || measuredColumns)
   const measurements = useRef<HTMLDivElement>(null)
   const [storyHeights, setStoryHeights] = useState({ header: 0, footer: 0 })
   const [commentPins, setCommentPins] = useState<
@@ -323,7 +326,7 @@ export function PageCanvas({
   }, [pages, scale, view, page])
   return (
     <section ref={pane} className="draft-document-area" aria-label={translations[locale].document}>
-      {columns > 1 && view === 'print' && (
+      {columns > 1 && !measuredColumns && view === 'print' && (
         <p className="draft-pagination-notice" role="note">
           {pageLabels[locale].columnsHint}
         </p>
@@ -372,7 +375,7 @@ export function PageCanvas({
           />
         )}
         <div
-          className={`draft-paper${paged ? ' draft-paper--paged' : ''}${hyphenation ? ' draft-paper--hyphenate' : ''}`}
+          className={`draft-paper${paged ? ' draft-paper--paged' : ''}${paged && measuredColumns ? ' draft-paper--columns' : ''}${hyphenation ? ' draft-paper--hyphenate' : ''}`}
           data-theme={isEink ? undefined : 'light'}
           style={{ '--draft-columns': columns } as CSSProperties}
         >

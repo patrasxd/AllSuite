@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 
 // Draft-specific commands use the same 24-unit, currentColor line style as AllUI.
 const drawings = {
+  textColor: <path d="m5 17 7-14 7 14M8 12h8M3 21h18" />,
+  highlight: <path d="m5 15 10-10 4 4-10 10H5zM13 7l4 4M3 21h18" />,
   print: <path d="M6 8V3h12v5M6 17H3V9h18v8h-3M6 14h12v7H6zM17 11h1" />,
   preview: (
     <>

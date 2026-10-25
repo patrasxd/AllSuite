@@ -1,10 +1,13 @@
+import { draftFileAction } from './helpers/reveal-toolbar-command'
 import { test, expect, type Page } from '@playwright/test'
 import { generatedPNG } from './fixtures/png'
 import { unzipSync } from 'fflate'
+import { revealToolbarCommand } from './helpers/reveal-toolbar-command'
 
 async function insertFile(page: Page, width = 240, height = 120, maxEdge?: number, keepOriginal = false) {
   await page.getByRole('tab', { name: 'Insert', exact: true }).click()
-  await page.getByRole('button', { name: 'Insert image', exact: true }).click()
+  const { command, pagesAdvanced } = await revealToolbarCommand(page, 'Insert image')
+  await command.click()
   const dialog = page.getByRole('dialog', { name: 'Insert image', exact: true })
   if (maxEdge) await dialog.getByRole('spinbutton', { name: 'Maximum image edge (px)' }).fill(String(maxEdge))
   if (keepOriginal) await dialog.getByRole('button', { name: 'Keep original', exact: true }).click()
@@ -15,6 +18,7 @@ async function insertFile(page: Page, width = 240, height = 120, maxEdge?: numbe
   await dialog.getByRole('button', { name: 'Insert image', exact: true }).click()
   await expect(dialog).toHaveCount(0)
   await expect(page.locator('.tiptap img[src]').last()).toHaveAttribute('alt', 'Synthetic blue image')
+  return pagesAdvanced
 }
 
 test('insert, resize with handles and keyboard, edit alt, save/reopen and release history on New', async ({ page }) => {
@@ -25,12 +29,12 @@ test('insert, resize with handles and keyboard, edit alt, save/reopen and releas
   await page.goto('./#/draft')
   await insertFile(page)
   const image = page.locator('.tiptap img[src]')
-  await page.locator('.tiptap').press('ArrowLeft')
+  await image.click()
   const tools = page.getByRole('toolbar', { name: 'Image tools', exact: true })
   await expect(tools).toBeVisible()
   await page.keyboard.press('Alt+Shift+ArrowRight')
   await expect(image).toHaveAttribute('width', '250')
-  const handle = page.getByRole('button', { name: 'Resize image bottom right', exact: true })
+  const handle = page.getByRole('button', { name: 'Resize image: bottom right corner', exact: true })
   let box = (await handle.boundingBox())!
   await page.mouse.move(box.x + 22, box.y + 22)
   await page.mouse.down()
@@ -51,25 +55,35 @@ test('insert, resize with handles and keyboard, edit alt, save/reopen and releas
   )
   await page.keyboard.press('Control+Alt+a')
   const altDialog = page.getByRole('dialog', { name: 'Alt text', exact: true })
+  await expect(altDialog.getByRole('textbox', { name: 'Alt text', exact: true })).toHaveValue('Synthetic blue image')
+  await expect(altDialog.getByRole('button', { name: 'Close dialog', exact: true })).toBeFocused()
   await altDialog.getByRole('textbox', { name: 'Alt text', exact: true }).fill('Edited with keyboard')
   await altDialog.getByRole('button', { name: 'Apply', exact: true }).click()
   await expect(image).toHaveAttribute('alt', 'Edited with keyboard')
-  await tools.getByRole('combobox', { name: 'Image alignment', exact: true }).selectOption('center')
-  await tools.getByRole('combobox', { name: 'Text wrapping', exact: true }).selectOption('top-bottom')
+  const imageLayout = tools.getByRole('combobox', { name: 'Image layout', exact: true })
+  await imageLayout.selectOption('center')
+  await expect(page.locator('.draft-image')).toHaveAttribute('data-alignment', 'center')
+  await expect(page.locator('.draft-image')).toHaveAttribute('data-wrap', 'inline')
+  await imageLayout.selectOption('top-bottom')
+  await expect(page.locator('.draft-image')).toHaveAttribute('data-alignment', 'inline')
   await expect(page.locator('.draft-image')).toHaveAttribute('data-wrap', 'top-bottom')
   const width = await image.getAttribute('width')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
   const downloading = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await page.getByRole('button', { name: 'Save document', exact: true }).click()
   const chunks: Buffer[] = []
   for await (const chunk of await (await downloading).createReadStream()) chunks.push(Buffer.from(chunk))
   await expect(page.getByRole('status')).toContainText('Ready')
-  await page.getByRole('button', { name: 'New', exact: true }).click()
+  await draftFileAction(page, 'New')
+  const newDocument = page.getByRole('dialog', { name: 'New document', exact: true })
+  await expect(newDocument).toBeVisible()
+  await newDocument.getByRole('button', { name: /^Blank document/ }).click()
+  await expect(newDocument).toBeHidden()
   await expect(image).toHaveCount(0)
   await page.locator('.tiptap').press('Control+z')
   await expect(image).toHaveCount(0)
   const choosing = page.waitForEvent('filechooser')
-  await page.getByRole('button', { name: 'Open', exact: true }).click()
+  await draftFileAction(page, 'Open')
   await (
     await choosing
   ).setFiles({
@@ -79,7 +93,7 @@ test('insert, resize with handles and keyboard, edit alt, save/reopen and releas
   })
   await expect(image).toHaveAttribute('alt', 'Edited with keyboard')
   await expect(image).toHaveAttribute('width', width!)
-  await expect(page.locator('.draft-image')).toHaveAttribute('data-alignment', 'center')
+  await expect(page.locator('.draft-image')).toHaveAttribute('data-alignment', 'inline')
   await expect(page.locator('.draft-image')).toHaveAttribute('data-wrap', 'top-bottom')
 })
 
@@ -166,8 +180,9 @@ test('JPEG, GIF, WebP and embedded clipboard HTML images are accepted', async ({
     ]
   })
   const editor = page.locator('.tiptap')
-  for (const src of sources) {
+  for (const [index, src] of sources.entries()) {
     await editor.focus()
+    if (index > 0) await editor.press('ArrowRight')
     await editor.evaluate((element, source) => {
       const [header, base64] = source.split(',')
       const mime = header.slice(5).split(';')[0]
@@ -178,6 +193,9 @@ test('JPEG, GIF, WebP and embedded clipboard HTML images are accepted', async ({
     }, src)
     await expect(editor.locator(`img[src^="${src.slice(0, src.indexOf(','))}"]`)).toHaveCount(1)
   }
+  await expect(editor.locator('img[src]')).toHaveCount(sources.length)
+  await editor.focus()
+  await editor.press('ArrowRight')
   await editor.evaluate(
     (element, bytes) => {
       const data = new DataTransfer()
@@ -192,13 +210,18 @@ test('JPEG, GIF, WebP and embedded clipboard HTML images are accepted', async ({
     Array.from(generatedPNG(80, 40)),
   )
   await expect(editor.locator('img[alt="HTML image"]')).toHaveCount(1)
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await expect(editor.locator('img[src]')).toHaveCount(sources.length + 1)
+  await page.getByRole('button', { name: 'File', exact: true }).click()
   const downloading = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await page.getByRole('button', { name: 'Save document', exact: true }).click()
   const chunks: Buffer[] = []
   for await (const chunk of await (await downloading).createReadStream()) chunks.push(Buffer.from(chunk))
-  const media = Object.keys(unzipSync(Buffer.concat(chunks))).filter((name) => name.startsWith('word/media/'))
-  expect(media.some((name) => name.endsWith('.jpg'))).toBe(true)
+  const archive = unzipSync(Buffer.concat(chunks))
+  const media = Object.keys(archive).filter((name) => name.startsWith('word/media/') && !name.endsWith('/'))
+  expect(media).toHaveLength(4)
+  const jpeg = media.find((name) => name.endsWith('.jpg'))
+  expect(jpeg, `DOCX media parts: ${media.join(', ')}`).toBeDefined()
+  expect(Array.from(archive[jpeg!].subarray(0, 3))).toEqual([0xff, 0xd8, 0xff])
   expect(media.some((name) => name.endsWith('.gif'))).toBe(true)
   expect(media.filter((name) => name.endsWith('.png'))).toHaveLength(2)
 })
@@ -213,7 +236,9 @@ for (const locale of ['en', 'pl']) {
       await page.goto('./#/draft')
       await page.getByRole('tab', { name: locale === 'en' ? 'Insert' : 'Wstawianie', exact: true }).click()
       const label = locale === 'en' ? 'Insert image' : 'Wstaw obraz'
-      await page.getByRole('button', { name: label, exact: true }).click()
+      const { command } = await revealToolbarCommand(page, label, locale)
+      await expect(command).toBeVisible()
+      await command.click()
       const dialog = page.getByRole('dialog', { name: label, exact: true })
       const alt = dialog.getByRole('textbox', {
         name: locale === 'en' ? 'Alt text' : 'Tekst alternatywny',
@@ -252,6 +277,7 @@ for (const theme of ['dark', 'light', 'e-ink-light', 'e-ink-dark']) {
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.goto('./#/draft')
       await insertFile(page)
+      await expect(page.locator('.tiptap img[src]').last()).toBeVisible()
       await page.locator('.tiptap img[src]').click()
       await page.locator('.tiptap img[src]').evaluate((image) => (image as HTMLImageElement).decode())
       const tools = page.getByRole('toolbar', { name: 'Image tools', exact: true })
@@ -259,7 +285,7 @@ for (const theme of ['dark', 'light', 'e-ink-light', 'e-ink-dark']) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width)
       const pane = (await page.locator('.draft-document-area').boundingBox())!
       expect(pane.height).toBeGreaterThan(80)
-      for (const handle of await page.locator('.draft-image-handle').all()) {
+      for (const handle of await page.getByRole('button', { name: /^Resize image:/ }).all()) {
         const box = (await handle.boundingBox())!
         expect(box.height).toBeGreaterThanOrEqual(44)
         expect(box.width).toBeGreaterThanOrEqual(44)

@@ -82,7 +82,7 @@ describe('Grid workspace', () => {
       'title',
       'Pogrub tekst zaznaczonych komórek',
     )
-    expect(screen.getByRole('tab', { name: 'Plik', exact: true })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Plik', exact: true })).toHaveAttribute(
       'title',
       'Pokaż polecenia plików skoroszytu',
     )
@@ -138,7 +138,7 @@ describe('Grid workspace', () => {
     Object.defineProperty(file, 'arrayBuffer', { value: async () => new ArrayBuffer(8) })
     fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [file] } })
     await waitFor(() => expect(start).toHaveBeenCalledOnce())
-    fireEvent.click(screen.getByRole('tab', { name: 'File', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'New', exact: true }))
     expect(cancel).toHaveBeenCalledOnce()
     await act(async () => {
@@ -162,7 +162,7 @@ describe('Grid workspace', () => {
     const grid = screen.getByRole('grid', { name: 'Spreadsheet grid' })
     const formulaBar = screen.getByRole('textbox', { name: 'Formula bar' })
     fireEvent.change(formulaBar, { target: { value: 'keep style' } })
-    fireEvent.keyDown(formulaBar, { key: 'Enter' })
+    fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
     const bold = screen.getByRole('button', { name: 'Bold', exact: true })
     fireEvent.click(bold)
     for (const key of ['Delete', 'Backspace']) {
@@ -213,7 +213,7 @@ describe('Grid workspace', () => {
     const grid = screen.getByRole('grid', { name: 'Spreadsheet grid' })
     const formulaBar = screen.getByRole('textbox', { name: 'Formula bar' })
     fireEvent.change(formulaBar, { target: { value: '0.125' } })
-    fireEvent.keyDown(formulaBar, { key: 'Enter' })
+    fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
     fireEvent.change(screen.getByRole('combobox', { name: 'Number format' }), { target: { value: 'percent' } })
     fireEvent.keyDown(grid, { key: 'F2' })
     const editor = screen.getByRole('textbox', { name: 'Edit cell A1' })
@@ -237,7 +237,7 @@ describe('Grid workspace', () => {
     const slider = screen.getByRole('slider', { name: 'Resize column A', exact: true })
     slider.focus()
     fireEvent.keyDown(slider, { key: 'End' })
-    expect(nameBox).toHaveValue('A1:C3')
+    expect(screen.getByRole('gridcell', { name: 'C3, empty' })).toHaveAttribute('data-range-edges', 'bottom right')
     expect(slider).toHaveFocus()
     expect(fireEvent.keyDown(slider, { key: 'Tab' })).toBe(true)
   })
@@ -246,7 +246,7 @@ describe('Grid workspace', () => {
     const { rerender } = render(<Grid locale="en" setIsDirty={setIsDirty} />)
     const formulaBar = screen.getByRole('textbox', { name: 'Formula bar' })
     fireEvent.change(formulaBar, { target: { value: 'Local workbook' } })
-    fireEvent.keyDown(formulaBar, { key: 'Enter' })
+    fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
 
     rerender(<Grid locale="pl" isEink setIsDirty={setIsDirty} />)
     expect(screen.getByRole('textbox', { name: 'Pasek formuły' })).toHaveValue('Local workbook')
@@ -263,20 +263,39 @@ describe('Grid workspace', () => {
     render(<Grid locale="pl" setIsDirty={setIsDirty} />)
     const formulaBar = screen.getByRole('textbox', { name: 'Pasek formuły' })
     fireEvent.change(formulaBar, { target: { value: 'Zachowaj' } })
-    fireEvent.keyDown(formulaBar, { key: 'Enter' })
+    fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
     const grid = screen.getByRole('grid', { name: 'Siatka arkusza' })
     const selection = grid.getAttribute('aria-activedescendant')
-    const formatTab = screen.getByRole('tab', { name: 'Format', exact: true })
+    const formatTab = screen.getByRole('tab', { name: 'Narzędzia główne', exact: true })
     expect(formatTab).toHaveAttribute('aria-selected', 'true')
     fireEvent.keyDown(formatTab, { key: 'ArrowRight' })
-    const fileTab = screen.getByRole('tab', { name: 'Plik', exact: true })
-    expect(fileTab).toHaveFocus()
-    expect(screen.getByRole('tabpanel', { name: 'Plik', exact: true })).toBeVisible()
-    fireEvent.keyDown(fileTab, { key: 'Home' })
-    expect(fileTab).toHaveFocus()
+    const insertTab = screen.getByRole('tab', { name: 'Wstaw', exact: true })
+    expect(insertTab).toHaveFocus()
+    expect(screen.getByRole('tabpanel', { name: 'Wstaw', exact: true })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Utwórz tabelę', exact: true })).toBeVisible()
+    fireEvent.keyDown(insertTab, { key: 'ArrowRight' })
+    const dataTab = screen.getByRole('tab', { name: 'Dane', exact: true })
+    expect(dataTab).toHaveFocus()
+    fireEvent.keyDown(dataTab, { key: 'ArrowRight' })
+    const viewTab = screen.getByRole('tab', { name: 'Widok', exact: true })
+    expect(viewTab).toHaveFocus()
+    expect(screen.getByRole('tabpanel', { name: 'Widok', exact: true })).toBeVisible()
+    fireEvent.keyDown(viewTab, { key: 'ArrowRight' })
+    expect(formatTab).toHaveFocus()
+    const fileTab = screen.getByRole('button', { name: 'Plik', exact: true })
+    fireEvent.click(fileTab)
+    expect(fileTab).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('button', { name: 'Nowy', exact: true })).toBeVisible()
     expect(screen.getAllByRole('tabpanel')).toHaveLength(1)
-    fireEvent.keyDown(fileTab, { key: 'ArrowLeft' })
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Nowy', exact: true }), { key: 'Escape' })
+    expect(fileTab).toHaveFocus()
+    fireEvent.keyDown(formatTab, { key: 'ArrowLeft' })
+    expect(viewTab).toHaveFocus()
+    fireEvent.keyDown(viewTab, { key: 'ArrowLeft' })
+    expect(dataTab).toHaveFocus()
+    fireEvent.keyDown(dataTab, { key: 'ArrowLeft' })
+    expect(insertTab).toHaveFocus()
+    fireEvent.keyDown(insertTab, { key: 'ArrowLeft' })
     expect(formatTab).toHaveFocus()
     expect(formulaBar).toHaveValue('Zachowaj')
     expect(grid).toHaveAttribute('aria-activedescendant', selection)
@@ -287,10 +306,10 @@ describe('Grid workspace', () => {
     const setIsDirty = vi.fn()
     render(<Grid locale="en" setIsDirty={setIsDirty} />)
 
-    fireEvent.click(screen.getByRole('tab', { name: 'File', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }))
     expect(screen.getByRole('button', { name: 'New' })).toBeVisible()
-    fireEvent.click(screen.getByRole('tab', { name: 'Format', exact: true }))
-    expect(screen.getByRole('status')).toHaveTextContent('Choose Save or Save As to write an XLSX file')
+    fireEvent.click(screen.getByRole('tab', { name: 'Home', exact: true }))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
     const grid = screen.getByRole('grid', { name: 'Spreadsheet grid' })
     expect(grid).toBeVisible()
     expect(grid).toHaveAttribute('aria-rowcount', '101')
@@ -303,7 +322,7 @@ describe('Grid workspace', () => {
     const formulaBar = screen.getByRole('textbox', { name: 'Formula bar' })
     fireEvent.change(formulaBar, { target: { value: '=SUM(A1:A4)' } })
     expect(setIsDirty).toHaveBeenLastCalledWith(true)
-    fireEvent.keyDown(formulaBar, { key: 'Enter' })
+    fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
 
     expect(formulaBar).toHaveValue('=SUM(A1:A4)')
     expect(screen.getByRole('gridcell', { name: 'B1, empty' })).toBeVisible()
@@ -314,10 +333,10 @@ describe('Grid workspace', () => {
   it('renders Polish labels and a working in-memory New placeholder message', () => {
     render(<Grid locale="pl" />)
 
-    expect(screen.getByRole('textbox', { name: 'Pole nazwy' })).toBeVisible()
+    expect(screen.getByRole('textbox', { name: 'Pole nazwy' })).toHaveValue('A1')
     expect(screen.getByRole('textbox', { name: 'Pasek formuły' })).toBeVisible()
-    expect(screen.getByRole('status')).toHaveTextContent('Zapisz jako, aby zapisać plik XLSX')
-    fireEvent.click(screen.getByRole('tab', { name: 'Plik', exact: true }))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Plik', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Nowy' }))
     expect(screen.getByRole('status')).toHaveTextContent('Utworzono nowy pusty skoroszyt')
   })
@@ -326,7 +345,7 @@ describe('Grid workspace', () => {
     render(<Grid locale="pl" />)
     const formulaBar = screen.getByRole('textbox', { name: /Pasek formu/u })
     fireEvent.change(formulaBar, { target: { value: '0,125' } })
-    fireEvent.keyDown(formulaBar, { key: 'Enter' })
+    fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
     expect(screen.getByRole('gridcell', { name: 'A1, 0,125' })).toBeVisible()
 
     const numberFormat = screen.getByRole('combobox', { name: /Format liczby/u })
@@ -355,7 +374,7 @@ describe('Grid workspace', () => {
     stubSuccessfulSavePicker()
     render(<Grid locale="en" />)
 
-    fireEvent.click(screen.getByRole('tab', { name: 'File', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Save', exact: true }))
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Workbook saved.'))
 
@@ -373,7 +392,7 @@ describe('Grid workspace', () => {
     stubSuccessfulSavePicker()
     render(<Grid locale="en" />)
 
-    fireEvent.click(screen.getByRole('tab', { name: 'File', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Save As', exact: true }))
     expect(document.querySelector('.grid-import-progress')).not.toBeInTheDocument()
     await waitFor(() => expect(document.querySelector('.grid-import-progress')).toBeInTheDocument())
@@ -400,7 +419,7 @@ describe('Grid workspace', () => {
     fireEvent.change(editor, { target: { value: 'keep dirty' } })
     fireEvent.keyDown(editor, { key: 'Enter' })
 
-    fireEvent.click(screen.getByRole('tab', { name: 'File', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Save', exact: true }))
     const dialog = await screen.findByRole('dialog', { name: 'Workbook save review' })
     expect(dialog).toHaveTextContent('customXml/item1.xml')
@@ -438,7 +457,7 @@ describe('Grid workspace', () => {
     fireEvent.change(editor, { target: { value: 'unsaved on error' } })
     fireEvent.keyDown(editor, { key: 'Enter' })
 
-    fireEvent.click(screen.getByRole('tab', { name: 'File', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Save', exact: true }))
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Save failed'))
     expect(abort).toHaveBeenCalledOnce()
@@ -470,7 +489,7 @@ describe('Grid workspace', () => {
     const formula = screen.getByRole('textbox', { name: 'Formula bar' })
     fireEvent.change(formula, { target: { value: 'snapshot' } })
     fireEvent.keyDown(formula, { key: 'Enter' })
-    fireEvent.click(screen.getByRole('tab', { name: 'File', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Save', exact: true }))
     await waitFor(() => expect(close).toHaveBeenCalledOnce())
     fireEvent.change(formula, { target: { value: 'newer edit' } })
@@ -496,7 +515,7 @@ describe('Grid workspace', () => {
     fireEvent.change(editor, { target: { value: 'unsaved after cancel' } })
     fireEvent.keyDown(editor, { key: 'Enter' })
 
-    fireEvent.click(screen.getByRole('tab', { name: 'File', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Save As', exact: true }))
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Save canceled'))
     expect(setIsDirty).toHaveBeenLastCalledWith(true)
@@ -577,7 +596,7 @@ describe('Grid workspace', () => {
     fireEvent.keyDown(editor, { key: 'Enter', altKey: true })
     expect(editor).toHaveValue('first line\nsecond line')
     fireEvent.keyDown(editor, { key: 'Tab' })
-    expect(screen.getByRole('status')).toHaveTextContent('B1')
+    expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-B1')
     expect(screen.getByRole('gridcell', { name: /A1, first line\s+second line/ })).toBeVisible()
 
     fireEvent.doubleClick(screen.getByRole('gridcell', { name: 'B1, empty' }))
@@ -585,6 +604,23 @@ describe('Grid workspace', () => {
     fireEvent.change(editor, { target: { value: 'double click' } })
     fireEvent.keyDown(editor, { key: 'Enter' })
     expect(screen.getByRole('gridcell', { name: 'B1, double click' })).toBeVisible()
+    expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-B2')
+  })
+
+  it('commits formula-bar Enter with navigation and keeps Ctrl+Enter on the current cell', () => {
+    render(<Grid locale="en" />)
+    const grid = screen.getByRole('grid', { name: 'Spreadsheet grid' })
+    const formulaBar = screen.getByRole('textbox', { name: 'Formula bar' })
+
+    fireEvent.change(formulaBar, { target: { value: 'first' } })
+    fireEvent.keyDown(formulaBar, { key: 'Enter' })
+    expect(screen.getByRole('gridcell', { name: 'A1, first' })).toBeVisible()
+    expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-A2')
+
+    fireEvent.change(formulaBar, { target: { value: 'second' } })
+    fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
+    expect(screen.getByRole('gridcell', { name: 'A2, second' })).toBeVisible()
+    expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-A2')
   })
 
   it('fills selected cells as one undoable edit and supports undo/redo shortcuts', () => {
@@ -595,6 +631,7 @@ describe('Grid workspace', () => {
 
     fireEvent.change(nameBox, { target: { value: 'A1:B2' } })
     fireEvent.keyDown(nameBox, { key: 'Enter' })
+    expect(nameBox).toHaveValue('A1:B2')
     fireEvent.change(formulaBar, { target: { value: 'filled' } })
     fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
     for (const address of ['A1', 'B1', 'A2', 'B2']) {
@@ -619,19 +656,19 @@ describe('Grid workspace', () => {
     fireEvent.keyDown(grid, { key: '=' })
     let editor = screen.getByRole('textbox', { name: 'Edit cell A1' })
     fireEvent.change(editor, { target: { value: '=1+1' } })
-    fireEvent.keyDown(editor, { key: 'Enter' })
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true })
     expect(screen.getByRole('textbox', { name: 'Formula bar' })).toHaveValue('=1+1')
     expect(screen.getByRole('gridcell', { name: 'A1, empty' })).toBeVisible()
 
     const formulaBar = screen.getByRole('textbox', { name: 'Formula bar' })
     fireEvent.change(formulaBar, { target: { value: "'=1+1" } })
-    fireEvent.keyDown(formulaBar, { key: 'Enter' })
+    fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
     expect(screen.getByRole('gridcell', { name: 'A1, =1+1' })).toBeVisible()
 
     fireEvent.keyDown(grid, { key: 'F2' })
     editor = screen.getByRole('textbox', { name: 'Edit cell A1' })
     expect(editor).toHaveValue("'=1+1")
-    fireEvent.keyDown(editor, { key: 'Enter' })
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true })
     expect(screen.getByRole('gridcell', { name: 'A1, =1+1' })).toBeVisible()
     expect(screen.getByRole('textbox', { name: 'Formula bar' })).toHaveValue('=1+1')
   })
@@ -653,7 +690,7 @@ describe('Grid workspace', () => {
     expect(screen.getByRole('gridcell', { name: 'A1, kept on Sheet1' })).toBeVisible()
   })
 
-  it('inserts a selected block of rows as one undoable context-menu action', () => {
+  it('inserts a selected block of rows as one undoable context-menu action', async () => {
     render(<Grid locale="en" />)
     const grid = screen.getByRole('grid', { name: 'Spreadsheet grid' })
     const nameBox = screen.getByRole('textbox', { name: 'Name box' })
@@ -661,12 +698,13 @@ describe('Grid workspace', () => {
 
     fireEvent.change(nameBox, { target: { value: 'A2:A3' } })
     fireEvent.keyDown(nameBox, { key: 'Enter' })
+    expect(nameBox).toHaveValue('A2:A3')
     fireEvent.change(formulaBar, { target: { value: 'bulk' } })
     fireEvent.keyDown(formulaBar, { key: 'Enter', ctrlKey: true })
 
     fireEvent.contextMenu(document.querySelector('[data-row-header="2"]')!)
     fireEvent.click(screen.getByRole('menuitem', { name: 'Insert 2 rows above' }))
-    expect(screen.getByRole('gridcell', { name: 'A4, bulk' })).toBeVisible()
+    expect(await screen.findByRole('gridcell', { name: 'A4, bulk' })).toBeVisible()
     expect(screen.getByRole('gridcell', { name: 'A5, bulk' })).toBeVisible()
 
     fireEvent.keyDown(grid, { key: 'z', ctrlKey: true })
@@ -674,17 +712,41 @@ describe('Grid workspace', () => {
     expect(screen.getByRole('gridcell', { name: 'A3, bulk' })).toBeVisible()
   })
 
-  it('opens an accessible context menu with honest disabled clipboard placeholders', () => {
+  it('opens an accessible values clipboard menu while Cut stays disabled', () => {
     render(<Grid locale="pl" />)
     const grid = screen.getByRole('grid', { name: 'Siatka arkusza' })
     fireEvent.contextMenu(screen.getByRole('gridcell', { name: 'A1, pusta' }))
 
     expect(screen.getByRole('menu', { name: 'Działania na komórkach' })).toBeVisible()
-    expect(screen.getByRole('menuitem', { name: 'Kopiowanie (jeszcze niedostępne)' })).toBeDisabled()
+    expect(screen.getByRole('menuitem', { name: 'Kopiuj wartości' })).toBeEnabled()
     expect(screen.getByRole('menuitem', { name: 'Wycinanie (jeszcze niedostępne)' })).toBeDisabled()
-    expect(screen.getByRole('menuitem', { name: 'Wklejanie (jeszcze niedostępne)' })).toBeDisabled()
+    expect(screen.getByRole('menuitem', { name: 'Wklej wartości' })).toBeEnabled()
     fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
     expect(grid).toHaveFocus()
+  })
+
+  it('refuses unavailable or denied formula clipboard transport without dirtying the workbook', async () => {
+    const clipboard = {
+      read: vi.fn().mockRejectedValue(new Error('Denied')),
+      write: vi.fn().mockRejectedValue(new Error('Denied')),
+    }
+    const previous = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard })
+    try {
+      render(<Grid locale="en" />)
+      const grid = screen.getByRole('grid')
+      fireEvent.keyDown(grid, { key: 'v', ctrlKey: true, altKey: true, shiftKey: true })
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Clipboard operation refused'))
+      expect(clipboard.read).toHaveBeenCalledOnce()
+      fireEvent.keyDown(grid, { key: 'c', ctrlKey: true, altKey: true, shiftKey: true })
+      await waitFor(() => expect(grid).toHaveFocus())
+      expect(screen.getByRole('gridcell', { name: 'A1, empty' })).toBeVisible()
+      expect(document.querySelector('.grid-app')).not.toHaveAttribute('data-dirty', 'true')
+      expect(screen.getByRole('button', { name: 'Undo (Ctrl+Z or ⌘Z)', exact: true })).toBeDisabled()
+    } finally {
+      if (previous) Object.defineProperty(navigator, 'clipboard', previous)
+      else Reflect.deleteProperty(navigator, 'clipboard')
+    }
   })
 
   it('announces the optional touch range-selection mode', () => {
@@ -709,9 +771,20 @@ describe('Grid workspace', () => {
     expect(mountedCells.length).toBeLessThan(2_000)
   })
 
-  it('supports spreadsheet navigation, Shift ranges, name-box jumps, and viewport edges', () => {
+  it('supports spreadsheet navigation, Name Box ranges, and viewport edges', () => {
     render(<Grid locale="en" />)
     const grid = screen.getByRole('grid', { name: 'Spreadsheet grid' })
+    const nameBox = screen.getByRole('textbox', { name: 'Name box' })
+    expect(nameBox).toHaveValue('A1')
+    fireEvent.change(nameBox, { target: { value: 'A1:D20' } })
+    fireEvent.keyDown(nameBox, { key: 'Enter' })
+    expect(nameBox).toHaveValue('A1:D20')
+    expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-D20')
+    expect(screen.getByRole('gridcell', { name: 'A1, empty' })).toHaveAttribute('data-range-edges', 'top left')
+    expect(screen.getByRole('gridcell', { name: 'D20, empty' })).toHaveAttribute('data-range-edges', 'bottom right')
+    fireEvent.change(nameBox, { target: { value: 'A1' } })
+    fireEvent.keyDown(nameBox, { key: 'Enter' })
+
     grid.focus()
 
     fireEvent.keyDown(grid, { key: 'ArrowRight' })
@@ -722,21 +795,39 @@ describe('Grid workspace', () => {
     fireEvent.keyDown(grid, { key: 'Tab' })
     expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-C2')
     fireEvent.keyDown(grid, { key: 'Enter', shiftKey: true })
-    expect(screen.getByRole('status')).toHaveTextContent('C1')
+    expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-C1')
     fireEvent.keyDown(grid, { key: 'Home' })
     expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-A1')
     expect(screen.getByRole('gridcell', { name: 'A1, empty' })).toBeVisible()
     fireEvent.keyDown(grid, { key: 'End' })
-    expect(screen.getByRole('status')).toHaveTextContent('Z1')
+    expect(grid).toHaveAttribute('aria-activedescendant', 'grid-active-cell-proxy')
+    expect(document.getElementById('grid-active-cell-proxy')).toHaveAttribute('aria-label', 'Z1, empty')
     fireEvent.keyDown(grid, { key: 'Home', ctrlKey: true })
     expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-A1')
+    expect(nameBox).toHaveValue('A1')
 
-    const nameBox = screen.getByRole('textbox', { name: 'Name box' })
-    fireEvent.change(nameBox, { target: { value: 'A1:D20' } })
-    fireEvent.keyDown(nameBox, { key: 'Enter' })
+    for (let row = 0; row < 19; row += 1) fireEvent.keyDown(grid, { key: 'ArrowDown', shiftKey: true })
+    for (let column = 0; column < 3; column += 1) fireEvent.keyDown(grid, { key: 'ArrowRight', shiftKey: true })
+    expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-D20')
     expect(nameBox).toHaveValue('A1:D20')
-    expect(screen.getByRole('status')).toHaveTextContent('D20')
     expect(screen.getByRole('gridcell', { name: 'D20, empty' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('validates Name Box addresses and restores the current selection after invalid input', () => {
+    render(<Grid locale="en" />)
+    const grid = screen.getByRole('grid', { name: 'Spreadsheet grid' })
+    const nameBox = screen.getByRole('textbox', { name: 'Name box' })
+
+    fireEvent.change(nameBox, { target: { value: 'not-an-address' } })
+    fireEvent.keyDown(nameBox, { key: 'Enter' })
+    expect(nameBox).toHaveValue('A1')
+    expect(screen.getByRole('status')).toHaveTextContent('Enter a valid cell or range address.')
+
+    fireEvent.change(nameBox, { target: { value: 'C3' } })
+    fireEvent.keyDown(nameBox, { key: 'Enter' })
+    expect(nameBox).toHaveValue('C3')
+    expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-C3')
+    expect(screen.getByRole('gridcell', { name: 'C3, empty' })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('keeps focus on the grid after adding and switching sheets', () => {

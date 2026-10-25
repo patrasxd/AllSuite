@@ -1,6 +1,12 @@
+import { importColumnChart } from './chart-xml'
 import { Unzip, UnzipInflate, UnzipPassThrough } from 'fflate'
-import { DOMParser, type Element as XmlElement, type Node as XmlNode } from '@xmldom/xmldom'
-import { dateToSerial } from '../workbook/dates'
+import { FILTER_NAMESPACE, filteredRows } from '../workbook/filter'
+import { supportedFrozenPane } from '../workbook/freeze'
+import { validHeader, validTableName } from '../workbook/table'
+import { simpleTableXml, TABLE_CONTENT_TYPE } from './table-xml'
+import type { FilterCriterion } from '../workbook/types'
+import { DOMParser, XMLSerializer, type Element as XmlElement, type Node as XmlNode } from '@xmldom/xmldom'
+import { dateToSerial, isDateFormat } from '../workbook/dates'
 import { cellAddressKey, parseCellAddress, parseRangeAddress, parseSheetQualifiedAddress } from '../workbook/address'
 import {
   createOpaquePartDescriptor,
@@ -79,7 +85,7 @@ interface ContentTypeEntry {
   isDefault: boolean
 }
 
-interface RelationshipEntry {
+export interface RelationshipEntry {
   sourcePart: string
   id: string
   type: string
@@ -504,11 +510,13 @@ export async function parseXlsxWorkbook(
       )
       readTables(
         sheet,
+        worksheetRoot,
         relationships.filter((relationship) => relationship.sourcePart === partName),
         sourceParts,
         findings,
       )
       readDrawingsAndPivots(sheet, worksheetRoot, relationships, sourceParts, findings, partName)
+      importColumnChart(sheet, partName, sourceParts, relationships)
       onProgress({ phase: 'map', percent: 60 + Math.round(((index + 1) / workbook.sheetOrder.length) * 35) })
       await yieldTask()
     }
@@ -536,6 +544,61 @@ export async function parseXlsxWorkbook(
       sheetMappings,
       inventory: { contentTypes, relationships },
     }
+    // Ownership is local to a fully proved native part graph, never granted to an opaque table.
+    const allTables = [...workbook.sheetsById.values()].flatMap((s) => s.tables)
+    const plainGraphNode = (node: XmlElement | undefined, namespace: string, allowed: string[]) =>
+      Boolean(
+        node &&
+        node.namespaceURI === namespace &&
+        !children(node).length &&
+        Array.from({ length: node.attributes.length }, (_, i) => node.attributes.item(i)!).every(
+          (a) => allowed.includes(a.name) || a.name === 'xmlns' || a.prefix === 'xmlns',
+        ),
+      )
+    const typeRoot = requireXmlRoot(parseXml(sourceParts.get('[Content_Types].xml')!, '[Content_Types].xml'))
+    for (const sheet of workbook.sheetsById.values())
+      for (const table of sheet.tables) {
+        if (table.ownership !== 'simple') continue
+        const mapping = sheetMappings.find((m) => m.sheetId === sheet.id)!
+        const incoming = relationships.filter((r) => r.resolvedTarget === table.id)
+        const content = contentTypes.filter((t) => t.partName === table.id && !t.isDefault)
+        const relPart = [...sourceParts.keys()].find(
+          (path) => /_rels\/[^/]+\.rels$/i.test(path) && relationshipSource(path) === mapping.partName,
+        )
+        const relRoot = relPart ? requireXmlRoot(parseXml(sourceParts.get(relPart)!, relPart)) : undefined
+        const relNode = relRoot && children(relRoot).find((node) => node.getAttribute('Id') === incoming[0]?.id)
+        const typeNode = children(typeRoot).find(
+          (node) => localName(node) === 'Override' && normalizePartUri(node.getAttribute('PartName')) === table.id,
+        )
+        if (
+          !plainGraphNode(relNode, XMLNS.relationships, ['Id', 'Type', 'Target', 'TargetMode']) ||
+          !plainGraphNode(typeNode, XMLNS.contentTypes, ['PartName', 'ContentType']) ||
+          incoming.length !== 1 ||
+          incoming[0].sourcePart !== mapping.partName ||
+          incoming[0].type !== `${XMLNS.officeRelationships}/table` ||
+          incoming[0].targetMode === 'External' ||
+          content.length !== 1 ||
+          content[0].contentType !== TABLE_CONTENT_TYPE ||
+          relationships.some((r) => r.sourcePart === table.id) ||
+          allTables.some(
+            (t) => t !== table && (t.nativeId === table.nativeId || t.name.toLowerCase() === table.name.toLowerCase()),
+          )
+        ) {
+          delete table.ownership
+          delete table.nativeId
+          sheet.autoFilter = undefined
+          const originalRoot = requireXmlRoot(parseXml(sourceParts.get(mapping.partName)!, mapping.partName))
+          sheet.rowMetadata = new Map(
+            descendants(firstChild(originalRoot, 'sheetData'), 'row').flatMap((row) => {
+              const metadata = readRowMetadata(row)
+              return metadata ? [[Number(row.getAttribute('r')), metadata] as const] : []
+            }),
+          )
+        } else {
+          const part = workbook.preservation.parts.find((p) => p.partName === table.id)!
+          if (part.classification === 'readable-not-editable') part.classification = 'supported'
+        }
+      }
     findings.add('supported-content', 'supported', 1, workbookPart)
     const reportFindings = findings.all()
     onProgress({ phase: 'map', percent: 100 })
@@ -1196,21 +1259,6 @@ function builtinNumberFormat(id: number): string {
   return formats[id] ?? `General#${id}`
 }
 
-function isDateFormat(format: string, id: number): boolean {
-  if (
-    [
-      14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 45, 46, 47, 50, 51, 52, 53, 54, 55,
-      56, 57, 58,
-    ].includes(id)
-  )
-    return true
-  const clean = format
-    .replace(/"[^"]*"/g, '')
-    .replace(/\\./g, '')
-    .replace(/\[[^\]]*\]/g, (part) => (/^\[(?:h+|m+|s+)\]$/i.test(part) ? part : ''))
-  return /[ydhs]/i.test(clean) || /m{1,4}/i.test(clean)
-}
-
 function parseScalarValue(
   cellType: string,
   rawValue: string,
@@ -1295,14 +1343,72 @@ function isBalancedFormula(formula: string): boolean {
 
 function readFrozenPane(root: XmlElement, sheet: Worksheet): void {
   const pane = firstChild(firstChild(firstChild(root, 'sheetViews'), 'sheetView'), 'pane')
-  if (!pane) return
-  sheet.frozenPane = {
-    xSplit: finiteAttribute(pane, 'xSplit') ?? 0,
-    ySplit: finiteAttribute(pane, 'ySplit') ?? 0,
-    topLeftCell: pane.getAttribute('topLeftCell') ?? 'A1',
-    ...(pane.getAttribute('activePane') ? { activePane: pane.getAttribute('activePane')! } : {}),
-    ...(pane.getAttribute('state') ? { state: pane.getAttribute('state')! } : {}),
+  if (pane)
+    sheet.frozenPane = {
+      xSplit: finiteAttribute(pane, 'xSplit') ?? 0,
+      ySplit: finiteAttribute(pane, 'ySplit') ?? 0,
+      topLeftCell: pane.getAttribute('topLeftCell') ?? 'A1',
+      ...(pane.getAttribute('activePane') ? { activePane: pane.getAttribute('activePane')! } : {}),
+      ...(pane.getAttribute('state') ? { state: pane.getAttribute('state')! } : {}),
+    }
+  const containers = children(root).filter((child) => localName(child) === 'sheetViews')
+  const views = children(containers[0]).filter((child) => localName(child) === 'sheetView')
+  const view = views[0]
+  const onlyAttributes = (element: XmlElement, allowed: string[]) =>
+    element.namespaceURI === XMLNS.spreadsheet &&
+    Array.from(element.attributes).every((attr) => !attr.namespaceURI && allowed.includes(attr.name))
+  const supportedSelection = (element: XmlElement) => {
+    if (!onlyAttributes(element, ['pane', 'activeCell', 'sqref']) || children(element).length) return false
+    const active = element.getAttribute('activeCell') ?? 'A1'
+    try {
+      const address = parseCellAddress(active)
+      if (
+        sheet.frozenPane &&
+        (!element.hasAttribute('pane') ||
+          address.row <= sheet.frozenPane.ySplit ||
+          address.column <= sheet.frozenPane.xSplit)
+      )
+        return false
+    } catch {
+      return false
+    }
+    return (
+      (!element.hasAttribute('sqref') || element.getAttribute('sqref') === active) &&
+      (!element.hasAttribute('pane') ||
+        element.getAttribute('pane') ===
+          (sheet.frozenPane?.activePane ??
+            (sheet.frozenPane?.xSplit ? (sheet.frozenPane.ySplit ? 'bottomRight' : 'topRight') : 'bottomLeft')))
+    )
   }
+  const customViews = children(root).some((child) => localName(child) === 'customSheetViews')
+  if (containers.length === 0) {
+    if (customViews) sheet.unsupportedSheetViews = true
+    return
+  }
+  sheet.unsupportedSheetViews = Boolean(
+    customViews ||
+    containers.length !== 1 ||
+    views.length !== 1 ||
+    children(containers[0]).length !== 1 ||
+    !onlyAttributes(containers[0], []) ||
+    !view ||
+    !onlyAttributes(view, ['workbookViewId', 'tabSelected']) ||
+    view.getAttribute('workbookViewId') !== '0' ||
+    (view.hasAttribute('tabSelected') && !['0', '1'].includes(view.getAttribute('tabSelected')!)) ||
+    children(view).some((child) => !['pane', 'selection'].includes(localName(child))) ||
+    children(view).filter((child) => localName(child) === 'pane').length > 1 ||
+    children(view).filter((child) => localName(child) === 'selection').length > 1 ||
+    (pane &&
+      (!onlyAttributes(pane, ['xSplit', 'ySplit', 'topLeftCell', 'activePane', 'state']) ||
+        ['xSplit', 'ySplit'].some(
+          (name) => pane.hasAttribute(name) && !['0', '1'].includes(pane.getAttribute(name)!),
+        ) ||
+        children(pane).length ||
+        !supportedFrozenPane(sheet.frozenPane))) ||
+    children(view)
+      .filter((child) => localName(child) === 'selection')
+      .some((child) => !supportedSelection(child)),
+  )
 }
 
 function readColumns(root: XmlElement, sheet: Worksheet): void {
@@ -1324,14 +1430,29 @@ function readColumns(root: XmlElement, sheet: Worksheet): void {
   }
 }
 
+function ownedRowVisibility(row: XmlElement): boolean {
+  const filtered = row.getAttributeNS(FILTER_NAMESPACE, 'filterHidden')
+  const manual = row.getAttributeNS(FILTER_NAMESPACE, 'manualHidden')
+  return (
+    ['0', '1'].includes(filtered ?? '') &&
+    ['0', '1'].includes(manual ?? '') &&
+    boolAttribute(row, 'hidden') &&
+    (filtered === '1' || manual === '1') &&
+    Boolean(firstChild(row.ownerDocument!.documentElement!, 'autoFilter'))
+  )
+}
+
 function readRowMetadata(row: XmlElement): RowMetadata | undefined {
   const height = finiteAttribute(row, 'ht')
-  const hidden = boolAttribute(row, 'hidden')
+  const owned = ownedRowVisibility(row)
+  const filterHidden = owned && row.getAttributeNS(FILTER_NAMESPACE, 'filterHidden') === '1'
+  const hidden = owned ? row.getAttributeNS(FILTER_NAMESPACE, 'manualHidden') === '1' : boolAttribute(row, 'hidden')
   const outlineLevel = finiteAttribute(row, 'outlineLevel')
-  if (height === undefined && !hidden && outlineLevel === undefined) return undefined
+  if (height === undefined && !hidden && !filterHidden && outlineLevel === undefined) return undefined
   return {
     ...(height !== undefined ? { height } : {}),
     ...(hidden ? { hidden: true } : {}),
+    ...(filterHidden ? { filterHidden: true } : {}),
     ...(outlineLevel !== undefined ? { outlineLevel } : {}),
   }
 }
@@ -1356,6 +1477,78 @@ function readAutoFilter(root: XmlElement, sheet: Worksheet, partName: string): v
   if (!reference) return
   try {
     sheet.autoFilter = { range: parseRangeAddress(reference), sourcePartName: partName }
+    const range = sheet.autoFilter.range
+    const criteria: FilterCriterion[] = []
+    const onlyAttributes = (node: XmlElement, allowed: string[]) =>
+      Array.from({ length: node.attributes.length }, (_, i) => node.attributes.item(i)!).every(
+        (a) => allowed.includes(a.name) || a.name === 'xmlns' || a.prefix === 'xmlns',
+      )
+    let supported =
+      onlyAttributes(autoFilter!, ['ref']) &&
+      children(root).filter((node) => localName(node) === 'autoFilter').length === 1
+    const columns = new Set<number>()
+    for (const node of children(autoFilter!)) {
+      const offset = Number(node.getAttribute('colId'))
+      const column = range.start.column + offset
+      const filters = firstChild(node, 'filters')
+      if (
+        node.namespaceURI !== XMLNS.spreadsheet ||
+        localName(node) !== 'filterColumn' ||
+        !node.hasAttribute('colId') ||
+        !Number.isInteger(offset) ||
+        offset < 0 ||
+        column > range.end.column ||
+        columns.has(column) ||
+        !onlyAttributes(node, ['colId']) ||
+        children(node).length !== 1 ||
+        !filters ||
+        filters.namespaceURI !== XMLNS.spreadsheet ||
+        !onlyAttributes(filters, ['blank']) ||
+        !['', '0', '1', 'false', 'true'].includes(filters.getAttribute('blank') ?? '')
+      ) {
+        supported = false
+        continue
+      }
+      columns.add(column)
+      const values: string[] = []
+      for (const value of children(filters)) {
+        if (
+          value.namespaceURI !== XMLNS.spreadsheet ||
+          localName(value) !== 'filter' ||
+          !onlyAttributes(value, ['val']) ||
+          !value.hasAttribute('val') ||
+          children(value).length ||
+          !value.getAttribute('val')
+        )
+          supported = false
+        else values.push(value.getAttribute('val')!)
+      }
+      if (new Set(values).size !== values.length) supported = false
+      criteria.push({ column, values, blank: boolAttribute(filters, 'blank') })
+    }
+    // Standard hidden="1" does not identify its cause. Do not guess and expose manual rows.
+    const ownedRows = new Set(
+      descendants(firstChild(root, 'sheetData'), 'row')
+        .filter(ownedRowVisibility)
+        .map((row) => Number(row.getAttribute('r'))),
+    )
+    if (
+      criteria.length &&
+      [...sheet.rowMetadata].some(
+        ([row, m]) => row > range.start.row && row <= range.end.row && m.hidden && !ownedRows.has(row),
+      )
+    )
+      supported = false
+    if (supported) {
+      sheet.autoFilter.criteria = criteria
+      try {
+        // Validate the supported literal subset and derive visibility consistently.
+        sheet.rowMetadata = filteredRows({}, sheet, range, criteria)
+      } catch {
+        delete sheet.autoFilter.criteria
+        sheet.autoFilter.unsupported = true
+      }
+    } else sheet.autoFilter.unsupported = true
   } catch {
     throw new XlsxImportError('invalid-workbook', 'Invalid worksheet filter range.')
   }
@@ -1565,6 +1758,7 @@ function readComments(
 
 function readTables(
   sheet: Worksheet,
+  worksheetRoot: XmlElement,
   relationships: RelationshipEntry[],
   sourceParts: Map<string, Uint8Array>,
   findings: ImportFindings,
@@ -1601,6 +1795,76 @@ function readTables(
         rangeStatus: 'safe',
       }
       sheet.tables.push(table)
+      const nativeId = Number(root.getAttribute('id'))
+      table.nativeId = nativeId
+      if (
+        tableRels.length === 1 &&
+        !sheet.autoFilter &&
+        validTableName(name) &&
+        Number.isSafeInteger(nativeId) &&
+        nativeId > 0 &&
+        nativeId <= 0xffffffff &&
+        table.id === `xl/tables/table${nativeId}.xml` &&
+        columns.length === table.range.end.column - table.range.start.column + 1 &&
+        columns.every(
+          (c, i) =>
+            c.id === String(i + 1) &&
+            validHeader(c.name) &&
+            sheet.cells.get(cellAddressKey({ row: table.range.start.row, column: table.range.start.column + i }))?.value
+              .kind === 'string' &&
+            (
+              sheet.cells.get(cellAddressKey({ row: table.range.start.row, column: table.range.start.column + i }))!
+                .value as { value: string }
+            ).value === c.name,
+        ) &&
+        new Set(columns.map((c) => c.name.toLowerCase())).size === columns.length
+      ) {
+        const clone = worksheetRoot.cloneNode(true) as XmlElement
+        const auto = firstChild(root, 'autoFilter')
+        const refs = descendants(firstChild(worksheetRoot, 'tableParts'), 'tablePart')
+        const tableParts = firstChild(worksheetRoot, 'tableParts')
+        const plainAttributes = (node: XmlElement, allowed: string[]) =>
+          Array.from({ length: node.attributes.length }, (_, i) => node.attributes.item(i)!).every(
+            (a) => allowed.includes(a.name) || a.name === 'xmlns' || a.prefix === 'xmlns',
+          )
+        if (
+          auto &&
+          tableParts &&
+          children(worksheetRoot).filter((node) => localName(node) === 'tableParts').length === 1 &&
+          tableParts.namespaceURI === XMLNS.spreadsheet &&
+          refs.every((ref) => ref.namespaceURI === XMLNS.spreadsheet) &&
+          plainAttributes(tableParts, ['count']) &&
+          tableParts.getAttribute('count') === '1' &&
+          children(tableParts).length === 1 &&
+          refs.length === 1 &&
+          plainAttributes(refs[0], ['r:id']) &&
+          !children(refs[0]).length &&
+          refs[0].getAttributeNS(XMLNS.officeRelationships, 'id') === relationship.id
+        ) {
+          clone.appendChild(auto.cloneNode(true))
+          const candidate = { ...sheet, tables: [], rowMetadata: new Map(sheet.rowMetadata) }
+          // Row ownership is interpreted only with the now-proven table filter in the temporary document.
+          const tempDoc = new DOMParser().parseFromString(
+            new XMLSerializer().serializeToString(clone),
+            'application/xml',
+          )
+          for (const row of descendants(firstChild(tempDoc.documentElement!, 'sheetData'), 'row')) {
+            const metadata = readRowMetadata(row)
+            if (metadata) candidate.rowMetadata.set(Number(row.getAttribute('r')), metadata)
+          }
+          readAutoFilter(tempDoc.documentElement!, candidate, table.id)
+          if (
+            candidate.autoFilter?.criteria &&
+            !candidate.autoFilter.unsupported &&
+            new XMLSerializer().serializeToString(root) === simpleTableXml(table, candidate.autoFilter)
+          ) {
+            table.ownership = 'simple'
+            sheet.autoFilter = candidate.autoFilter
+            sheet.rowMetadata = candidate.rowMetadata
+          }
+        }
+      }
+      if (!table.ownership) delete table.nativeId
     } catch {
       findings.add('tables', 'readable-not-editable', 1, relationship.resolvedTarget!)
     }

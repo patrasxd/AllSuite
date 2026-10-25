@@ -1,0 +1,54 @@
+.allsuite-task-pane-host {
+  display: flex;
+  flex: 0 0 340px;
+  width: 340px;
+  min-width: 0;
+  min-height: 0;
+  border-inline-start: var(--all-border-width) solid var(--all-border);
+}
+.allsuite-task-pane-host[hidden] {
+  display: none;
+}
+.allsuite-task-pane {
+  width: 100%;
+}
+.allsuite-task-pane .all-side-panel__header {
+  padding: var(--all-space-2) var(--all-space-3);
+}
+.allsuite-task-pane .all-side-panel__content {
+  overflow-x: hidden;
+}
+.allsuite-task-pane [hidden] {
+  display: none !important;
+}
+.allsuite-task-pane button:not([role='switch']) {
+  min-height: 44px;
+}
+.allsuite-task-pane .all-icon-btn {
+  min-width: 44px;
+}
+/* The pinned secondary hover uses --all-border, which equals --all-text in
+   e-ink. Keep selected modes/results readable within this composition. */
+[data-eink='true'] .allsuite-task-pane .all-btn--secondary:hover:not(:disabled) {
+  background-color: var(--all-surface-2);
+  border-color: var(--all-text);
+}
+.allsuite-task-pane .all-toggle-container {
+  min-height: 44px;
+  align-items: center;
+}
+.allsuite-task-pane .all-toggle::before {
+  content: '';
+  position: absolute;
+  inset: -11px 0;
+}
+@media (max-width: 900px) {
+  .allsuite-task-pane-host {
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 6;
+    width: min(340px, 88%);
+    max-width: 100%;
+    border-inline-start-width: calc(var(--all-border-width) * 2);
+  }
+}

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, CloseIcon, Input, ReplaceIcon, Text, Toggle } from '@all/ui'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Button, CloseIcon, IconButton, Input, ReplaceIcon, Text, Toggle } from '@all/ui'
 import { DraftIcon } from './DraftIcons'
 import type { Editor } from '@tiptap/core'
 import type { Locale } from '../types'
@@ -10,14 +10,26 @@ import type { SearchOptions } from '../engine/search'
 interface Props {
   editor: Editor
   locale: Locale
-  mode: 'find' | 'replace'
-  onModeChange: (mode: 'find' | 'replace') => void
+  mode: 'find' | 'replace' | 'headings'
+  onModeChange: (mode: 'find' | 'replace' | 'headings') => void
+  children?: ReactNode
+  active?: boolean
+  embedded?: boolean
   onClose: () => void
 }
 
 const defaultOptions: SearchOptions = { caseSensitive: false, wholeWord: false, regex: false }
 
-export function FindReplacePanel({ editor, locale, mode, onModeChange, onClose }: Props) {
+export function FindReplacePanel({
+  editor,
+  locale,
+  mode,
+  onModeChange,
+  onClose,
+  active = true,
+  embedded = false,
+  children,
+}: Props) {
   const t = translations[locale]
   const [query, setQuery] = useState('')
   const [replacement, setReplacement] = useState('')
@@ -27,16 +39,16 @@ export function FindReplacePanel({ editor, locale, mode, onModeChange, onClose }
   const queryInput = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    queryInput.current?.focus()
-  }, [])
+    if (active) queryInput.current?.focus()
+  }, [active, mode])
 
   const refresh = useCallback(() => {
-    const next = findDocumentMatches(editor, query, options)
+    const next = findDocumentMatches(editor, active && mode !== 'headings' ? query : '', options)
     const nextCurrent = next.matches.length ? Math.min(current, next.matches.length - 1) : 0
     setCurrent(nextCurrent)
     setResult(next)
     setSearchHighlights(editor, next.matches, nextCurrent)
-  }, [current, editor, options, query])
+  }, [active, current, editor, mode, options, query])
 
   useEffect(() => {
     refresh()
@@ -89,11 +101,14 @@ export function FindReplacePanel({ editor, locale, mode, onModeChange, onClose }
           </Text>
           <Input
             ref={queryInput}
+            fullWidth
             aria-label={t.find}
             value={query}
+            placeholder={locale === 'pl' ? 'Szukaj w dokumencie' : 'Search document'}
             onChange={(event) => {
               setQuery(event.target.value)
               setCurrent(0)
+              if (mode === 'headings') onModeChange('find')
             }}
             onKeyDown={(event) => {
               if (event.key !== 'Enter') return
@@ -102,81 +117,138 @@ export function FindReplacePanel({ editor, locale, mode, onModeChange, onClose }
             }}
           />
         </label>
+      </div>
+      <div className="draft-navigation-modes" role="group" aria-label={locale === 'pl' ? 'Nawigacja' : 'Navigation'}>
+        {(['find', 'replace', 'headings'] as const).map((view) => (
+          <Button
+            key={view}
+            size="sm"
+            variant={mode === view ? 'secondary' : 'ghost'}
+            aria-pressed={mode === view}
+            onClick={() => onModeChange(view)}
+          >
+            {view === 'find' ? t.find : view === 'replace' ? t.replace : locale === 'pl' ? 'Nagłówki' : 'Headings'}
+          </Button>
+        ))}
+      </div>
+      <div hidden={mode !== 'headings'}>{children}</div>
+      <div hidden={mode === 'headings'} className="draft-find-content">
         {mode === 'replace' && (
           <label>
             <Text as="span" variant="caption">
               {t.replaceWith}
             </Text>
             <Input
+              fullWidth
               aria-label={t.replaceWith}
               value={replacement}
               onChange={(event) => setReplacement(event.target.value)}
             />
           </label>
         )}
-      </div>
-      <div className="draft-find-options">
-        <Toggle
-          checked={options.caseSensitive}
-          onChange={(caseSensitive) => setOptions((value) => ({ ...value, caseSensitive }))}
-          label={t.caseSensitive}
-        />
-        <Toggle
-          checked={options.wholeWord}
-          onChange={(wholeWord) => setOptions((value) => ({ ...value, wholeWord }))}
-          label={t.wholeWord}
-        />
-        <Toggle
-          checked={options.regex}
-          onChange={(regex) => setOptions((value) => ({ ...value, regex }))}
-          label={t.regularExpression}
-        />
-      </div>
-      <div className="draft-find-actions">
-        <Text as="span" variant="secondary" aria-live="polite">
-          {result.matches.length
-            ? `${current + 1}/${result.matches.length}${result.truncated ? '+' : ''}`
-            : t.noMatches}
-        </Text>
-        <Button
-          variant="secondary"
-          icon={<DraftIcon name="previous" />}
-          onClick={() => move(-1)}
-          disabled={!result.matches.length}
-        >
-          {t.previousMatch}
-        </Button>
-        <Button
-          variant="secondary"
-          icon={<DraftIcon name="next" />}
-          onClick={() => move(1)}
-          disabled={!result.matches.length}
-        >
-          {t.nextMatch}
-        </Button>
-        {mode === 'find' ? (
-          <Button variant="secondary" icon={<ReplaceIcon />} onClick={() => onModeChange('replace')}>
-            {t.replace}
-          </Button>
-        ) : (
-          <>
-            <Button variant="secondary" icon={<ReplaceIcon />} onClick={replaceOne} disabled={!result.matches.length}>
-              {t.replaceOne}
+        <details className="draft-search-options">
+          <summary>{locale === 'pl' ? 'Opcje wyszukiwania' : 'Search options'}</summary>
+          <div className="draft-find-options">
+            <Toggle
+              checked={options.caseSensitive}
+              onChange={(caseSensitive) => setOptions((value) => ({ ...value, caseSensitive }))}
+              label={t.caseSensitive}
+            />
+            <Toggle
+              checked={options.wholeWord}
+              onChange={(wholeWord) => setOptions((value) => ({ ...value, wholeWord }))}
+              label={t.wholeWord}
+            />
+            <Toggle
+              checked={options.regex}
+              onChange={(regex) => setOptions((value) => ({ ...value, regex }))}
+              label={t.regularExpression}
+            />
+          </div>
+        </details>
+        <div className="draft-find-actions">
+          <Text as="span" variant="secondary" aria-live="polite">
+            {result.matches.length
+              ? `${current + 1}/${result.matches.length}${result.truncated ? '+' : ''}`
+              : t.noMatches}
+          </Text>
+          <IconButton
+            size="sm"
+            variant="outline"
+            icon={<DraftIcon name="previous" />}
+            aria-label={t.previousMatch}
+            onClick={() => move(-1)}
+            disabled={!result.matches.length}
+          />
+          <IconButton
+            size="sm"
+            variant="outline"
+            icon={<DraftIcon name="next" />}
+            aria-label={t.nextMatch}
+            onClick={() => move(1)}
+            disabled={!result.matches.length}
+          />
+          {mode === 'replace' && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                icon={<ReplaceIcon />}
+                onClick={replaceOne}
+                disabled={!result.matches.length}
+              >
+                {t.replaceOne}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                icon={<ReplaceIcon />}
+                onClick={replaceAll}
+                disabled={!result.matches.length}
+              >
+                {t.replaceAll}
+              </Button>
+            </>
+          )}
+          {!embedded && (
+            <Button variant="ghost" onClick={onClose} aria-label={t.closeFind}>
+              <CloseIcon />
             </Button>
-            <Button variant="secondary" icon={<ReplaceIcon />} onClick={replaceAll} disabled={!result.matches.length}>
-              {t.replaceAll}
-            </Button>
-          </>
+          )}
+        </div>
+        <ol className="draft-search-results" aria-label={t.find}>
+          {result.matches.map((match, index) => (
+            <li key={match.from}>
+              <Button
+                variant={current === index ? 'secondary' : 'ghost'}
+                aria-current={current === index ? 'true' : undefined}
+                onClick={() => {
+                  setCurrent(index)
+                  setSearchHighlights(editor, result.matches, index)
+                  editor.chain().focus().setTextSelection({ from: match.from, to: match.to }).scrollIntoView().run()
+                }}
+              >
+                <span className="draft-search-result-number">{index + 1}</span>
+                <span className="draft-search-context">
+                  {editor.state.doc.textBetween(Math.max(0, match.from - 30), match.from, ' ')}
+                  <strong>{editor.state.doc.textBetween(match.from, match.to, ' ')}</strong>
+                  {editor.state.doc.textBetween(match.to, Math.min(editor.state.doc.content.size, match.to + 45), ' ')}
+                </span>
+              </Button>
+            </li>
+          ))}
+        </ol>
+        {!query && (
+          <Text variant="secondary">
+            {locale === 'pl' ? 'Wpisz tekst, aby znaleźć go w dokumencie.' : 'Enter text to find it in your document.'}
+          </Text>
         )}
-        <Button variant="ghost" onClick={onClose} aria-label={t.closeFind}>
-          <CloseIcon />
-        </Button>
+        {error && (
+          <Text role="alert" variant="secondary">
+            {error}
+          </Text>
+        )}
       </div>
-      {error && (
-        <Text role="alert" variant="secondary">
-          {error}
-        </Text>
-      )}
     </section>
   )
 }

@@ -7,6 +7,7 @@ import { referenceTargets, safeLink } from '../engine/references'
 import { exportFontFamily } from '../engine/export/model'
 import { PAGE_GAP } from '../engine/pagination'
 import { readCommentThreads } from '../engine/comments'
+import { columnCount, supportsColumnLayout } from '../engine/columns'
 import type { Box, PrintItem, PrintLayout } from '../engine/print-layout'
 
 export async function capturePrintLayout(
@@ -20,6 +21,12 @@ export async function capturePrintLayout(
     onResolved?: (document: DraftDocument) => void
   } = {},
 ): Promise<PrintLayout> {
+  if (
+    columnCount(document) > 1 &&
+    (!supportsColumnLayout(document) ||
+      (options.includeComments && readCommentThreads(document.attrs?.comments).length))
+  )
+    throw new Error('printColumns')
   let output!: PrintLayout
   await prepareReferenceExport(
     document,
@@ -144,7 +151,7 @@ export async function capturePrintLayout(
                   href,
                 })
             }
-          if (element.tagName === 'LI') {
+          if (element.tagName === 'LI' && !element.hasAttribute('data-column-marker')) {
             const list = element.parentElement!,
               ordered = list.tagName === 'OL'
             const marker = ordered

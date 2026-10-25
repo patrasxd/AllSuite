@@ -11,6 +11,7 @@ import {
   safeGetItem,
   safeSetItem,
 } from '@all/ui'
+import { EditorHeader } from '../../../packages/ui/src/EditorChrome'
 import { HomePage } from './HomePage'
 import type { Locale } from './types/app'
 import { APPS_METADATA, loadAppComponent } from './apps/registry'
@@ -110,9 +111,10 @@ export default function App() {
     document.title = appMetadata ? `${appMetadata.name[locale]} · AllSuite` : 'AllSuite'
     safeSetItem('allsuite:locale', locale)
   }, [locale, appMetadata])
+  const Header = inEditor ? EditorHeader : AppHeader
   return (
     <div className="suite-shell">
-      <AppHeader
+      <Header
         logo={
           <button
             type="button"

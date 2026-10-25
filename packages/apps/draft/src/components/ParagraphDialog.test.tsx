@@ -24,13 +24,10 @@ function setup(locale: 'en' | 'pl' = 'en') {
 }
 
 describe('paragraph dialog', () => {
-  it('keeps actions inside the dialog body without a separate footer shelf', () => {
+  it('keeps Apply and Cancel in the stable AllUI dialog footer', () => {
     setup()
     const dialog = screen.getByRole('dialog', { name: 'Paragraph settings' })
-    expect(dialog.querySelector('.all-dialog__footer')).toBeNull()
-    expect(dialog.querySelector('.draft-dialog-actions')).toContainElement(
-      screen.getByRole('button', { name: 'Apply' }),
-    )
+    expect(dialog.querySelector('.all-dialog__footer')).toContainElement(screen.getByRole('button', { name: 'Apply' }))
   })
 
   it('applies spacing, custom line spacing, indents and tab stops to the selected paragraph', () => {
@@ -41,11 +38,14 @@ describe('paragraph dialog', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Custom line spacing' }), { target: { value: '1.25' } })
     fireEvent.change(screen.getByRole('textbox', { name: 'Left indent (pt)' }), { target: { value: '18' } })
     fireEvent.change(screen.getByRole('textbox', { name: 'Right indent (pt)' }), { target: { value: '9' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Special' }), { target: { value: 'hanging' } })
     fireEvent.change(screen.getByRole('textbox', { name: 'Hanging indent (pt)' }), { target: { value: '6' } })
+    fireEvent.click(screen.getByRole('tab', { name: 'Tab stops' }))
     fireEvent.change(screen.getByRole('textbox', { name: 'Tab stops (pt)' }), { target: { value: '144, 72' } })
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Keep with next' }))
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Keep lines together' }))
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Widow/orphan control' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Page flow' }))
+    fireEvent.click(screen.getByRole('switch', { name: 'Keep with next' }))
+    fireEvent.click(screen.getByRole('switch', { name: 'Keep lines together' }))
+    fireEvent.click(screen.getByRole('switch', { name: 'Widow/orphan control' }))
     act(() => fireEvent.click(screen.getByRole('button', { name: 'Apply' })))
     expect(editor.getJSON().content?.[0].attrs).toMatchObject({
       spacingBefore: 6,

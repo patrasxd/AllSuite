@@ -1,5 +1,34 @@
-import { test, expect } from '@playwright/test'
+import { draftFileAction } from './helpers/reveal-toolbar-command'
+import { test, expect, type Page } from '@playwright/test'
 import { strToU8, zipSync } from 'fflate'
+
+const unsupportedImportFixture = zipSync({
+  'word/document.xml': strToU8(
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Imported safely</w:t></w:r></w:p><w:drawing><w:chart/></w:drawing></w:body></w:document>',
+  ),
+})
+
+async function openUnsupportedDocx(page: Page) {
+  await page.getByRole('button', { name: 'File', exact: true }).click()
+  const chooser = page.waitForEvent('filechooser')
+  await draftFileAction(page, 'Open')
+  await (
+    await chooser
+  ).setFiles({
+    name: 'unsupported.docx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    buffer: Buffer.from(unsupportedImportFixture),
+  })
+}
+
+async function startWithLetterTemplate(page: Page) {
+  await page.goto('./#/draft')
+  await page.getByRole('button', { name: 'File', exact: true }).click()
+  await draftFileAction(page, 'New')
+  const templatePicker = page.getByRole('dialog', { name: 'New document', exact: true })
+  await templatePicker.getByRole('button', { name: /^Letter/ }).click()
+  await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).toContainText('Dear recipient,')
+}
 
 test('restored workspace keeps content through tabs and paper view changes', async ({ page }) => {
   await page.goto('./#/draft')
@@ -15,7 +44,7 @@ test('restored workspace keeps content through tabs and paper view changes', asy
   await expect(editor).toHaveText('Synthetic document retained through view changes.')
   await expect(page.locator('.draft-title-bar')).toHaveCount(0)
   await expect(page.locator('.draft-ruler')).toBeVisible()
-  await page.getByRole('tab', { name: 'Format', exact: true }).click()
+  await page.getByRole('tab', { name: 'Home', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Bold', exact: true })).toBeVisible()
 })
 
@@ -25,8 +54,8 @@ test('catalog card opens the editor and footer opens the legal notice', async ({
   await page.getByRole('button', { name: 'Open Draft', exact: true }).click()
   await expect(page).toHaveURL(/\/AllSuite\/apps\/draft$/)
   await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).toBeVisible()
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Save document', exact: true })).toBeEnabled()
   await expect(page.locator('input[type=file]')).toHaveCount(0)
   await page.getByRole('button', { name: 'Back to AllSuite' }).click()
   await page.locator('.home-page').evaluate((element) => element.scrollTo(0, element.scrollHeight))
@@ -53,7 +82,7 @@ test('@smoke Polish preferences and blocked browser storage both work', async ({
   })
   await page.goto('./#/draft')
   await expect(page.getByRole('textbox', { name: 'Edytor dokumentu', exact: true })).toBeVisible()
-  await page.getByRole('tab', { name: 'Plik', exact: true }).click()
+  await page.getByRole('button', { name: 'Plik', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Zapisz', exact: true })).toBeEnabled()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'e-ink-light')
   await page.addInitScript(() => {
@@ -201,14 +230,14 @@ test('@smoke fallback file input opens text and explicit save downloads DOCX', a
   expect(
     await page.evaluate(() => typeof (window as Window & { showOpenFilePicker?: unknown }).showOpenFilePicker),
   ).toBe('undefined')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
   const chooser = page.waitForEvent('filechooser')
-  await page.getByRole('button', { name: 'Open', exact: true }).click()
+  await draftFileAction(page, 'Open')
   await (await chooser).setFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Private\nnotes') })
   await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).toContainText('Private')
   await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).toContainText('notes')
   const download = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await page.getByRole('button', { name: 'Save document', exact: true }).click()
   expect((await download).suggestedFilename()).toBe('notes.docx')
   expect(
     (await page.evaluate(() => Object.keys(localStorage))).every((key) =>
@@ -223,29 +252,34 @@ test('DOCX import report requires a decision before replacing the document', asy
   await page.addInitScript(() =>
     Object.defineProperty(window, 'showOpenFilePicker', { value: undefined, configurable: true }),
   )
-  await page.goto('./#/draft')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
-  const chooser = page.waitForEvent('filechooser')
-  await page.getByRole('button', { name: 'Open', exact: true }).click()
-  const fixture = zipSync({
-    'word/document.xml': strToU8(
-      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Imported safely</w:t></w:r></w:p><w:drawing><w:chart/></w:drawing></w:body></w:document>',
-    ),
-  })
-  await (
-    await chooser
-  ).setFiles({
-    name: 'unsupported.docx',
-    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    buffer: Buffer.from(fixture),
-  })
+  await startWithLetterTemplate(page)
+  const editor = page.getByRole('textbox', { name: 'Document editor', exact: true })
+  await openUnsupportedDocx(page)
   const dialog = page.getByRole('dialog', { name: 'Import report', exact: true })
   await expect(dialog).toBeVisible()
-  await expect(dialog.locator('.all-dialog__footer')).toHaveCount(0)
   await expect(dialog).toContainText('chart')
-  await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).not.toContainText('Imported safely')
+  await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Continue', exact: true })).toBeVisible()
+  await expect(editor).toContainText('Dear recipient,')
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await expect(dialog).toBeHidden()
+  await expect(editor).toContainText('Dear recipient,')
+  await expect(editor).not.toContainText('Imported safely')
+})
+
+test('DOCX import report Continue replaces the current document', async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.defineProperty(window, 'showOpenFilePicker', { value: undefined, configurable: true }),
+  )
+  await startWithLetterTemplate(page)
+  const editor = page.getByRole('textbox', { name: 'Document editor', exact: true })
+  await openUnsupportedDocx(page)
+  const dialog = page.getByRole('dialog', { name: 'Import report', exact: true })
+  await expect(dialog).toBeVisible()
+  await expect(editor).toContainText('Dear recipient,')
   await dialog.getByRole('button', { name: 'Continue', exact: true }).click()
-  await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).toContainText('Imported safely')
+  await expect(dialog).toBeHidden()
+  await expect(editor).toHaveText('Imported safely')
 })
 
 test('Draft toolbar preserves AllUI control geometry and typography', async ({ page }) => {
@@ -275,63 +309,49 @@ test('Draft toolbar preserves AllUI control geometry and typography', async ({ p
   expect(await rulerButton.evaluate((element) => getComputedStyle(element).height)).toBe('32px')
 })
 
-test('Draft and Grid toolbars stay one row and page overflowing groups', async ({ page }) => {
-  const verifyPager = async (toolbarSelector: string) => {
-    const tabs = page.locator('.all-workspace-tabs')
-    await expect(tabs).toBeVisible()
-    expect(await tabs.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44)
-    const toolbar = page.locator(toolbarSelector)
-    await expect(toolbar.locator('..')).toHaveCSS('height', '72px')
-    const visibleGroups = toolbar.locator('.all-toolbar-group:visible')
-    const groupTops = await visibleGroups.evaluateAll((groups) =>
-      groups.map((group) => Math.round(group.getBoundingClientRect().top)),
-    )
-    expect(new Set(groupTops).size).toBe(1)
-    const firstPage = await toolbar
-      .locator('.all-toolbar-group')
-      .evaluateAll((groups) => groups.map((group) => getComputedStyle(group).display !== 'none'))
-
-    const next = page.getByRole('button', { name: /Next toolbar page/ })
-    await expect(next).toBeVisible()
-    await next.click()
-    await expect
-      .poll(() =>
-        toolbar
-          .locator('.all-toolbar-group')
-          .evaluateAll((groups) => groups.map((group) => getComputedStyle(group).display !== 'none')),
-      )
-      .not.toEqual(firstPage)
-    expect(await toolbar.evaluate((element) => element.scrollLeft)).toBe(0)
-    const previous = page.getByRole('button', { name: /Previous toolbar page/ })
-    await expect(previous).toBeEnabled()
-    await previous.click()
-    await expect
-      .poll(() =>
-        toolbar
-          .locator('.all-toolbar-group')
-          .evaluateAll((groups) => groups.map((group) => getComputedStyle(group).display !== 'none')),
-      )
-      .toEqual(firstPage)
-  }
-
+test('Draft and Grid use compact mobile docks and bounded More panels', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('./apps/draft')
-  await page.getByRole('tab', { name: 'Format', exact: true }).click()
-  await verifyPager('.draft-toolbar--formatting')
-
+  await expect(page.locator('.draft-mobile-dock')).toBeVisible()
+  await expect(page.locator('.draft-toolbar')).toBeHidden()
+  await page.getByRole('button', { name: 'More', exact: true }).click()
+  await expect(page.locator('.draft-toolbar')).toBeVisible()
+  const draftBold = page.locator('.draft-toolbar').getByRole('button', { name: 'Bold', exact: true })
+  expect((await draftBold.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'More', exact: true })).toBeFocused()
+  await expect(page.locator('.draft-toolbar')).toBeHidden()
   await page.goto('./apps/grid')
-  await page.getByRole('tab', { name: 'Format', exact: true }).click()
-  await verifyPager('.grid-format-toolbar')
+  await page.getByRole('tab', { name: 'Home', exact: true }).click()
+  await expect(page.locator('.grid-mobile-dock')).toBeVisible()
+  await expect(page.locator('.grid-format-toolbar')).toBeHidden()
+  const more = page.getByRole('button', { name: 'More', exact: true })
+  await more.click()
+  await expect(more).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.locator('.grid-format-toolbar')).toBeVisible()
+  const bold = page.locator('.grid-format-toolbar').getByRole('button', { name: 'Bold', exact: true })
+  await expect(bold).toBeVisible()
+  const bounds = (await bold.boundingBox())!
+  expect(bounds.height).toBeGreaterThanOrEqual(44)
+  expect(bounds.x).toBeGreaterThanOrEqual(0)
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(390)
+  await more.click()
+  await expect(page.locator('.grid-format-toolbar')).toBeHidden()
 })
 
-test('Draft dialog actions stay on the same surface as their content', async ({ page }) => {
+test('Draft dialog actions use a stable footer on the same surface as their content', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.addInitScript(() => localStorage.setItem('allsuite:theme', 'dark'))
   await page.goto('./#/draft')
   await page.getByRole('tab', { name: 'Layout', exact: true }).click()
   await page.getByRole('button', { name: 'Open paragraph settings', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Paragraph settings', exact: true })
-  await expect(dialog.locator('.all-dialog__footer')).toHaveCount(0)
-  await expect(dialog.locator('.draft-dialog-actions')).toContainText('Cancel')
+  const footer = dialog.locator('.all-dialog__footer')
+  await expect(footer).toHaveCount(1)
+  await expect(footer.getByRole('button', { name: 'Cancel', exact: true })).toBeInViewport()
+  await expect(footer.getByRole('button', { name: 'Apply', exact: true })).toBeInViewport()
+  await expect(footer).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(footer).toHaveCSS('border-top-width', '0px')
 })
 
 for (const { width, height } of [
@@ -376,14 +396,19 @@ for (const viewport of [
     await page.goto('./#/draft')
     await expect(page.getByRole('textbox', { name: 'Document editor', exact: true })).toBeVisible()
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'none')
-    const touchControls =
-      viewport.width <= 900 ? '.header-logo, .draft-toolbar button:not([role="switch"])' : '.header-logo'
-    // Header menu uses shared 36px visuals and a 44px coarse-pointer pseudo target;
-    // the dedicated hasTouch test above verifies that activation area.
-    for (const button of await page.locator(touchControls).all()) {
-      const box = await button.boundingBox()
-      expect(box?.width).toBeGreaterThanOrEqual(44)
-      expect(box?.height).toBeGreaterThanOrEqual(44)
+    if (viewport.width <= 900) {
+      await page.getByRole('button', { name: 'File', exact: true }).click()
+      const toolbar = page.getByRole('toolbar', { name: 'File', exact: true })
+      const buttons = toolbar.getByRole('button')
+      const namedButtons = toolbar.getByRole('button', { name: /\S+/ })
+      await expect(namedButtons).toHaveCount(await buttons.count())
+      for (const button of await buttons.all()) {
+        await expect(button).toBeVisible()
+        const box = await button.boundingBox()
+        expect(box).not.toBeNull()
+        expect(box!.width).toBeGreaterThanOrEqual(44)
+        expect(box!.height).toBeGreaterThanOrEqual(44)
+      }
     }
     await page.locator('.tiptap').evaluate((paper) => {
       for (let i = 0; i < 60; i++) {
@@ -396,12 +421,17 @@ for (const viewport of [
     const geometry = await page.evaluate(() => {
       const pane = document.querySelector('.draft-document-area')!
       const toolbar = document.querySelector('.draft-toolbar')!.getBoundingClientRect()
-      const status = document.querySelector('[role=status]')!.getBoundingClientRect()
+      const status = document.querySelector('.all-workspace-status')!.getBoundingClientRect()
+      const documentArea = pane.getBoundingClientRect()
       return {
         paneScroll: pane.scrollTop,
         pageScroll: document.scrollingElement!.scrollTop,
         pageWidth: document.documentElement.scrollWidth,
         toolbarTop: toolbar.top,
+        toolbarBottom: toolbar.bottom,
+        documentTop: documentArea.top,
+        documentBottom: documentArea.bottom,
+        statusTop: status.top,
         statusBottom: status.bottom,
       }
     })
@@ -409,6 +439,8 @@ for (const viewport of [
     expect(geometry.pageScroll).toBe(0)
     expect(geometry.pageWidth).toBeLessThanOrEqual(viewport.width)
     expect(geometry.toolbarTop).toBeGreaterThanOrEqual(0)
+    expect(geometry.toolbarBottom).toBeLessThanOrEqual(geometry.documentTop)
+    expect(geometry.documentBottom).toBeLessThanOrEqual(geometry.statusTop)
     expect(geometry.statusBottom).toBeLessThanOrEqual(viewport.height)
   })
 }

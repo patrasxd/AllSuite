@@ -1,3 +1,4 @@
+﻿import { draftFileAction } from './helpers/reveal-toolbar-command'
 import { expect, test, type Page } from '@playwright/test'
 import { inflateSync } from 'node:zlib'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
@@ -17,12 +18,11 @@ async function sample(page: Page, long = false) {
   }, html)
   await expect(editor.locator('img[src]')).toHaveCount(1)
   await expect(editor.locator('h1')).toHaveText('Zażółć gęślą jaźń')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
   return editor
 }
 async function choose(page: Page, name: string) {
-  await page.getByRole('button', { name: 'Export', exact: true }).click()
-  await page.getByRole('menuitem', { name, exact: true }).click()
+  await draftFileAction(page, name)
 }
 async function downloadFormat(page: Page, name: string) {
   const downloading = page.waitForEvent('download')
@@ -83,7 +83,7 @@ test('PDF print document embeds open fonts, images and A4 pages; never reports t
   })
   await sample(page, true)
   const opening = page.waitForEvent('popup')
-  await page.getByRole('button', { name: 'Print', exact: true }).click()
+  await draftFileAction(page, 'Print')
   const print = await opening
   await expect(print.locator('html')).toHaveAttribute('data-print-requested', 'true', { timeout: 15000 })
   expect(await print.evaluate(() => window.opener)).toBeNull()
@@ -146,17 +146,18 @@ test('adds an anchored comment and renders it in the print margin while PDF incl
   await page.getByRole('tab', { name: 'Review', exact: true }).click()
   await editor.focus()
   await editor.press('Control+Alt+m')
-  await expect(page.locator('.draft-comments-panel')).toBeVisible()
+  await expect(page.getByRole('complementary', { name: 'Comments', exact: true })).toBeVisible()
   await editor.press('Control+Alt+Shift+m')
-  await expect(page.locator('.draft-comments-panel')).toHaveCount(0)
+  await expect(page.getByRole('complementary', { name: 'Comments', exact: true })).toHaveCount(0)
   await editor.press('Control+Alt+Shift+m')
-  await expect(page.locator('.draft-comments-panel')).toBeVisible()
+  await expect(page.getByRole('complementary', { name: 'Comments', exact: true })).toBeVisible()
+  await page.locator('.draft-pane-settings summary').filter({ hasText: 'Your name for this session' }).click()
   await page.getByLabel('Your name for this session').fill('Avery')
   await page.getByLabel('New comment').fill('Please clarify this section.')
   await page.locator('.draft-comment-compose').getByRole('button', { name: 'Add comment' }).click()
   await expect(editor.locator('[data-comment-id]')).toHaveText('Commented words')
   await expect(page.locator('.draft-comment-pin')).toBeVisible()
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
   await page.getByRole('button', { name: 'Print preview', exact: true }).click()
   const print = page.frameLocator('iframe[title="Print preview"]')
   await expect(print.locator('.print-sheet')).toContainText('Avery')
@@ -208,7 +209,7 @@ test('exports a captured snapshot while later edits stay dirty, and handles font
   await page.goto('./#/draft')
   const editor = page.locator('.tiptap')
   await editor.fill('Original export snapshot')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
   const downloading = page.waitForEvent('download')
   await choose(page, 'HTML')
   await expect(page.getByText('Preparing export…', { exact: true })).toBeVisible()
@@ -225,7 +226,7 @@ test('exports a captured snapshot while later edits stay dirty, and handles font
   })
   await choose(page, 'HTML')
   await expect(page.getByText('The document could not be exported. Please try again.', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Print', exact: true }).click()
+  await draftFileAction(page, 'Print')
   await expect(page.getByText('Allow a print window to open, then choose Print again.', { exact: true })).toBeVisible()
   await expect(editor).toHaveText('Newer unsaved edit')
 })
@@ -239,9 +240,9 @@ test('@smoke exports HTML offline using only precached static code/fonts and kee
   )
   await page.goto('./#/draft')
   await page.locator('.tiptap').fill('Offline Zażółć gęślą jaźń')
-  await page.getByRole('tab', { name: 'File', exact: true }).click()
+  await page.getByRole('button', { name: 'File', exact: true }).click()
   const saving = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await page.getByRole('button', { name: 'Save document', exact: true }).click()
   await saving
   await expect(page.getByRole('status')).toContainText('Ready')
   await page.evaluate(() => navigator.serviceWorker.ready)
@@ -273,21 +274,20 @@ for (const theme of ['dark', 'light', 'e-ink-light', 'e-ink-dark'])
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.goto('./#/draft')
       await page.locator('.tiptap').fill('Zażółć gęślą jaźń')
-      await page.getByRole('tab', { name: locale === 'pl' ? 'Plik' : 'File', exact: true }).click()
-      const trigger = page.getByRole('button', { name: locale === 'pl' ? 'Eksportuj' : 'Export', exact: true })
-      await trigger.focus()
-      await trigger.press('ArrowDown')
-      const menu = page.getByRole('menu')
-      await expect(menu.getByRole('menuitem').first()).toBeFocused()
-      await menu.getByRole('menuitem').first().press('End')
-      await expect(menu.getByRole('menuitem').last()).toBeFocused()
+      await page.getByRole('button', { name: locale === 'pl' ? 'Plik' : 'File', exact: true }).click()
+      const trigger = page.getByRole('button', { name: locale === 'pl' ? 'Plik' : 'File', exact: true })
+      const menu = page.locator('.allsuite-ribbon-menu__items')
+      await expect(menu.getByRole('button').first()).toBeFocused()
+      await menu.getByRole('button').first().press('End')
+      await expect(menu.getByRole('button').last()).toBeFocused()
+      await expect(menu.getByRole('button', { name: 'PDF', exact: true })).toBeVisible()
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width)
       expect(await page.evaluate(() => document.scrollingElement!.scrollTop)).toBe(0)
       const rect = (await menu.boundingBox())!
       expect(rect.x).toBeGreaterThanOrEqual(0)
       expect(rect.x + rect.width).toBeLessThanOrEqual(viewport.width)
       expect(rect.y + rect.height).toBeLessThanOrEqual(viewport.height)
-      for (const item of await menu.getByRole('menuitem').all()) {
+      for (const item of await menu.getByRole('button').all()) {
         const box = (await item.boundingBox())!
         expect(box.height).toBeGreaterThanOrEqual(44)
         expect(box.width).toBeGreaterThanOrEqual(44)

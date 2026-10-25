@@ -22,6 +22,39 @@ const ALLOWED_FUNCTIONS = new Set<string>(SUPPORTED_FORMULA_FUNCTIONS)
 const DAY_MS = 86_400_000
 const ENGINE_1900_MARCH_1 = Date.UTC(1900, 2, 1)
 
+/** The same parser and supported-expression policy used by calculation. */
+export async function parseStructuralFormula(source: string, workbook: GridWorkbook, sheetId: string) {
+  if (
+    source.length > FORMULA_RESOURCE_LIMITS.formulaLength ||
+    exceedsNestingBudget(source) ||
+    hasExternalOrStructuredReference(source)
+  )
+    throw new Error('Unsupported formula syntax. Keep the original rows or replace the formula explicitly.')
+  await initializeWasm()
+  const nativeAst = await parseFormualizerFormula(source)
+  const validation = validateAndConvertAst(
+    nativeAst,
+    sheetId,
+    new Map([...workbook.sheetsById.values()].map((sheet) => [sheet.name.toLocaleLowerCase('en-US'), sheet.id])),
+    source,
+  )
+  if (!validation.ast || validation.unsupported || validation.errorCode)
+    throw new Error('This formula cannot be safely rewritten. Keep the original rows or replace it explicitly.')
+  const checkOperators = (node: FormulaAstNode): void => {
+    if (node.type === 'binary') {
+      if (!['+', '-', '*', '/', '^', '&', '=', '<>', '<', '>', '<=', '>='].includes(node.operator))
+        throw new Error('This formula operator cannot be safely rewritten.')
+      checkOperators(node.left)
+      checkOperators(node.right)
+    } else if (node.type === 'unary') {
+      if (!['+', '-', '%'].includes(node.operator)) throw new Error('This formula operator cannot be safely rewritten.')
+      checkOperators(node.operand)
+    } else if (node.type === 'call') node.arguments.forEach(checkOperators)
+  }
+  checkOperators(validation.ast)
+  return { nativeAst, ast: validation.ast }
+}
+
 interface FormulaReference {
   sheetId: string
   range: {
@@ -518,6 +551,7 @@ function validateAndConvertAst(
   const references: FormulaReference[] = []
   let unsupported: FormulaAnalysis['reason']
   let errorCode: string | undefined
+  let sourceBytes: Uint8Array | undefined
 
   const visit = (node: ASTNodeData, depth: number): FormulaAstNode | null => {
     nodeCount += 1
@@ -613,7 +647,17 @@ function validateAndConvertAst(
         return null
       case 'error':
         if (node.sourceTokenSubtype === 'Error') {
-          return { type: 'error', code: source.slice(node.sourceStart, node.sourceEnd).toUpperCase() }
+          const start = node.sourceStart
+          const end = node.sourceEnd
+          sourceBytes ??= new TextEncoder().encode(source)
+          if (start === undefined || end === undefined || start < 0 || end <= start || end > sourceBytes.length) {
+            unsupported ??= 'parse-failed'
+            return null
+          }
+          return {
+            type: 'error',
+            code: new TextDecoder('utf-8', { fatal: true }).decode(sourceBytes.slice(start, end)).toUpperCase(),
+          }
         }
         unsupported ??= 'parse-failed'
         return null

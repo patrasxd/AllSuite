@@ -1,12 +1,15 @@
+﻿import { createPortal } from 'react-dom'
+import { EditorActionCluster, EditorNavigation, type EditorActions } from '../../../../ui/src/EditorChrome'
 import { InsertTable } from './TableTools'
-import { ExportMenu } from './ExportMenu'
+import { exportLabels } from './ExportMenu'
+import { RibbonMenuButton } from '../../../../ui/src/RibbonMenuButton'
 import { printLabels } from './PrintPreview'
 import { pageLabels } from './PageSetupDialog'
 import type { ExportFormat } from '../engine/export/model'
 import { StylePicker } from './StylePicker'
 import { clearDirectFormatting, selectionFormat, toggleStyleEmphasis } from '../editor/styles'
 import { DraftIcon } from './DraftIcons'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   AlignCenterIcon,
   AlignJustifyIcon,
@@ -30,18 +33,14 @@ import {
   PasteIcon,
   PhotoIcon,
   QuoteIcon,
-  RedoIcon,
   ReplaceIcon,
   RulerIcon,
   SaveAsIcon,
   SaveIcon,
   SearchIcon,
   Select,
-  Text,
-  ToolbarPager as ControlsBar,
+  ControlsBar,
   ToolbarGroup,
-  UndoIcon,
-  WorkspaceTabs,
 } from '@all/ui'
 import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
@@ -69,6 +68,7 @@ import { applyFormatting, captureFormatting, type FormatSnapshot } from '../edit
 import { pageViewLabels } from '../engine/page-view'
 
 interface Props {
+  headerActions?: HTMLSpanElement | null
   editor: Editor
   locale: Locale
   onClipboard: (action: 'cut' | 'copy' | 'paste' | 'plain' | 'pasteImage') => void
@@ -81,6 +81,7 @@ interface Props {
   orientation?: string
   onOrientation?: (value: string) => void
   onPageSetup?: () => void
+  onHeaderFooter?: () => void
   onNew?: () => void
   onOpen?: () => void
   onSave?: () => void
@@ -128,6 +129,7 @@ interface Props {
 }
 
 export function EditorToolbar({
+  headerActions,
   editor,
   locale,
   onClipboard,
@@ -140,6 +142,7 @@ export function EditorToolbar({
   orientation = 'portrait',
   onOrientation,
   onPageSetup,
+  onHeaderFooter,
   onNew,
   onOpen,
   onSave,
@@ -186,9 +189,89 @@ export function EditorToolbar({
   onToggleSuggestions,
 }: Props) {
   const t = translations[locale]
-  const tabs = ['file', 'edit', 'insert', 'format', 'layout', 'view', 'review'] as const
+  const tabs = ['home', 'insert', 'layout', 'review', 'view'] as const
+  const homeLabel = locale === 'pl' ? 'Narzędzia główne' : 'Home'
+  const [mobile, setMobile] = useState(() =>
+    Boolean(window.matchMedia?.('(max-width: 599px), (max-width: 899px) and (max-height: 499px)').matches),
+  )
+  useEffect(() => {
+    const media = window.matchMedia?.('(max-width: 599px), (max-width: 899px) and (max-height: 499px)')
+    if (!media) return
+    const update = () => {
+      setMobile(media.matches)
+      if (!media.matches) setMoreOpen(false)
+    }
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
   type ToolbarTab = (typeof tabs)[number]
-  const [activeTab, setActiveTab] = useState<ToolbarTab>('format')
+  const [activeTab, setActiveTab] = useState<ToolbarTab>('home')
+  const [moreOpen, setMoreOpen] = useState(false)
+  const moreButton = useRef<HTMLButtonElement>(null)
+  const moreOpenRef = useRef(false)
+  const moreBack = useRef(false)
+  moreOpenRef.current = moreOpen
+  useEffect(() => {
+    if (window.history.state?.draftRibbonMore) {
+      const state = { ...window.history.state }
+      delete state.draftRibbonMore
+      window.history.replaceState(state, '')
+    }
+    const back = (event: PopStateEvent) => {
+      if (document.querySelector('.allsuite-task-pane-host:not([hidden])')) return
+      if (!moreOpenRef.current && !moreBack.current) return
+      event.stopImmediatePropagation()
+      moreBack.current = false
+      setMoreOpen(false)
+      moreButton.current?.focus()
+    }
+    window.addEventListener('popstate', back, true)
+    return () => window.removeEventListener('popstate', back, true)
+  }, [])
+  useEffect(() => {
+    if (!moreOpen) return
+    window.history.pushState({ ...window.history.state, draftRibbonMore: true }, '')
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !document.querySelector('.allsuite-ribbon-menu__items, [role="dialog"]')) {
+        setMoreOpen(false)
+        moreButton.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', close)
+    const frame = requestAnimationFrame(() =>
+      document.querySelector<HTMLButtonElement>('.draft-more-heading button')?.focus(),
+    )
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('keydown', close)
+      if (window.history.state?.draftRibbonMore) {
+        moreBack.current = true
+        window.history.back()
+      }
+    }
+  }, [moreOpen])
+  useEffect(() => {
+    const viewport = window.visualViewport
+    const workspace = document.querySelector<HTMLElement>('.draft-workspace')
+    if (!viewport || !workspace) return
+    const fit = () => {
+      if (viewport.scale !== 1) return
+      workspace.style.setProperty(
+        '--draft-visible-height',
+        `${Math.max(0, viewport.height + viewport.offsetTop - workspace.getBoundingClientRect().top)}px`,
+      )
+      if (!window.matchMedia('(max-width: 599px), (max-width: 899px) and (max-height: 499px)').matches)
+        setMoreOpen(false)
+    }
+    fit()
+    viewport.addEventListener('resize', fit)
+    viewport.addEventListener('scroll', fit)
+    return () => {
+      viewport.removeEventListener('resize', fit)
+      viewport.removeEventListener('scroll', fit)
+      workspace.style.removeProperty('--draft-visible-height')
+    }
+  }, [])
   const [painter, setPainter] = useState<{
     snapshot: FormatSnapshot
     repeat: boolean
@@ -290,75 +373,156 @@ export function EditorToolbar({
     const normalized = normalizeDocumentLanguage(languageInput)
     if (normalized) onDocumentLanguage?.(normalized)
   }
+  const editorActions: EditorActions = {
+    undo: () => {
+      editor.chain().focus().undo().run()
+    },
+    redo: () => {
+      editor.chain().focus().redo().run()
+    },
+    save: () => onSave?.(),
+    canUndo: state.undo,
+    canRedo: state.redo,
+    saving,
+    labels: {
+      undo: t.undo,
+      redo: t.redo,
+      save: locale === 'pl' ? 'Zapisz dokument' : 'Save document',
+      group: t.documentGroup,
+    },
+  }
+  const fileTrigger = () => (
+    <RibbonMenuButton variant="outline" label={t.file}>
+      <Button size="sm" variant="ghost" icon={<FilePlusIcon />} disabled={saving} onClick={onNew}>
+        {t.new}
+      </Button>
+      <Button size="sm" variant="ghost" icon={<FolderOpenIcon />} disabled={saving} onClick={onOpen}>
+        {t.open}
+      </Button>
+      <Button size="sm" variant="ghost" icon={<SaveIcon />} disabled={saving} onClick={onSave}>
+        {t.save}
+      </Button>
+      <Button size="sm" variant="ghost" icon={<SaveAsIcon />} disabled={saving} onClick={onSaveAs}>
+        {t.saveAs}
+      </Button>
+      {(['pdf', 'odt', 'markdown', 'html', 'text'] as ExportFormat[]).map((format) => (
+        <Button key={format} size="sm" variant="ghost" disabled={saving} onClick={() => onExport?.(format)}>
+          {exportLabels[locale][format]}
+        </Button>
+      ))}
+      <Button size="sm" variant="ghost" icon={<DraftIcon name="preview" />} disabled={saving} onClick={onPrintPreview}>
+        {printLabels[locale].preview}
+      </Button>
+      <Button size="sm" variant="ghost" icon={<DraftIcon name="print" />} disabled={saving} onClick={onPrint}>
+        {printLabels[locale].print}
+      </Button>
+    </RibbonMenuButton>
+  )
   return (
-    <div className="draft-tools">
-      <WorkspaceTabs
-        label={t.toolbar}
-        items={tabs.map((tab) => ({
-          id: tab,
-          label: t[tab],
-          tooltip: getDraftTabTooltip(locale, tab),
-          tabId: `draft-tab-${tab}`,
-          panelId: 'draft-command-panel',
-        }))}
-        activeId={activeTab}
-        onChange={(tab) => setActiveTab(tab as ToolbarTab)}
+    <div className={`draft-tools${moreOpen ? ' draft-tools--more' : ''}`}>
+      {headerActions &&
+        createPortal(
+          <>
+            {fileTrigger()}
+            <EditorActionCluster actions={editorActions} saveOnly />
+          </>,
+          headerActions,
+        )}
+      <EditorNavigation
+        aria-label={t.toolbar}
+        file={fileTrigger()}
+        actions={editorActions}
+        tabs={{
+          label: t.toolbar,
+          items: tabs.map((tab) => ({
+            id: tab,
+            label: tab === 'home' ? homeLabel : t[tab],
+            tooltip: tab === 'home' ? homeLabel : getDraftTabTooltip(locale, tab),
+            tabId: `draft-tab-${tab}`,
+            panelId: 'draft-command-panel',
+          })),
+          activeId: activeTab,
+          onChange: (tab) => setActiveTab(tab as ToolbarTab),
+        }}
       />
 
+      {mobile && (
+        <div className="draft-mobile-dock" role="toolbar" aria-label={t.toolbar}>
+          {activeTab === 'home' ? (
+            <>
+              {tool(t.bold, <strong>B</strong>, () => toggleStyleEmphasis(editor, 'bold'), state.bold)}
+              {tool(t.italic, <em>I</em>, () => toggleStyleEmphasis(editor, 'italic'), state.italic)}
+              <RibbonMenuButton label={t.clipboardGroup} variant="outline" icon={<PasteIcon />}>
+                <Button size="sm" variant="ghost" onClick={() => onClipboard('paste')}>
+                  {t.paste}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => onClipboard('copy')} disabled={!state.selection}>
+                  {t.copy}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => onClipboard('cut')} disabled={!state.selection}>
+                  {t.cut}
+                </Button>
+              </RibbonMenuButton>
+            </>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (activeTab === 'insert') onImage?.()
+                else if (activeTab === 'layout') onPageSetup?.()
+                else if (activeTab === 'review') onToggleComments?.()
+                else onNavigation?.()
+              }}
+            >
+              {activeTab === 'insert'
+                ? t.insertImage
+                : activeTab === 'layout'
+                  ? pageLabels[locale].title
+                  : activeTab === 'review'
+                    ? t.comments
+                    : locale === 'pl'
+                      ? 'Konspekt'
+                      : 'Outline'}
+            </Button>
+          )}
+          <Button
+            ref={moreButton}
+            size="sm"
+            variant="outline"
+            aria-expanded={moreOpen}
+            aria-controls="draft-command-panel"
+            onClick={() => setMoreOpen(!moreOpen)}
+          >
+            {locale === 'pl' ? 'Więcej' : 'More'}
+          </Button>
+        </div>
+      )}
       <div
         id="draft-command-panel"
-        className="draft-command-panel"
+        className="draft-command-panel allsuite-ribbon-surface"
         role="tabpanel"
         aria-labelledby={`draft-tab-${activeTab}`}
       >
-        {activeTab === 'file' && (
-          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.file}>
-            <ToolbarGroup label={t.documentGroup} caption={t.documentGroup}>
-              <Button size="sm" variant="outline" icon={<FilePlusIcon />} disabled={saving} onClick={() => onNew?.()}>
-                {t.new}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                icon={<FolderOpenIcon />}
-                disabled={saving}
-                onClick={() => onOpen?.()}
-              >
-                {t.open}
-              </Button>
-              <Button size="sm" variant="outline" icon={<SaveIcon />} disabled={saving} onClick={() => onSave?.()}>
-                {t.save}
-              </Button>
-              <Button size="sm" variant="outline" icon={<SaveAsIcon />} disabled={saving} onClick={() => onSaveAs?.()}>
-                {t.saveAs}
-              </Button>
-            </ToolbarGroup>
-            <ToolbarGroup label={t.outputGroup} caption={t.outputGroup}>
-              <ExportMenu
-                locale={locale}
-                busy={saving}
-                onExport={(format) => onExport?.(format)}
-                includeCommentsInPDF={includeCommentsInPDF}
-                onToggleCommentsInPDF={onToggleCommentsInPDF}
-              />
-              <Button size="sm" variant="outline" icon={<DraftIcon name="print" />} disabled={saving} onClick={onPrint}>
-                {printLabels[locale].print}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                icon={<DraftIcon name="preview" />}
-                disabled={saving}
-                onClick={onPrintPreview}
-              >
-                {printLabels[locale].preview}
-              </Button>
-            </ToolbarGroup>
-          </ControlsBar>
-        )}
-
+        <div className="draft-more-heading">
+          <span>{activeTab === 'home' ? homeLabel : t[activeTab]}</span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setMoreOpen(false)
+              moreButton.current?.focus()
+            }}
+          >
+            {locale === 'pl' ? 'Gotowe' : 'Done'}
+          </Button>
+        </div>
         {activeTab === 'insert' && (
-          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.insert}>
+          <ControlsBar
+            className="allsuite-editor-toolbar allsuite-ribbon-toolbar draft-toolbar"
+            role="toolbar"
+            aria-label={t.insert}
+          >
             <ToolbarGroup label={t.pageElementsGroup} caption={t.pageElementsGroup}>
               <Button
                 size="sm"
@@ -375,6 +539,14 @@ export function EditorToolbar({
                 onClick={() => editor.chain().focus().insertContent({ type: 'pageBreak' }).run()}
               >
                 {pageLabels[locale].break}
+              </Button>
+            </ToolbarGroup>
+            <ToolbarGroup
+              label={locale === 'pl' ? 'Nagłówek i stopka' : 'Header & footer'}
+              caption={locale === 'pl' ? 'Nagłówek i stopka' : 'Header & footer'}
+            >
+              <Button size="sm" variant="outline" onClick={onHeaderFooter}>
+                {locale === 'pl' ? 'Nagłówek i stopka' : 'Header & footer'}
               </Button>
             </ToolbarGroup>
             <ToolbarGroup label={t.textObjectsGroup} caption={t.textObjectsGroup}>
@@ -415,227 +587,327 @@ export function EditorToolbar({
             </ToolbarGroup>
           </ControlsBar>
         )}
-        {activeTab === 'edit' && (
-          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.edit}>
-            <ToolbarGroup label={t.historyGroup} caption={t.historyGroup}>
-              {tool(t.undo, <UndoIcon />, () => editor.chain().focus().undo().run(), undefined, !state.undo)}
-              {tool(t.redo, <RedoIcon />, () => editor.chain().focus().redo().run(), undefined, !state.redo)}
-            </ToolbarGroup>
-            <ToolbarGroup label={t.clipboardGroup} caption={t.clipboardGroup}>
-              {tool(t.cut, <CutIcon />, () => onClipboard('cut'), undefined, !state.selection)}
-              {tool(t.copy, <CopyIcon />, () => onClipboard('copy'), undefined, !state.selection)}
-              {tool(t.paste, <PasteIcon />, () => onClipboard('paste'))}
-              {tool(t.pastePlain, <span aria-hidden="true">T</span>, () => onClipboard('plain'))}
-            </ToolbarGroup>
-            <ToolbarGroup label={t.searchGroup} caption={t.searchGroup}>
-              {tool(t.find, <SearchIcon />, () => onFind?.())}
-              {tool(t.replace, <ReplaceIcon />, () => onReplace?.())}
-            </ToolbarGroup>
-          </ControlsBar>
-        )}
-
-        {activeTab === 'format' && (
+        {activeTab === 'home' && (
           <ControlsBar
-            locale={locale}
-            className="draft-toolbar draft-toolbar--formatting"
+            className="allsuite-editor-toolbar allsuite-ribbon-toolbar draft-toolbar"
             role="toolbar"
-            aria-label={t.format}
+            aria-label={homeLabel}
           >
-            <ToolbarGroup label={t.typographyGroup} caption={t.typographyGroup}>
-              <StylePicker editor={editor} locale={locale} />
-              <Select
-                aria-label={t.fontFamily}
-                title={t.fontFamily}
-                density="compact"
-                value={fontPickerValue(state.fontFamily)}
-                options={[
-                  { value: SYSTEM_FONT_STACK, label: t.systemFont },
-                  ...DOCUMENT_FONTS.map(({ family }) => ({ value: family, label: family })),
-                ]}
-                onChange={(event) => applyFont(event.target.value as DocumentFontFamily | typeof SYSTEM_FONT_STACK)}
-              />
-              {tool(
-                t.decreaseSize,
-                <span aria-hidden="true">−</span>,
-                () => applySize(String(stepFontSize(parseFontSize(sizeInput) ?? selectedSize, -1))),
-                undefined,
-                selectedSize <= MIN_FONT_SIZE,
-              )}
-              <Input
-                className="draft-font-size"
-                aria-label={t.fontSize}
-                title={t.fontSize}
-                density="compact"
-                inputMode="decimal"
-                value={sizeInput}
-                error={sizeError ? t.invalidSize : undefined}
-                onChange={(event) => setSizeInput(event.target.value)}
-                onBlur={() => applySize(sizeInput, false)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    applySize(sizeInput)
+            <ToolbarGroup label={t.clipboardGroup} caption={t.clipboardGroup} className="">
+              <RibbonMenuButton
+                variant="outline"
+                label={t.paste}
+                icon={<PasteIcon />}
+                presentation="large"
+                primaryAction={() => onClipboard('paste')}
+                optionsLabel={locale === 'pl' ? 'Opcje wklejania' : 'Paste options'}
+              >
+                <Button size="sm" variant="ghost" icon={<PasteIcon />} onClick={() => onClipboard('paste')}>
+                  {t.paste}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => onClipboard('plain')}>
+                  {t.pastePlain}
+                </Button>
+                <Button size="sm" variant="ghost" icon={<PhotoIcon />} onClick={() => onClipboard('pasteImage')}>
+                  {t.pasteImage}
+                </Button>
+              </RibbonMenuButton>
+              <div className="draft-ribbon-stack">
+                <div className="draft-ribbon-row">
+                  {tool(t.cut, <CutIcon />, () => onClipboard('cut'), undefined, !state.selection)}
+                  {tool(t.copy, <CopyIcon />, () => onClipboard('copy'), undefined, !state.selection)}
+                </div>
+                <IconButton
+                  variant={painter ? 'primary' : 'outline'}
+                  size="sm"
+                  aria-label={t.formatPainter}
+                  aria-pressed={Boolean(painter)}
+                  aria-keyshortcuts="Shift+Enter"
+                  tooltip={
+                    locale === 'pl'
+                      ? 'Kliknij, aby skopiować formatowanie raz. Dwuklik lub Shift+Enter włącza tryb wielokrotny. Esc kończy kopiowanie.'
+                      : 'Click to copy formatting once. Double-click or Shift+Enter to keep painting. Esc cancels.'
                   }
-                }}
-              />
-              {tool(
-                t.increaseSize,
-                <span aria-hidden="true">+</span>,
-                () => applySize(String(stepFontSize(parseFontSize(sizeInput) ?? selectedSize, 1))),
-                undefined,
-                selectedSize >= MAX_FONT_SIZE,
-              )}
-              <Text as="span" variant="caption" className="draft-font-unit">
-                pt
-              </Text>
+                  icon={<PaintbrushIcon />}
+                  disabled={!state.selection}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => (painter ? setPainter(undefined) : startPainter(false))}
+                  onDoubleClick={() => startPainter(true)}
+                  onKeyDown={(event) => {
+                    if (event.shiftKey && (event.key === 'Enter' || event.key === ' ')) {
+                      event.preventDefault()
+                      startPainter(true)
+                    }
+                  }}
+                />
+              </div>
             </ToolbarGroup>
-            <ToolbarGroup label={t.emphasisGroup} caption={t.emphasisGroup}>
-              {tool(
-                t.bold,
-                <strong aria-hidden="true">B</strong>,
-                () => toggleStyleEmphasis(editor, 'bold'),
-                state.bold,
-              )}
-              {tool(t.italic, <em aria-hidden="true">I</em>, () => toggleStyleEmphasis(editor, 'italic'), state.italic)}
-              {tool(
-                t.underline,
-                <u aria-hidden="true">U</u>,
-                () => editor.chain().focus().toggleUnderline().run(),
-                state.underline,
-              )}
-              {tool(
-                t.strike,
-                <s aria-hidden="true">S</s>,
-                () => editor.chain().focus().toggleStrike().run(),
-                state.strike,
-              )}
-              {tool(
-                t.subscript,
-                <span aria-hidden="true">x₂</span>,
-                () => editor.chain().focus().unsetSuperscript().toggleSubscript().run(),
-                state.subscript,
-              )}
-              {tool(
-                t.superscript,
-                <span aria-hidden="true">x²</span>,
-                () => editor.chain().focus().unsetSubscript().toggleSuperscript().run(),
-                state.superscript,
-              )}
+            <ToolbarGroup
+              label={locale === 'pl' ? 'Czcionka' : 'Font'}
+              caption={locale === 'pl' ? 'Czcionka' : 'Font'}
+              className="draft-ribbon-font draft-ribbon-stack-group"
+            >
+              <div className="draft-ribbon-row">
+                <Select
+                  aria-label={t.fontFamily}
+                  title={t.fontFamily}
+                  density="compact"
+                  value={fontPickerValue(state.fontFamily)}
+                  options={[
+                    { value: SYSTEM_FONT_STACK, label: t.systemFont },
+                    ...DOCUMENT_FONTS.map(({ family }) => ({ value: family, label: family })),
+                  ]}
+                  onChange={(event) => applyFont(event.target.value as DocumentFontFamily | typeof SYSTEM_FONT_STACK)}
+                />
+                {tool(
+                  t.decreaseSize,
+                  <span aria-hidden="true">−</span>,
+                  () => applySize(String(stepFontSize(parseFontSize(sizeInput) ?? selectedSize, -1))),
+                  undefined,
+                  selectedSize <= MIN_FONT_SIZE,
+                )}
+                <Input
+                  className="draft-font-size"
+                  aria-label={t.fontSize}
+                  title={t.fontSize}
+                  density="compact"
+                  inputMode="decimal"
+                  value={sizeInput}
+                  error={sizeError ? t.invalidSize : undefined}
+                  onChange={(event) => setSizeInput(event.target.value)}
+                  onBlur={() => applySize(sizeInput, false)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      applySize(sizeInput)
+                    }
+                  }}
+                />
+                {tool(
+                  t.increaseSize,
+                  <span aria-hidden="true">+</span>,
+                  () => applySize(String(stepFontSize(parseFontSize(sizeInput) ?? selectedSize, 1))),
+                  undefined,
+                  selectedSize >= MAX_FONT_SIZE,
+                )}
+                <span className="draft-font-unit">pt</span>
+              </div>
+              <div className="draft-ribbon-row">
+                {tool(
+                  t.bold,
+                  <strong aria-hidden="true">B</strong>,
+                  () => toggleStyleEmphasis(editor, 'bold'),
+                  state.bold,
+                )}
+                {tool(
+                  t.italic,
+                  <em aria-hidden="true">I</em>,
+                  () => toggleStyleEmphasis(editor, 'italic'),
+                  state.italic,
+                )}
+                {tool(
+                  t.underline,
+                  <u aria-hidden="true">U</u>,
+                  () => editor.chain().focus().toggleUnderline().run(),
+                  state.underline,
+                )}
+                <RibbonMenuButton
+                  variant="outline"
+                  presentation="icon"
+                  label={t.color}
+                  icon={<DraftIcon name="textColor" />}
+                  keepOpen
+                >
+                  {' '}
+                  <Input
+                    type="color"
+                    aria-label={t.color}
+                    title={t.color}
+                    density="compact"
+                    value={normalizeHexColor(state.color || '') || '#000000'}
+                    onChange={(event) => editor.chain().focus().setColor(event.target.value).run()}
+                  />
+                  {tool(
+                    t.resetColor,
+                    <span aria-hidden="true">A↺</span>,
+                    () => editor.chain().focus().unsetColor().run(),
+                    undefined,
+                    !state.directColor,
+                  )}
+                </RibbonMenuButton>
+                <RibbonMenuButton
+                  variant="outline"
+                  presentation="icon"
+                  label={t.highlightColor}
+                  icon={<DraftIcon name="highlight" />}
+                  keepOpen
+                >
+                  {' '}
+                  {tool(
+                    t.highlight,
+                    <span aria-hidden="true">▰</span>,
+                    () =>
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHighlight({ color: normalizeHexColor(state.highlightColor || '') || '#ffff00' })
+                        .run(),
+                    state.highlight,
+                  )}
+                  <Input
+                    type="color"
+                    aria-label={t.highlightColor}
+                    title={t.highlightColor}
+                    density="compact"
+                    value={normalizeHexColor(state.highlightColor || '') || '#ffff00'}
+                    onChange={(event) => editor.chain().focus().setHighlight({ color: event.target.value }).run()}
+                  />
+                </RibbonMenuButton>{' '}
+                {tool(t.clearFormatting, <EraserIcon />, () => clearDirectFormatting(editor))}
+                <RibbonMenuButton
+                  variant="outline"
+                  label="Aa"
+                  optionsLabel={locale === 'pl' ? 'Więcej formatowania' : 'More formatting'}
+                  keepOpen
+                >
+                  {tool(
+                    t.strike,
+                    <s aria-hidden="true">S</s>,
+                    () => editor.chain().focus().toggleStrike().run(),
+                    state.strike,
+                  )}
+                  {tool(
+                    t.subscript,
+                    <span aria-hidden="true">x₂</span>,
+                    () => editor.chain().focus().unsetSuperscript().toggleSubscript().run(),
+                    state.subscript,
+                  )}
+                  {tool(
+                    t.superscript,
+                    <span aria-hidden="true">x²</span>,
+                    () => editor.chain().focus().unsetSubscript().toggleSuperscript().run(),
+                    state.superscript,
+                  )}
+                </RibbonMenuButton>
+              </div>
             </ToolbarGroup>
-            <ToolbarGroup label={t.colorsGroup} caption={t.colorsGroup}>
-              <Input
-                type="color"
-                aria-label={t.color}
-                title={t.color}
-                density="compact"
-                value={normalizeHexColor(state.color || '') || '#000000'}
-                onChange={(event) => editor.chain().focus().setColor(event.target.value).run()}
-              />
-              {tool(
-                t.resetColor,
-                <span aria-hidden="true">A↺</span>,
-                () => editor.chain().focus().unsetColor().run(),
-                undefined,
-                !state.directColor,
-              )}
-              {tool(
-                t.highlight,
-                <span aria-hidden="true">▰</span>,
-                () =>
-                  editor
-                    .chain()
-                    .focus()
-                    .toggleHighlight({ color: normalizeHexColor(state.highlightColor || '') || '#ffff00' })
-                    .run(),
-                state.highlight,
-              )}
-              <Input
-                type="color"
-                aria-label={t.highlightColor}
-                title={t.highlightColor}
-                density="compact"
-                value={normalizeHexColor(state.highlightColor || '') || '#ffff00'}
-                onChange={(event) => editor.chain().focus().setHighlight({ color: event.target.value }).run()}
-              />
+            <ToolbarGroup label={t.paragraphGroup} caption={t.paragraphGroup} className="draft-ribbon-stack-group">
+              <div className="draft-ribbon-row">
+                {tool(
+                  t.formattingMarks,
+                  <span aria-hidden="true">¶</span>,
+                  () => onShowFormattingMarks?.(!showFormattingMarks),
+                  showFormattingMarks,
+                )}
+                {tool(t.bulletList, <ListIcon />, () => editor.chain().focus().toggleBulletList().run(), state.bullet)}
+                {tool(
+                  t.orderedList,
+                  <ListOrderedIcon />,
+                  () => editor.chain().focus().toggleOrderedList().run(),
+                  state.ordered,
+                )}
+                {tool(
+                  t.indent,
+                  <IndentIncreaseIcon />,
+                  () => editor.chain().focus().sinkListItem('listItem').run(),
+                  undefined,
+                  !state.indent,
+                )}
+                {tool(
+                  t.outdent,
+                  <IndentDecreaseIcon />,
+                  () => editor.chain().focus().liftListItem('listItem').run(),
+                  undefined,
+                  !state.outdent,
+                )}
+              </div>
+              <div className="draft-ribbon-row">
+                {tool(
+                  t.left,
+                  <AlignLeftIcon />,
+                  () => editor.chain().focus().setTextAlign('left').run(),
+                  state.align === 'left',
+                )}
+                {tool(
+                  t.center,
+                  <AlignCenterIcon />,
+                  () => editor.chain().focus().setTextAlign('center').run(),
+                  state.align === 'center',
+                )}
+                {tool(
+                  t.right,
+                  <AlignRightIcon />,
+                  () => editor.chain().focus().setTextAlign('right').run(),
+                  state.align === 'right',
+                )}
+                {tool(
+                  t.justify,
+                  <AlignJustifyIcon />,
+                  () => editor.chain().focus().setTextAlign('justify').run(),
+                  state.align === 'justify',
+                )}
+                <RibbonMenuButton
+                  variant="outline"
+                  label="↕"
+                  optionsLabel={locale === 'pl' ? 'Opcje akapitu' : 'Paragraph options'}
+                  keepOpen
+                >
+                  {tool(
+                    t.blockquote,
+                    <QuoteIcon />,
+                    () => editor.chain().focus().toggleBlockquote().run(),
+                    state.quote,
+                  )}{' '}
+                  {tool(t.paragraphSettings, <span aria-hidden="true">¶</span>, () => {
+                    // The keep-open menu unmounts when the dialog takes focus. Restore to its durable trigger.
+                    const label = locale === 'pl' ? 'Opcje akapitu' : 'Paragraph options'
+                    Array.from(document.querySelectorAll<HTMLButtonElement>('button[aria-expanded]'))
+                      .find((button) => button.getAttribute('aria-label') === label)
+                      ?.focus()
+                    onParagraphDialog?.()
+                  })}
+                  <Select
+                    aria-label={t.lineSpacing}
+                    title={t.lineSpacing}
+                    density="compact"
+                    value={String(state.lineSpacing)}
+                    options={[...new Set([1, 1.15, 1.5, 2, state.lineSpacing])].map((value) => ({
+                      value: String(value),
+                      label: `${value}×`,
+                    }))}
+                    onChange={(event) => updateSelectedParagraphs(editor, { lineSpacing: Number(event.target.value) })}
+                  />
+                </RibbonMenuButton>
+              </div>
             </ToolbarGroup>
-            <ToolbarGroup label={t.paragraphGroup} caption={t.paragraphGroup}>
-              {tool(t.blockquote, <QuoteIcon />, () => editor.chain().focus().toggleBlockquote().run(), state.quote)}
-              {tool(t.bulletList, <ListIcon />, () => editor.chain().focus().toggleBulletList().run(), state.bullet)}
-              {tool(
-                t.orderedList,
-                <ListOrderedIcon />,
-                () => editor.chain().focus().toggleOrderedList().run(),
-                state.ordered,
-              )}
-              {tool(
-                t.indent,
-                <IndentIncreaseIcon />,
-                () => editor.chain().focus().sinkListItem('listItem').run(),
-                undefined,
-                !state.indent,
-              )}
-              {tool(
-                t.outdent,
-                <IndentDecreaseIcon />,
-                () => editor.chain().focus().liftListItem('listItem').run(),
-                undefined,
-                !state.outdent,
-              )}
+            <ToolbarGroup
+              label={locale === 'pl' ? 'Style' : 'Styles'}
+              caption={locale === 'pl' ? 'Style' : 'Styles'}
+              className=""
+            >
+              <StylePicker editor={editor} locale={locale} gallery />
             </ToolbarGroup>
-            <ToolbarGroup label={t.alignment} caption={t.alignment}>
-              {tool(
-                t.left,
-                <AlignLeftIcon />,
-                () => editor.chain().focus().setTextAlign('left').run(),
-                state.align === 'left',
-              )}
-              {tool(
-                t.center,
-                <AlignCenterIcon />,
-                () => editor.chain().focus().setTextAlign('center').run(),
-                state.align === 'center',
-              )}
-              {tool(
-                t.right,
-                <AlignRightIcon />,
-                () => editor.chain().focus().setTextAlign('right').run(),
-                state.align === 'right',
-              )}
-              {tool(
-                t.justify,
-                <AlignJustifyIcon />,
-                () => editor.chain().focus().setTextAlign('justify').run(),
-                state.align === 'justify',
-              )}
-            </ToolbarGroup>
-            <ToolbarGroup label={t.format} caption={t.format}>
-              {tool(t.clearFormatting, <EraserIcon />, () => clearDirectFormatting(editor))}
-              {tool(t.formatPainter, <PaintbrushIcon />, () => startPainter(false), Boolean(painter), !state.selection)}
-              {tool(
-                t.formatPainterRepeat,
-                <PaintbrushIcon />,
-                () => startPainter(true),
-                Boolean(painter?.repeat),
-                !state.selection,
-              )}
-              {tool(t.paragraphSettings, <span aria-hidden="true">¶</span>, () => onParagraphDialog?.())}
-              <Select
-                aria-label={t.lineSpacing}
-                title={t.lineSpacing}
-                density="compact"
-                value={String(state.lineSpacing)}
-                options={[...new Set([1, 1.15, 1.5, 2, state.lineSpacing])].map((value) => ({
-                  value: String(value),
-                  label: `${value}×`,
-                }))}
-                onChange={(event) => updateSelectedParagraphs(editor, { lineSpacing: Number(event.target.value) })}
-              />
+            <ToolbarGroup
+              label={locale === 'pl' ? 'Edycja' : 'Editing'}
+              caption={locale === 'pl' ? 'Edycja' : 'Editing'}
+              className="draft-ribbon-stack-group"
+            >
+              <Button size="sm" variant="outline" icon={<SearchIcon />} onClick={onFind}>
+                {t.find}
+              </Button>
+              <Button size="sm" variant="outline" icon={<ReplaceIcon />} onClick={onReplace}>
+                {t.replace}
+              </Button>
             </ToolbarGroup>
           </ControlsBar>
         )}
 
         {activeTab === 'layout' && (
-          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.layout}>
+          <ControlsBar
+            className="allsuite-editor-toolbar allsuite-ribbon-toolbar draft-toolbar"
+            role="toolbar"
+            aria-label={t.layout}
+          >
             <ToolbarGroup label={t.layout} caption={t.layout}>
               <Select
                 aria-label={t.pageSize}
@@ -692,41 +964,11 @@ export function EditorToolbar({
         )}
 
         {activeTab === 'view' && (
-          <ControlsBar locale={locale} className="draft-toolbar draft-toolbar--view" role="toolbar" aria-label={t.view}>
-            <ToolbarGroup label={t.documentLanguage} caption={t.documentLanguage}>
-              <Select
-                aria-label={t.documentLanguage}
-                title={t.documentLanguage}
-                density="compact"
-                value={languageChoice}
-                options={[
-                  { value: 'en', label: t.languageEnglish },
-                  { value: 'pl', label: t.languagePolish },
-                  { value: 'other', label: t.languageOther },
-                ]}
-                onChange={(event) => {
-                  if (event.target.value === 'en') onDocumentLanguage?.('en-US')
-                  else if (event.target.value === 'pl') onDocumentLanguage?.('pl-PL')
-                  else if (languageChoice !== 'other') {
-                    setLanguageInput('de-DE')
-                    onDocumentLanguage?.('de-DE')
-                  }
-                }}
-              />
-              {languageChoice === 'other' && (
-                <Input
-                  aria-label={t.languageCode}
-                  title={t.languageCode}
-                  density="compact"
-                  value={languageInput}
-                  onChange={(event) => setLanguageInput(event.target.value)}
-                  onBlur={applyCustomLanguage}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') applyCustomLanguage()
-                  }}
-                />
-              )}
-            </ToolbarGroup>
+          <ControlsBar
+            className="allsuite-editor-toolbar allsuite-ribbon-toolbar draft-toolbar draft-toolbar--view"
+            role="toolbar"
+            aria-label={t.view}
+          >
             <ToolbarGroup label={t.zoom} caption={t.zoom}>
               <Select
                 aria-label={t.zoom}
@@ -808,7 +1050,11 @@ export function EditorToolbar({
         )}
 
         {activeTab === 'review' && (
-          <ControlsBar locale={locale} className="draft-toolbar" role="toolbar" aria-label={t.review}>
+          <ControlsBar
+            className="allsuite-editor-toolbar allsuite-ribbon-toolbar draft-toolbar"
+            role="toolbar"
+            aria-label={t.review}
+          >
             <ToolbarGroup label={t.comments} caption={t.comments}>
               <Button
                 size="sm"
@@ -862,6 +1108,40 @@ export function EditorToolbar({
                 {t.reviewChanges}
                 {suggestionCount ? ` (${suggestionCount})` : ''}
               </Button>
+            </ToolbarGroup>
+            <ToolbarGroup label={t.documentLanguage} caption={t.documentLanguage}>
+              <Select
+                aria-label={t.documentLanguage}
+                title={t.documentLanguage}
+                density="compact"
+                value={languageChoice}
+                options={[
+                  { value: 'en', label: t.languageEnglish },
+                  { value: 'pl', label: t.languagePolish },
+                  { value: 'other', label: t.languageOther },
+                ]}
+                onChange={(event) => {
+                  if (event.target.value === 'en') onDocumentLanguage?.('en-US')
+                  else if (event.target.value === 'pl') onDocumentLanguage?.('pl-PL')
+                  else if (languageChoice !== 'other') {
+                    setLanguageInput('de-DE')
+                    onDocumentLanguage?.('de-DE')
+                  }
+                }}
+              />
+              {languageChoice === 'other' && (
+                <Input
+                  aria-label={t.languageCode}
+                  title={t.languageCode}
+                  density="compact"
+                  value={languageInput}
+                  onChange={(event) => setLanguageInput(event.target.value)}
+                  onBlur={applyCustomLanguage}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') applyCustomLanguage()
+                  }}
+                />
+              )}
             </ToolbarGroup>
           </ControlsBar>
         )}

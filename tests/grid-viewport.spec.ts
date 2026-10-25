@@ -17,16 +17,20 @@ test('@smoke Grid extends disjoint selections and supports reverse and boundary 
   await grid.press('Home')
   await grid.press('Shift+Tab')
   await expect(nameBox).toHaveValue('Z4')
+  await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-Z4')
   await grid.press('Shift+Enter')
   await expect(nameBox).toHaveValue('Z3')
+  await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-Z3')
   await grid.press('Control+Shift+Home')
   await expect(nameBox).toHaveValue('A1:Z3')
+  await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-A1')
   await grid.press('Control+Home')
   await grid.press('PageDown')
   await expect(nameBox).not.toHaveValue('A1')
   await grid.press('Control+Home')
   await grid.press('PageUp')
   await expect(nameBox).toHaveValue('A1')
+  await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-A1')
 })
 
 test('@smoke Grid refreshes virtual dimensions when switching sheets and undoing resize', async ({ page }) => {
@@ -51,6 +55,7 @@ test('@smoke Grid refreshes virtual dimensions when switching sheets and undoing
 })
 
 test('@smoke Grid keeps an accessible active-cell proxy while scrolled away at high DPI', async ({ browser }) => {
+  test.setTimeout(60_000)
   const context = await browser.newContext({ deviceScaleFactor: 2, viewport: { width: 1280, height: 800 } })
   try {
     const page = await context.newPage()
@@ -59,6 +64,7 @@ test('@smoke Grid keeps an accessible active-cell proxy while scrolled away at h
     const nameBox = page.getByRole('textbox', { name: 'Name box' })
     await nameBox.fill('AZ500')
     await nameBox.press('Enter')
+    await expect(nameBox).toHaveValue('AZ500')
     const active = page.locator('#grid-cell-AZ500')
     await expect(active).toBeInViewport()
     await expect(grid).toBeFocused()

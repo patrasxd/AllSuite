@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/core'
-import { Badge, Button, Card, Heading, Input, SidePanel, Text, Toggle } from '@all/ui'
+import { Badge, Button, Card, Heading, Input, Text } from '@all/ui'
 import type { Locale } from '../types'
 import { translations } from '../i18n'
 import type { SuggestionDecision, SuggestionSummary } from '../editor/suggestions'
@@ -18,9 +18,7 @@ export function SuggestionsPanel({
   author,
   tracking,
   onAuthorChange,
-  onTrackingChange,
   onResolve,
-  onClose,
 }: {
   editor: Editor
   locale: Locale
@@ -28,9 +26,7 @@ export function SuggestionsPanel({
   author: string
   tracking: boolean
   onAuthorChange: (value: string) => void
-  onTrackingChange: (enabled: boolean) => void
   onResolve: (ids: string[], decision: SuggestionDecision) => void
-  onClose: () => void
 }) {
   const t = translations[locale]
   const label = (suggestion: SuggestionSummary) => {
@@ -55,37 +51,14 @@ export function SuggestionsPanel({
     return 'warning' as const
   }
   return (
-    <SidePanel
-      className="draft-suggestions-panel"
-      label={t.reviewChanges}
-      title={<Heading level={2}>{t.reviewChanges}</Heading>}
-      closeLabel={t.closeReviewChanges}
-      onClose={onClose}
-    >
+    <div className="draft-suggestions-content">
       <section className="draft-review-controls" aria-label={t.reviewChanges}>
-        <Input
-          id="draft-suggestion-author"
-          className="draft-suggestion-author"
-          fullWidth
-          label={t.suggestionAuthor}
-          type="text"
-          value={author}
-          onChange={(event) => onAuthorChange(event.target.value)}
-          maxLength={200}
-          autoComplete="off"
-        />
-        <Toggle
-          className="draft-suggestion-tracking"
-          checked={tracking}
-          onChange={onTrackingChange}
-          label={t.trackChanges}
-        />
         {suggestions.length > 0 && (
           <div className="draft-review-bulk-actions" role="group" aria-label={t.reviewChanges}>
             <Button
               type="button"
-              size="md"
-              variant="secondary"
+              size="sm"
+              variant="outline"
               onClick={() =>
                 onResolve(
                   suggestions.map((item) => item.id),
@@ -97,8 +70,8 @@ export function SuggestionsPanel({
             </Button>
             <Button
               type="button"
-              size="md"
-              variant="secondary"
+              size="sm"
+              variant="outline"
               onClick={() =>
                 onResolve(
                   suggestions.map((item) => item.id),
@@ -156,10 +129,10 @@ export function SuggestionsPanel({
                 </Text>
               </Button>
               <div className="draft-suggestion-card-actions">
-                <Button type="button" size="md" variant="success" onClick={() => onResolve([suggestion.id], 'accept')}>
+                <Button type="button" size="sm" variant="outline" onClick={() => onResolve([suggestion.id], 'accept')}>
                   {t.accept}
                 </Button>
-                <Button type="button" size="md" variant="danger" onClick={() => onResolve([suggestion.id], 'reject')}>
+                <Button type="button" size="sm" variant="outline" onClick={() => onResolve([suggestion.id], 'reject')}>
                   {t.reject}
                 </Button>
               </div>
@@ -167,6 +140,17 @@ export function SuggestionsPanel({
           ))
         )}
       </div>
-    </SidePanel>
+      <details className="draft-pane-settings">
+        <summary>{t.suggestionAuthor}</summary>
+        <Input
+          fullWidth
+          label={t.suggestionAuthor}
+          value={author}
+          onChange={(event) => onAuthorChange(event.target.value)}
+          maxLength={200}
+          autoComplete="off"
+        />
+      </details>
+    </div>
   )
 }

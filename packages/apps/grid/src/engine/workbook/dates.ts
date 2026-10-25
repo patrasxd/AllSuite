@@ -1,5 +1,21 @@
 import type { DateSystem } from './types'
 
+/** Shared by XLSX decoding and literal-operation preflight. */
+export function isDateFormat(format: string, id = 0): boolean {
+  if (
+    [
+      14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 45, 46, 47, 50, 51, 52, 53, 54, 55,
+      56, 57, 58,
+    ].includes(id)
+  )
+    return true
+  const clean = format
+    .replace(/"[^"]*"/g, '')
+    .replace(/\\./g, '')
+    .replace(/\[[^\]]*\]/g, (part) => (/^\[(?:h+|m+|s+)\]$/i.test(part) ? part : ''))
+  return /[ydhs]/i.test(clean) || /m{1,4}/i.test(clean)
+}
+
 const DAY_MS = 86_400_000
 const EXCEL_1900_EPOCH_UTC = Date.UTC(1899, 11, 31)
 const EXCEL_1904_EPOCH_UTC = Date.UTC(1904, 0, 1)

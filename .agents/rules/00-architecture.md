@@ -9,7 +9,7 @@ AllSuite is a browser office monorepo managed with npm workspaces and Node 22:
 - `packages/ui`: local helpers and app-specific vector icons (`@allsuite/ui`) when needed. Never duplicate shared primitives, layouts or tokens here.
 - `AllUI/`: shared Git submodule, imported as `@all/ui`. Consume shared components and templates directly.
 
-**Current state:** workspaces are `apps/*` and `packages/apps/*`; Draft provides an in-memory editor and local file workflows. `packages/ui` does not exist. The older editor in `packages/tools/draft` is preserved locally outside active workspaces and ignored by Git, along with `tests/legacy`; it is not routed, bundled or tested by active app gates. Do not create empty packages.
+**Current state:** workspaces are `apps/*` and `packages/apps/*`; Draft provides an in-memory editor and local file workflows. `packages/ui/src` contains local editor compositions, consumed directly by the apps. The older editor in `packages/tools/draft` is preserved locally outside active workspaces and ignored by Git, along with `tests/legacy`; it is not routed, bundled or tested by active app gates. Do not create empty packages.
 
 ## Shell and registry contract
 
@@ -29,4 +29,4 @@ Use vanilla CSS, semantic tokens and shared `@all/ui` controls, dialogs, headers
 
 When editor features are requested, Tiptap/ProseMirror and document import/export libraries must remain reachable only through Draft's lazy runtime graph. Dynamically load heavy conversions within the app; never import them into shell, metadata or shared helper barrels. Use editor transactions, not `document.execCommand`. Active editor setup lives in `src/editor/`, pure helpers in `src/engine/`, and UI in `src/components/`. The editor and paste sanitizer are lazy chunks.
 
-AllSuite pins AllUI at `3e8e7d1e648dfc3e1df707938bfea42edd80f4e8`, the same clean submodule commit used by AllTools and AllGames. Update shared UI through the normal submodule pointer only; do not maintain product-local patches or copy shared components into AllSuite. Verify AllUI with its own build and tests before running the product gates.
+The Git submodule pointer is the authoritative AllUI pin; inspect its actual source and APIs. Do not modify AllUI or its revision unless explicitly requested. When an AllUI update is requested, use the normal submodule workflow and verify its build and tests before product gates; do not maintain product-local primitive copies or patches.

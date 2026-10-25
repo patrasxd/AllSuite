@@ -1,4 +1,12 @@
+import { planColumnChart, ChartError, validateChartAnchor } from './chart'
+import type { SimpleColumnChart } from './types'
 import { cellAddressKey, compareCellAddresses, isAddressInRange, parseCellAddress } from './address'
+import { sortedRangeCells, type SortOptions } from './sort'
+import { filteredRows } from './filter'
+import { planSimpleTable, validateTableContext } from './table'
+import { evaluateFilterRows } from './filter'
+import { createFrozenPane, supportedFrozenPane } from './freeze'
+import type { FilterCriterion } from './types'
 import {
   assertNoMergeOverlap,
   addDefinedName,
@@ -29,6 +37,14 @@ import {
 } from './types'
 
 export type WorkbookAction =
+  | { type: 'place-chart'; sheetId: string; chartId: string; range: CellRange }
+  | { type: 'set-chart'; sheetId: string; chart: SimpleColumnChart }
+  | { type: 'remove-chart'; sheetId: string; chartId: string }
+  | { type: 'create-table'; sheetId: string; range: CellRange; name: string }
+  | { type: 'convert-table'; sheetId: string; tableId: string }
+  | { type: 'set-frozen-panes'; sheetId: string; rows: boolean; columns: boolean }
+  | { type: 'set-auto-filter'; sheetId: string; range: CellRange; criteria: FilterCriterion[] }
+  | ({ type: 'sort-range'; sheetId: string } & SortOptions)
   | { type: 'add-defined-name'; name: DefinedName }
   | { type: 'delete-defined-name'; name: string; scopeSheetId?: string }
   | { type: 'set-cells'; sheetId: string; changes: Array<{ address: CellAddress | string; value: CellValue }> }
@@ -62,7 +78,7 @@ export type WorkbookPatch =
   | { kind: 'sheet-order'; before: string[]; after: string[] }
   | {
       kind: 'workbook-field'
-      field: 'activeSheetId' | 'definedNames' | 'preservation'
+      field: 'activeSheetId' | 'definedNames' | 'preservation' | 'formulaStructureUnsafe'
       before: unknown
       after: unknown
     }
@@ -80,6 +96,8 @@ export interface WorkbookCommand {
 
 export interface CommandPlannerOptions {
   createId: (kind: 'sheet' | 'table') => string
+  /** Supplied only by asynchronous structural preflight; coordinates here are still original. */
+  structuralFormulaCells?: Map<string, Map<string, Cell>>
 }
 
 export function planWorkbookAction(
@@ -94,7 +112,136 @@ export function planWorkbookAction(
   const includeImpacts = (...values: PreservationImpact[]) => values.forEach((impact) => impacts.add(impact))
   const addPatch = (patch: WorkbookPatch) => patches.push(patch)
 
+  if (
+    [
+      'insert-rows',
+      'delete-rows',
+      'insert-columns',
+      'delete-columns',
+      'rename-sheet',
+      'delete-sheet',
+      'duplicate-sheet',
+    ].includes(action.type) &&
+    [...workbook.sheetsById.values()].some((sheet) => sheet.drawings.some((drawing) => drawing.chart))
+  )
+    throw new ChartError('context')
   switch (action.type) {
+    case 'place-chart': {
+      const sheet = requireSheet(workbook, action.sheetId)
+      const drawing = sheet.drawings.find((item) => item.id === action.chartId && item.chart)
+      if (!drawing || sheet.drawings.length !== 1) throw new ChartError('context')
+      validateChartAnchor(action.range)
+      const after = [{ ...structuredClone(drawing), range: cloneRange(action.range) }]
+      if (!sameValue(sheet.drawings, after)) {
+        addPatch({ kind: 'worksheet-field', sheetId: sheet.id, field: 'drawings', before: sheet.drawings, after })
+        dirtyRegions.push({ kind: 'sheet', sheetId: sheet.id })
+        affected.add(sheet.id)
+      }
+      break
+    }
+    case 'set-chart':
+    case 'remove-chart': {
+      const sheet = requireSheet(workbook, action.sheetId)
+      const existing = sheet.drawings.find((drawing) => drawing.chart)
+      if (action.type === 'remove-chart' && (!existing || existing.id !== action.chartId))
+        throw new ChartError('context')
+      const after = action.type === 'set-chart' ? [planColumnChart(workbook, sheet, action.chart, existing)] : []
+      if (!sameValue(sheet.drawings, after)) {
+        addPatch({ kind: 'worksheet-field', sheetId: sheet.id, field: 'drawings', before: sheet.drawings, after })
+        dirtyRegions.push({ kind: 'sheet', sheetId: sheet.id })
+        affected.add(sheet.id)
+      }
+      break
+    }
+    case 'create-table':
+    case 'convert-table': {
+      const sheet = requireSheet(workbook, action.sheetId)
+      validateTableContext(workbook, sheet)
+      let tables: Worksheet['tables']
+      let autoFilter: Worksheet['autoFilter']
+      let rows = sheet.rowMetadata
+      if (action.type === 'create-table') {
+        const table = planSimpleTable(workbook, sheet, action.range, action.name)
+        tables = [table]
+        autoFilter = { range: structuredClone(table.range), criteria: [] }
+      } else {
+        const table = sheet.tables.find((t) => t.id === action.tableId)
+        if (!table || table.ownership !== 'simple') throw new Error('Unsupported imported table.')
+        tables = []
+        autoFilter = undefined
+        rows = evaluateFilterRows(sheet, table.range, [])
+      }
+      for (const [field, before, after] of [
+        ['tables', sheet.tables, tables],
+        ['autoFilter', sheet.autoFilter, autoFilter],
+        ['rowMetadata', sheet.rowMetadata, rows],
+      ] as const) {
+        if (field === 'rowMetadata' ? !sameMap(sheet.rowMetadata, rows) : !sameValue(before, after))
+          addPatch({ kind: 'worksheet-field', sheetId: sheet.id, field, before, after })
+      }
+      dirtyRegions.push({ kind: 'sheet', sheetId: sheet.id })
+      affected.add(sheet.id)
+      includeImpacts('row-visibility')
+      break
+    }
+    case 'set-frozen-panes': {
+      const sheet = requireSheet(workbook, action.sheetId)
+      if (sheet.unsupportedSheetViews || !supportedFrozenPane(sheet.frozenPane))
+        throw new Error('Unsupported imported worksheet views must be preserved.')
+      if (typeof action.rows !== 'boolean' || typeof action.columns !== 'boolean')
+        throw new Error('Invalid frozen pane state.')
+      const after = createFrozenPane(action.rows, action.columns)
+      if (!sameValue(sheet.frozenPane, after)) {
+        addPatch({ kind: 'worksheet-field', sheetId: sheet.id, field: 'frozenPane', before: sheet.frozenPane, after })
+        dirtyRegions.push({ kind: 'sheet', sheetId: sheet.id })
+        affected.add(sheet.id)
+        includeImpacts('sheet-views')
+      }
+      break
+    }
+    case 'set-auto-filter': {
+      const sheet = requireSheet(workbook, action.sheetId)
+      const rows = filteredRows(workbook, sheet, action.range, action.criteria)
+      const autoFilter = {
+        ...sheet.autoFilter,
+        range: structuredClone(action.range),
+        criteria: structuredClone(action.criteria),
+      }
+      if (!sameValue(sheet.autoFilter, autoFilter)) {
+        addPatch({
+          kind: 'worksheet-field',
+          sheetId: sheet.id,
+          field: 'autoFilter',
+          before: sheet.autoFilter,
+          after: autoFilter,
+        })
+      }
+      if (!sameMap(sheet.rowMetadata, rows)) {
+        addPatch({
+          kind: 'worksheet-field',
+          sheetId: sheet.id,
+          field: 'rowMetadata',
+          before: sheet.rowMetadata,
+          after: rows,
+        })
+      }
+      dirtyRegions.push({ kind: 'sheet', sheetId: sheet.id })
+      affected.add(sheet.id)
+      includeImpacts('row-visibility')
+      break
+    }
+    case 'sort-range': {
+      const sheet = requireSheet(workbook, action.sheetId)
+      const changes = diffCellMaps(sheet.cells, sortedRangeCells(workbook, sheet, action))
+      addCellPatch(addPatch, sheet.id, changes)
+      if (changes.length) {
+        addUsedRangePatch(addPatch, sheet, new Map(changes.map((change) => [change.address, change])))
+        dirtyRegions.push({ kind: 'cells', sheetId: sheet.id, range: structuredClone(action.range) })
+        affected.add(sheet.id)
+        includeImpacts('cell-values', 'cell-styles', 'cell-addresses')
+      }
+      break
+    }
     case 'add-defined-name': {
       const after = addDefinedName(workbook, action.name)
       addPatch({ kind: 'workbook-field', field: 'definedNames', before: workbook.definedNames, after })
@@ -121,6 +268,16 @@ export function planWorkbookAction(
       const seen = new Set<string>()
       for (const change of action.changes) {
         const address = canonicalAddress(change.address)
+        if (
+          sheet.tables.some(
+            (t) =>
+              t.ownership === 'simple' &&
+              address.row === t.range.start.row &&
+              address.column >= t.range.start.column &&
+              address.column <= t.range.end.column,
+          )
+        )
+          throw new Error('Table headers are read-only. Convert to range first.')
         const key = cellAddressKey(address)
         if (seen.has(key)) {
           throw new Error(`A cell appears more than once in one operation: ${key}`)
@@ -131,6 +288,25 @@ export function planWorkbookAction(
         else nextCells.delete(key)
       }
       const updatedCells = nextCells
+      if (
+        sheet.autoFilter?.criteria &&
+        action.changes.some((change) => isAddressInRange(canonicalAddress(change.address), sheet.autoFilter!.range))
+      ) {
+        const rows = filteredRows(
+          workbook,
+          { ...sheet, cells: updatedCells },
+          sheet.autoFilter.range,
+          sheet.autoFilter.criteria,
+        )
+        if (!sameMap(sheet.rowMetadata, rows))
+          addPatch({
+            kind: 'worksheet-field',
+            sheetId: sheet.id,
+            field: 'rowMetadata',
+            before: sheet.rowMetadata,
+            after: rows,
+          })
+      }
       const changes = diffCellMaps(sheet.cells, updatedCells)
       addCellPatch(addPatch, sheet.id, changes)
       if (changes.length) {
@@ -190,6 +366,11 @@ export function planWorkbookAction(
       const next = new Map(current)
       if (action.metadata === null) next.delete(index)
       else next.set(index, structuredClone(action.metadata))
+      if (isRow) {
+        if (sheet.autoFilter && index === sheet.autoFilter.range.start.row && action.metadata?.hidden)
+          throw new Error('Filter headers must remain visible.')
+        if (sheet.rowMetadata.get(index)?.filterHidden) next.set(index, { ...next.get(index), filterHidden: true })
+      }
       if (!sameMap(current, next)) {
         addPatch({ kind: 'worksheet-field', sheetId: sheet.id, field, before: current, after: next })
         dirtyRegions.push(
@@ -208,6 +389,7 @@ export function planWorkbookAction(
     case 'delete-columns': {
       const sheet = requireSheet(workbook, action.sheetId)
       const axis = action.type.endsWith('rows') ? 'row' : 'column'
+      if (sheet.autoFilter?.criteria) throw new Error('Structural changes to a filtered sheet are not supported.')
       const insert = action.type.startsWith('insert')
       const limit = axis === 'row' ? MAX_ROWS : MAX_COLUMNS
       assertAxis(action.start, 1, limit, axis)
@@ -215,7 +397,28 @@ export function planWorkbookAction(
         throw new Error(`Count must be an integer between 1 and ${limit}.`)
       }
       if (action.start + action.count - 1 > limit) throw new Error('The operation exceeds worksheet limits.')
-      const nextCells = transformCellMap(sheet.cells, axis, action.start, action.count, insert)
+      if (
+        !options.structuralFormulaCells &&
+        !workbook.formulaStructureUnsafe &&
+        ([...workbook.sheetsById.values()].some((item) =>
+          [...item.cells.values()].some((cell) => cell.value.kind === 'formula'),
+        ) ||
+          workbook.definedNames.some((name) => Boolean(name.formula)))
+      ) {
+        addPatch({
+          kind: 'workbook-field',
+          field: 'formulaStructureUnsafe',
+          before: workbook.formulaStructureUnsafe,
+          after: true,
+        })
+      }
+      const nextCells = transformCellMap(
+        options.structuralFormulaCells?.get(sheet.id) ?? sheet.cells,
+        axis,
+        action.start,
+        action.count,
+        insert,
+      )
       const newCells = markFormulasStale(nextCells)
       addCellPatch(addPatch, sheet.id, diffCellMaps(sheet.cells, newCells))
 
@@ -236,7 +439,17 @@ export function planWorkbookAction(
         dirtyRegions.push({ kind: 'sheet', sheetId: sheet.id })
       }
       affected.add(sheet.id)
-      markOtherFormulaCellsStale(workbook, sheet.id, addPatch, dirtyRegions, affected)
+      if (options.structuralFormulaCells) {
+        for (const other of workbook.sheetsById.values()) {
+          if (other.id === sheet.id) continue
+          const changes = diffCellMaps(other.cells, options.structuralFormulaCells.get(other.id)!)
+          addCellPatch(addPatch, other.id, changes)
+          if (changes.length) {
+            dirtyRegions.push({ kind: 'sheet', sheetId: other.id })
+            affected.add(other.id)
+          }
+        }
+      } else markOtherFormulaCellsStale(workbook, sheet.id, addPatch, dirtyRegions, affected)
       const nextNames = transformDefinedNames(workbook, sheet.id, axis, action.start, action.count, insert)
       if (!sameValue(workbook.definedNames, nextNames))
         addPatch({ kind: 'workbook-field', field: 'definedNames', before: workbook.definedNames, after: nextNames })
@@ -390,7 +603,9 @@ export function planWorkbookAction(
     }
   }
 
-  if (patches.length && impacts.size) addPreservationInvalidation(workbook, [...impacts], action.type, patches)
+  // An operation below the sparse used range can still move opaque note/VML anchors.
+  if (impacts.size && (patches.length || impacts.has('cell-addresses')))
+    addPreservationInvalidation(workbook, [...impacts], action.type, patches)
   const uniqueAffected = [...affected]
   return {
     label: labelFor(action),
@@ -918,12 +1133,17 @@ function addPreservationInvalidation(
   const parts = preservation.parts.map((part) => {
     const isAffected =
       part.dependsOn.includes('all') || impactSet.has('all') || part.dependsOn.some((impact) => impactSet.has(impact))
-    if (!isAffected || part.status === 'unsafe') return part
+    if (!isAffected) return part
+    const previousImpacts = new Set(part.invalidatedBy ?? [])
+    const invalidatedBy = [...new Set([...previousImpacts, ...impacts])]
+    const hasNewImpacts = impacts.some((impact) => !previousImpacts.has(impact))
+    if (part.status === 'unsafe' && !hasNewImpacts) return part
     changed = true
     return {
       ...part,
       status: 'unsafe' as const,
       unsafeReasons: [...part.unsafeReasons, `Workbook ${reason} changed ${impacts.join(', ')}.`],
+      invalidatedBy,
     }
   })
   if (changed) {
@@ -965,6 +1185,14 @@ function uniqueTableName(workbook: Workbook, name: string, suffix: number): stri
 
 function labelFor(action: WorkbookAction): string {
   const labels: Record<WorkbookAction['type'], string> = {
+    'set-chart': 'Create or edit chart',
+    'place-chart': 'Move or resize chart',
+    'remove-chart': 'Remove chart',
+    'create-table': 'Create table',
+    'convert-table': 'Convert table to range',
+    'set-auto-filter': 'AutoFilter',
+    'set-frozen-panes': 'Freeze panes',
+    'sort-range': 'Sort range',
     'add-defined-name': 'Define name',
     'delete-defined-name': 'Delete defined name',
     'set-cells': 'Edit cells',

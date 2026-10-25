@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test'
+﻿import { test, expect } from '@playwright/test'
+import { revealToolbarCommand } from './helpers/reveal-toolbar-command'
 
 test('@smoke editing commands, history, headings, alignment and dirty navigation', async ({ page }) => {
   await page.goto('./#/draft')
@@ -8,7 +9,7 @@ test('@smoke editing commands, history, headings, alignment and dirty navigation
   await page.getByRole('button', { name: 'Bold', exact: true }).click()
   await expect(editor.locator('strong')).toHaveText('Hello document')
   await expect(page.getByRole('button', { name: 'Bold', exact: true })).toHaveAttribute('aria-pressed', 'true')
-  await page.getByRole('tab', { name: 'Edit', exact: true }).click()
+  await page.getByRole('tab', { name: 'Home', exact: true }).click()
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
   await expect(editor.locator('strong')).toHaveCount(0)
   await page.getByRole('button', { name: 'Redo', exact: true }).click()
@@ -93,7 +94,8 @@ test('formatting stays intact across all four presentation themes', async ({ pag
   await editor.press('Control+a')
   await page.getByRole('textbox', { name: 'Font size (pt)' }).fill('18')
   await page.getByRole('textbox', { name: 'Font size (pt)' }).press('Enter')
-  await page.getByLabel('Text color', { exact: true }).fill('#aabbcc')
+  await page.getByRole('button', { name: 'Text color', exact: true }).click()
+  await page.locator('input[type="color"][aria-label="Text color"]').fill('#aabbcc')
   const original = await editor.innerHTML()
   await page.getByRole('button', { name: 'Open preferences menu', exact: true }).click()
   for (const [base, eink, theme] of [
@@ -113,12 +115,13 @@ test('paragraph dialog, columns, view preferences and autoformat work together',
   await page.goto('./#/draft')
   const editor = page.getByRole('textbox', { name: 'Document editor', exact: true })
   await editor.fill('Paragraph text')
-  await page.getByRole('tab', { name: 'Format', exact: true }).click()
+  await page.getByRole('tab', { name: 'Layout', exact: true }).click()
   await page.getByRole('button', { name: 'Open paragraph settings', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Paragraph settings', exact: true })
   await dialog.getByRole('textbox', { name: 'Spacing before (pt)' }).fill('6')
   await dialog.getByRole('textbox', { name: 'Spacing after (pt)' }).fill('12')
   await dialog.getByRole('textbox', { name: 'Left indent (pt)' }).fill('18')
+  await dialog.getByRole('tab', { name: 'Tab stops', exact: true }).click()
   await dialog.getByRole('textbox', { name: 'Tab stops (pt)' }).fill('72, 144')
   await dialog.getByRole('button', { name: 'Apply', exact: true }).click()
   await expect(editor.locator('p')).toHaveCSS('margin-top', '8px')
@@ -127,14 +130,18 @@ test('paragraph dialog, columns, view preferences and autoformat work together',
 
   await page.getByRole('tab', { name: 'Layout', exact: true }).click()
   await page.getByRole('combobox', { name: 'Columns', exact: true }).selectOption('2')
-  await expect(editor).toHaveCSS('column-count', '2')
+  await expect(page.locator('.draft-paper')).toHaveClass(/draft-paper--columns/)
+  // Measured columns project narrow lanes; native continuous CSS balancing is disabled.
+  await expect(editor).toHaveCSS('column-count', '1')
 
   await page.getByRole('tab', { name: 'View', exact: true }).click()
   await page.getByRole('button', { name: 'Ruler', exact: true }).click()
   await expect(page.locator('.draft-ruler')).toHaveCount(0)
   await page.getByRole('button', { name: 'Show formatting marks', exact: true }).click()
   await expect(editor.locator('.draft-format-space')).toHaveCount(1)
-  await page.getByRole('button', { name: 'Autoformat while typing', exact: true }).click()
+  const { command: autoformat } = await revealToolbarCommand(page, 'Autoformat while typing')
+  await expect(autoformat).toBeVisible()
+  await autoformat.click()
   await editor.fill('')
   await editor.pressSequentially('--')
   await expect(editor).toContainText('--')
@@ -197,23 +204,26 @@ test('editing utilities find across formatting, report selection stats and inser
   await find.getByRole('textbox', { name: 'Replace with', exact: true }).fill('world')
   await find.getByRole('button', { name: 'Replace all', exact: true }).click()
   await expect(editor).toHaveText('world world')
-  await find.getByRole('button', { name: 'Close find and replace', exact: true }).click()
+  await page
+    .getByRole('complementary', { name: 'Navigation', exact: true })
+    .getByRole('button', { name: 'Close navigation', exact: true })
+    .click()
 
   await editor.press('Control+a')
-  await expect(page.locator('.all-workspace-status')).toContainText('Selection: 2 words, 11 characters')
-  await expect(page.locator('.all-workspace-status')).toContainText('Characters with spaces: 11')
-  await expect(page.locator('.all-workspace-status')).toContainText('Pages: 1')
+  await expect(page.getByLabel('Selection: 2 words, 11 characters')).toBeVisible()
+  await expect(page.getByLabel('Characters with spaces: 11; Characters without spaces: 10')).toBeVisible()
+  await expect(page.getByLabel('Page 1 of 1')).toBeVisible()
 
   expect(
     await page.evaluate(() =>
       performance.getEntriesByType('resource').some((entry) => entry.name.toLowerCase().includes('carlito')),
     ),
   ).toBe(false)
-  await page.getByRole('tab', { name: 'Format', exact: true }).click()
+  await page.getByRole('tab', { name: 'Home', exact: true }).click()
   await page.getByRole('combobox', { name: 'Font family', exact: true }).selectOption('Carlito')
   await expect(editor.locator('span[style*="Carlito"]')).toHaveCount(1)
   await expect.poll(() => page.evaluate(() => document.fonts.check('16px Carlito'))).toBe(true)
-  await page.getByRole('tab', { name: 'View', exact: true }).click()
+  await page.getByRole('tab', { name: 'Review', exact: true }).click()
   await page.getByRole('combobox', { name: 'Document language', exact: true }).selectOption('pl')
   await expect(editor).toHaveAttribute('lang', 'pl-PL')
 
@@ -243,24 +253,63 @@ test('tracked changes show inline and can be reviewed from the suggestions panel
   await editor.pressSequentially(' added')
   const insertion = editor.locator('[data-suggestion-kind="insert"]')
   await expect(insertion).toHaveText(' added')
-  await page.getByRole('button', { name: 'Open preferences menu', exact: true }).click()
-  await page.getByRole('button', { name: 'Light', exact: true }).click()
-  await page.getByRole('button', { name: 'On', exact: true }).click()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'e-ink-light')
-  await expect.poll(() => insertion.evaluate((element) => getComputedStyle(element).borderBottomStyle)).toBe('double')
-  await page.getByRole('button', { name: 'Close preferences menu', exact: true }).click()
+  const setEinkTheme = async (base: 'Light' | 'Dark', theme: 'e-ink-light' | 'e-ink-dark') => {
+    await page.getByRole('button', { name: 'Open preferences menu', exact: true }).click()
+    await page.getByRole('button', { name: base, exact: true }).click()
+    if ((await page.locator('html').getAttribute('data-eink')) !== 'true') {
+      await page.getByRole('button', { name: 'On', exact: true }).click()
+    }
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+    await page.getByRole('button', { name: 'Close preferences menu', exact: true }).click()
+  }
+  const expectEinkRevision = async (revision: typeof insertion, line: 'underline' | 'line-through') => {
+    const style = await revision.evaluate((element) => {
+      const computed = getComputedStyle(element)
+      const paper = element.closest('.draft-paper')
+      return {
+        lines: computed.textDecorationLine.split(/\s+/),
+        decorationStyle: computed.textDecorationStyle,
+        decorationColor: computed.textDecorationColor,
+        inkColor: paper ? getComputedStyle(paper).color : '',
+      }
+    })
+    expect(style.lines).toContain(line)
+    expect(style.decorationStyle).toBe('solid')
+    expect(style.decorationColor).toBe(style.inkColor)
+  }
+
+  for (const [base, theme] of [
+    ['Light', 'e-ink-light'],
+    ['Dark', 'e-ink-dark'],
+  ] as const) {
+    await setEinkTheme(base, theme)
+    await expectEinkRevision(insertion, 'underline')
+  }
 
   await page.getByRole('button', { name: /Review changes/ }).click()
-  const panel = page.locator('.draft-suggestions-panel')
-  await expect(panel.getByLabel('Your name for this session')).toHaveValue('Guest')
+  const panel = page.getByRole('complementary', { name: 'Review changes', exact: true })
+  await panel.locator('.draft-pane-settings summary:visible').click()
+  await expect(panel.getByRole('textbox', { name: 'Author name', exact: true })).toHaveValue('Guest')
   await expect(panel.getByText('Guest', { exact: true })).toBeVisible()
   await panel.getByRole('button', { name: 'Reject', exact: true }).click()
   await expect(editor).toHaveText('keep')
 
   await editor.press('Control+a')
   await editor.press('Backspace')
-  await expect(editor.locator('[data-suggestion-kind="delete"]')).toHaveText('keep')
+  const deletion = editor.locator('[data-suggestion-kind="delete"]')
+  await expect(deletion).toHaveText('keep')
+  for (const [base, theme] of [
+    ['Light', 'e-ink-light'],
+    ['Dark', 'e-ink-dark'],
+  ] as const) {
+    await setEinkTheme(base, theme)
+    await expectEinkRevision(deletion, 'line-through')
+  }
   await panel.getByRole('button', { name: 'Accept', exact: true }).click()
   await expect(editor).toHaveText('')
-  await expect(panel.getByText('No suggestions to review.')).toBeVisible()
+  const emptyReviewState = panel.getByRole('status')
+  await expect(emptyReviewState.getByRole('heading', { name: 'No changes to review yet.', exact: true })).toBeVisible()
+  await expect(emptyReviewState).toContainText('Edits made while tracking is on will appear here.')
+  await expect(panel.getByRole('button', { name: 'Accept', exact: true })).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: 'Reject', exact: true })).toHaveCount(0)
 })

@@ -29,7 +29,7 @@ describe('Grid selection math', () => {
     expect(isSelected(moved, { row: 21, column: 2 })).toBe(false)
   })
 
-  it('parses a name-box range with its end cell active', () => {
+  it('selects an address range with its end cell active', () => {
     const selected = selectRange(createSelection({ row: 1, column: 1 }), 'A1:D20')
     expect(selected.active).toMatchObject({ row: 20, column: 4 })
     expect(formatRangeAddress(selected.ranges[0])).toBe('A1:D20')

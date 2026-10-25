@@ -17,6 +17,6 @@
       "@allsuite/grid/metadata": ["../../packages/apps/grid/src/metadata.ts"]
     }
   },
-  "include": ["src", "../../packages/apps/*/src"],
+  "include": ["src", "../../packages/apps/*/src", "../../packages/ui/src"],
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "../../packages/**/*.test.ts", "../../packages/**/*.test.tsx"]
 }

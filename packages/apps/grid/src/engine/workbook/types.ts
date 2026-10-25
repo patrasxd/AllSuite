@@ -89,6 +89,8 @@ export interface SheetDimensions {
 
 export interface RowMetadata {
   height?: number
+  /** AutoFilter visibility, independent of manual `hidden`. */
+  filterHidden?: boolean
   hidden?: boolean
   outlineLevel?: number
   style?: CellStyle
@@ -123,6 +125,9 @@ export interface WorkbookCalculationUpdate {
 }
 
 export interface TableDescriptor {
+  /** Granted only after validation of the exact simple native authoring subset. */
+  ownership?: 'simple'
+  nativeId?: number
   id: string
   name: string
   range: CellRange
@@ -157,6 +162,9 @@ export interface ConditionalFormatDescriptor {
 }
 
 export interface DrawingDescriptor {
+  /** Only the exact native column-chart graph validated by the codec is editable. */
+  chart?: SimpleColumnChart
+  drawingPartName?: string
   id: string
   range: CellRange
   kind: 'image' | 'chart' | 'shape' | 'unknown'
@@ -164,6 +172,13 @@ export interface DrawingDescriptor {
   relationshipId?: string
   preservationStatus: 'safe' | 'unsafe'
   rangeStatus?: 'safe' | 'unsafe'
+}
+
+export interface SimpleColumnChart {
+  type: 'column'
+  title: string
+  sourceRange: CellRange
+  headers: boolean
 }
 
 export interface PivotDescriptor {
@@ -183,6 +198,8 @@ export interface Worksheet {
   id: string
   name: string
   visibility?: 'visible' | 'hidden' | 'veryHidden'
+  /** Imported view XML outside the editable first-row/column subset. Preserve, never normalize. */
+  unsupportedSheetViews?: boolean
   frozenPane?: {
     xSplit: number
     ySplit: number
@@ -199,7 +216,13 @@ export interface Worksheet {
     tooltip?: string
     location?: string
   }>
-  autoFilter?: { range: CellRange; sourcePartName?: string }
+  autoFilter?: {
+    range: CellRange
+    sourcePartName?: string
+    /** Undefined for opaque imported definitions. Empty means enabled without criteria. */
+    criteria?: FilterCriterion[]
+    unsupported?: boolean
+  }
   printSettings?: {
     pageMargins?: Record<string, number>
     pageSetup?: Record<string, string>
@@ -228,8 +251,24 @@ export interface Worksheet {
   pivots: PivotDescriptor[]
 }
 
+export interface FilterCriterion {
+  /** Absolute, one-based worksheet column. */
+  column: number
+  /** Native OOXML lexical literal values; equal representations share a choice. */
+  values: string[]
+  blank: boolean
+}
+
 export type PreservationImpact =
-  'cell-values' | 'cell-styles' | 'cell-addresses' | 'sheet-names' | 'sheet-order' | 'sheet-structure' | 'all'
+  | 'sheet-views'
+  | 'cell-values'
+  | 'cell-styles'
+  | 'row-visibility'
+  | 'cell-addresses'
+  | 'sheet-names'
+  | 'sheet-order'
+  | 'sheet-structure'
+  | 'all'
 
 export interface OOXMLPartPreservationDescriptor {
   partName: string
@@ -242,6 +281,8 @@ export interface OOXMLPartPreservationDescriptor {
   dependsOn: PreservationImpact[]
   status: 'safe' | 'unsafe'
   unsafeReasons: string[]
+  /** Workbook edit impacts that made a preserved package part unsafe to rewrite. */
+  invalidatedBy?: PreservationImpact[]
   originalBytes?: Uint8Array
 }
 
@@ -278,6 +319,8 @@ export interface Workbook {
   sheetOrder: string[]
   activeSheetId: string
   definedNames: DefinedName[]
+  /** An unprepared structural operation occurred; recalculation must never clear this blocker. */
+  formulaStructureUnsafe?: boolean
   preservation?: OOXMLPreservationState
 }
 

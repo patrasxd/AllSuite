@@ -1,14 +1,7 @@
-import type { ComponentType, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import type { Locale } from '../../../ui/src/app-host'
 
-export type Locale = 'en' | 'pl'
-
-export interface AppComponentProps {
-  locale: Locale
-  isEink?: boolean
-  setHeader?: (content: ReactNode) => void
-  isDirty?: boolean
-  setIsDirty?: (dirty: boolean) => void
-}
+export type { AppComponentProps, AppModule, Locale } from '../../../ui/src/app-host'
 
 export interface AppMetadata {
   slug: string
@@ -17,8 +10,4 @@ export interface AppMetadata {
   category: 'spreadsheets'
   tags: Record<Locale, string[]>
   icon: ReactNode
-}
-
-export interface AppModule {
-  AppComponent: ComponentType<AppComponentProps>
 }

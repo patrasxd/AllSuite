@@ -24,6 +24,24 @@ function createEditor(text: string) {
 }
 
 describe('suggestion tracking', () => {
+  it('undo and redo a review decision without re-tracking restored revision identities', () => {
+    const current = createEditor('Original')
+    setSuggestionTracking(current, true)
+    current.commands.insertContentAt(9, ' addition')
+    const before = readSuggestions(current.state.doc)
+    expect(before).toHaveLength(1)
+    resolveSuggestions(
+      current,
+      before.map((item) => item.id),
+      'reject',
+    )
+    expect(current.getText()).toBe('Original')
+    current.commands.undo()
+    expect(readSuggestions(current.state.doc)).toEqual(before)
+    current.commands.redo()
+    expect(current.getText()).toBe('Original')
+    expect(readSuggestions(current.state.doc)).toEqual([])
+  })
   it('records deleted text with its author and timestamp, then rejects the deletion', () => {
     const current = createEditor('keep remove')
     setSuggestionTracking(current, true)

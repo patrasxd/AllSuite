@@ -1,0 +1,308 @@
+﻿/* Approved Grid ribbon composition over AllUI primitives. Engines stay in Grid. */
+.grid-command-navigation #grid-command-table {
+  margin-inline-start: 8px;
+  border-inline-start-color: var(--all-border-2);
+}
+.grid-app .grid-command-panel[hidden] {
+  display: none;
+}
+.grid-app .grid-command-panel {
+  width: 100%;
+  align-self: stretch;
+}
+.grid-app .grid-ribbon-surface {
+  height: 114px;
+  padding: 8px 12px;
+  border-block: var(--all-border-width-sm) solid var(--all-border);
+  background: var(--all-surface);
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-sizing: border-box;
+}
+.grid-app .grid-toolbar.all-controls-bar {
+  display: flex;
+  width: max-content;
+  max-width: none;
+  height: 96px;
+  padding: 0;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 12px;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+}
+.grid-app .grid-toolbar .all-toolbar-group {
+  flex: 0 0 auto;
+  border: var(--all-border-width-sm) solid var(--all-border);
+  border-radius: var(--all-radius);
+  padding: var(--all-space-1) var(--all-space-2);
+  background: var(--all-surface-2);
+}
+.grid-app .grid-toolbar .all-toolbar-group:last-child {
+  padding-inline-end: var(--all-space-2);
+  border: var(--all-border-width-sm) solid var(--all-border);
+}
+.grid-app .grid-toolbar .grid-command-large .all-btn__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.grid-app .grid-toolbar .all-toolbar-group__controls {
+  height: 68px;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px;
+}
+.grid-app .grid-toolbar .all-toolbar-group__caption {
+  color: var(--all-text-dim);
+  font-size: calc((var(--all-text-xs) + var(--all-text-sm)) / 2);
+  font-weight: var(--all-font-medium);
+}
+.grid-app
+  .grid-toolbar
+  :is(.grid-ribbon-font, .grid-ribbon-alignment, .grid-ribbon-number, .grid-ribbon-cells)
+  > .all-toolbar-group__controls,
+.grid-ribbon-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 4px;
+}
+.grid-app .grid-toolbar .all-btn {
+  min-height: 32px;
+  height: 32px;
+  border-width: var(--all-border-width-sm);
+  font-size: 12px;
+}
+.grid-app .grid-toolbar .all-btn[aria-pressed='true'] {
+  color: var(--all-bg);
+  background: var(--all-accent);
+  border-color: var(--all-accent);
+}
+.grid-app .grid-toolbar .all-icon-btn {
+  width: 32px;
+  min-width: 32px;
+  padding: 6px;
+}
+.grid-app .grid-toolbar .all-btn svg {
+  width: 18px;
+  height: 18px;
+}
+.grid-app .grid-toolbar .grid-command-large,
+.grid-app .grid-toolbar .allsuite-ribbon-menu--large > .all-btn {
+  height: 68px;
+  min-height: 68px;
+  min-width: 82px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding-inline: 10px;
+}
+.grid-app .grid-toolbar .grid-command-large :is(svg, .all-btn__icon),
+.grid-app .grid-toolbar .allsuite-ribbon-menu--large > .all-btn:first-child :is(svg, .all-btn__icon) {
+  width: 26px;
+  height: 26px;
+}
+.grid-app .grid-toolbar .allsuite-ribbon-menu--split > .all-btn:last-of-type {
+  min-width: 28px;
+  padding-inline: 4px;
+}
+.grid-app .grid-toolbar .all-select-container {
+  width: 132px;
+}
+.grid-app .grid-toolbar .grid-ribbon-font .all-select-container:first-child {
+  width: 142px;
+}
+.grid-app .grid-toolbar .grid-ribbon-font .grid-font-size {
+  width: 62px;
+}
+.grid-app .grid-toolbar .grid-ribbon-alignment .all-select-container {
+  width: 138px;
+}
+.grid-app .grid-toolbar .grid-ribbon-number .all-select-container {
+  width: 132px;
+}
+.grid-app .grid-toolbar .all-select-field {
+  height: 32px;
+  min-height: 32px;
+  font-size: 12px;
+}
+.grid-app .grid-toolbar .grid-table-context {
+  padding: 10px 4px;
+  font-size: 12px;
+  gap: 6px;
+}
+.grid-app .grid-toolbar .grid-table-context > span {
+  color: var(--all-text-dim);
+}
+.grid-more-heading {
+  display: none;
+}
+@media (pointer: coarse) and (min-width: 600px) {
+  .grid-app .grid-ribbon-surface {
+    height: 138px;
+  }
+  .grid-app .grid-toolbar.all-controls-bar {
+    height: 120px;
+  }
+  .grid-app .grid-toolbar .all-toolbar-group__controls {
+    height: 92px;
+  }
+  .grid-app .grid-toolbar .all-btn,
+  .grid-app .grid-toolbar .all-select-field {
+    min-height: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+  .grid-app .grid-toolbar .grid-command-large,
+  .grid-app .grid-toolbar .allsuite-ribbon-menu--large > .all-btn {
+    height: 92px;
+    min-height: 92px;
+  }
+  .grid-app .grid-toolbar .allsuite-ribbon-menu--split > .all-btn:last-of-type {
+    min-width: 44px;
+  }
+}
+@media (max-width: 599px), (max-width: 899px) and (max-height: 499px) {
+  .grid-app {
+    height: min(100%, var(--grid-visible-height, 100%));
+  }
+  .grid-command-navigation #grid-command-table {
+    margin-inline-start: 0;
+  }
+  .grid-app .grid-command-panel:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    z-index: 30;
+    left: 8px;
+    right: 8px;
+    bottom: calc(112px + env(safe-area-inset-bottom));
+    max-height: min(50dvh, 420px, calc(var(--grid-visible-height, 100dvh) - 120px));
+    border: var(--all-border-width-sm) solid var(--all-border-2);
+    border-radius: var(--all-radius);
+    background: var(--all-surface);
+  }
+  .grid-more-heading {
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px 4px 12px;
+    border-bottom: var(--all-border-width-sm) solid var(--all-border);
+  }
+  .grid-more-heading .all-btn {
+    min-height: 44px;
+    min-width: 60px;
+  }
+  .grid-app .grid-command-panel .grid-ribbon-surface {
+    height: auto;
+    min-height: 0;
+    padding: 0 12px 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 0;
+    overscroll-behavior: contain;
+  }
+  .grid-app .grid-command-panel .grid-toolbar {
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    gap: var(--all-space-2);
+  }
+  .grid-app .grid-toolbar .all-toolbar-group {
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--all-space-2);
+    gap: var(--all-space-2);
+  }
+  .grid-app .grid-toolbar .all-toolbar-group--captioned {
+    flex-direction: column-reverse;
+  }
+  .grid-app .grid-toolbar .all-toolbar-group__caption {
+    text-align: left;
+    padding: 0;
+  }
+  .grid-app .grid-toolbar .all-toolbar-group__controls {
+    width: 100%;
+    height: auto;
+    min-height: 44px;
+    flex-wrap: wrap;
+  }
+  .grid-app .grid-toolbar .all-btn,
+  .grid-app .grid-toolbar .all-select-field {
+    height: 44px;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .grid-app .grid-toolbar .all-icon-btn {
+    width: 44px;
+  }
+  .grid-app .grid-toolbar .grid-command-large,
+  .grid-app .grid-toolbar .allsuite-ribbon-menu--large > .all-btn {
+    flex-direction: row;
+    height: 44px;
+    min-height: 44px;
+  }
+  .grid-app .grid-toolbar .grid-command-large .all-btn__text,
+  .grid-mobile-dock .grid-command-large .all-btn__text {
+    flex-direction: row;
+    gap: 6px;
+  }
+  .grid-app .grid-toolbar .allsuite-ribbon-menu--split > .all-btn:last-of-type {
+    min-width: 44px;
+  }
+  .grid-app .grid-mobile-dock {
+    gap: 6px;
+    min-height: 64px;
+    padding: 6px 8px max(6px, env(safe-area-inset-bottom));
+    justify-content: flex-start;
+  }
+  .grid-app .grid-mobile-dock .all-btn {
+    flex: 0 0 auto;
+    flex-direction: row;
+    min-height: 48px;
+    height: 50px;
+    gap: 6px;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+  .grid-app .grid-mobile-dock > .all-icon-btn {
+    width: 48px;
+    padding: 6px;
+  }
+  .grid-app .grid-mobile-dock > .grid-command-menu {
+    flex: 0 1 auto;
+  }
+  .grid-app .grid-mobile-dock[data-command-tab='home'] > .grid-command-menu {
+    flex: 1;
+  }
+  .grid-app .grid-mobile-dock > .grid-command-menu > .all-btn {
+    width: 100%;
+  }
+  .grid-app .grid-mobile-dock > [aria-controls='grid-panel-home'],
+  .grid-app .grid-mobile-dock[data-command-tab='home'] > .all-btn:last-child {
+    min-width: 66px;
+    margin-left: auto;
+  }
+  .grid-app[data-mobile-more='true'] .grid-mobile-dock > :not(:last-child) {
+    display: inline-flex;
+  }
+  .grid-app .grid-mobile-dock .grid-command-large {
+    min-width: 0;
+  }
+  .grid-app .grid-mobile-dock :is(svg, .all-btn__icon) {
+    width: 20px;
+    height: 20px;
+  }
+  .grid-app .grid-touch-controls,
+  .grid-app .grid-touch-controls .all-btn {
+    min-height: 48px;
+    height: 48px;
+  }
+}

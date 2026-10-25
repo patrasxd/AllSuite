@@ -1,4 +1,5 @@
-import { Select } from '@all/ui'
+﻿import { Button, Select } from '@all/ui'
+import { RibbonMenuButton } from '../../../../ui/src/RibbonMenuButton'
 import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import type { Locale } from '../types'
@@ -14,7 +15,15 @@ const names: Record<string, Record<Locale, string>> = {
   ListParagraph: { en: 'List paragraph', pl: 'Akapit listy' },
 }
 
-export function StylePicker({ editor, locale }: { editor: Editor; locale: Locale }) {
+export function StylePicker({
+  editor,
+  locale,
+  gallery = false,
+}: {
+  editor: Editor
+  locale: Locale
+  gallery?: boolean
+}) {
   const state = useEditorState({
     editor,
     selector: ({ editor: current }) => ({
@@ -32,6 +41,46 @@ export function StylePicker({ editor, locale }: { editor: Editor; locale: Locale
       value: state.id,
       label: editorStyles(editor).find((style) => style.id === state.id)?.name || state.id,
     })
+  if (gallery)
+    return (
+      <div className="draft-style-gallery">
+        {['Normal', 'Heading1'].map((id) => (
+          <Button
+            key={id}
+            size="sm"
+            variant="outline"
+            className={`draft-style-preview draft-style-preview--${id}`}
+            aria-pressed={state.id === id}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => applyDocumentStyle(editor, id)}
+          >
+            <span aria-hidden="true">Aa</span>
+            <small>{options.find((option) => option.value === id)?.label}</small>
+          </Button>
+        ))}
+        <RibbonMenuButton
+          label={
+            !['Normal', 'Heading1'].includes(state.id)
+              ? options.find((option) => option.value === state.id)?.label || state.id
+              : ''
+          }
+          optionsLabel={locale === 'pl' ? 'Styl tekstu' : 'Text style'}
+          variant="outline"
+        >
+          {options.map((option) => (
+            <Button
+              key={option.value}
+              size="sm"
+              variant="ghost"
+              aria-pressed={state.id === option.value}
+              onClick={() => applyDocumentStyle(editor, option.value)}
+            >
+              {option.label}
+            </Button>
+          ))}
+        </RibbonMenuButton>
+      </div>
+    )
   return (
     <Select
       density="compact"

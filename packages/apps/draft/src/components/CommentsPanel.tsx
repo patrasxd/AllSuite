@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import type { Editor } from '@tiptap/core'
-import { Button, Heading, SidePanel, Text } from '@all/ui'
+import { Badge, Button, Card, Input, Stack, Text, TextArea } from '@all/ui'
 import type { CommentThread } from '../engine/comments'
 import type { Locale } from '../types'
 import { translations } from '../i18n'
@@ -31,10 +31,11 @@ export function CommentsPanel({
   author,
   onAuthorChange,
   canComment,
+  composeRequest,
+  onStart,
   onAdd,
   onReply,
   onToggleResolved,
-  onClose,
 }: {
   editor: Editor
   locale: Locale
@@ -42,64 +43,75 @@ export function CommentsPanel({
   author: string
   onAuthorChange: (value: string) => void
   canComment: boolean
+  composeRequest: number
+  onStart: () => void
   onAdd: (text: string) => void
   onReply: (id: string, text: string) => void
   onToggleResolved: (id: string) => void
-  onClose: () => void
 }) {
   const t = translations[locale]
   const [text, setText] = useState('')
+  const [composing, setComposing] = useState(false)
+  const [replying, setReplying] = useState<Record<string, boolean>>({})
   const [replies, setReplies] = useState<Record<string, string>>({})
+  const composer = useRef<HTMLTextAreaElement>(null)
+  const focusReply = useCallback((element: HTMLTextAreaElement | null) => element?.focus(), [])
+  useEffect(() => {
+    if (composeRequest) setComposing(true)
+  }, [composeRequest])
+  useEffect(() => {
+    if (composing) composer.current?.focus()
+  }, [composing, composeRequest])
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const value = text.trim()
     if (!value || !canComment) return
     onAdd(value)
     setText('')
+    setComposing(false)
   }
   return (
-    <SidePanel
-      className="draft-comments-panel"
-      label={t.comments}
-      title={<Heading level={2}>{t.comments}</Heading>}
-      closeLabel={t.closeComments}
-      onClose={onClose}
-    >
-      <form className="draft-comment-compose" onSubmit={submit}>
-        <label htmlFor="draft-comment-author">{t.commentAuthor}</label>
-        <input
-          id="draft-comment-author"
-          className="draft-comment-input"
-          value={author}
-          onChange={(event) => onAuthorChange(event.target.value)}
-          maxLength={200}
-          autoComplete="off"
-        />
-        <label htmlFor="draft-comment-text">{t.newComment}</label>
-        <textarea
-          id="draft-comment-text"
-          className="draft-comment-input"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          rows={3}
-          maxLength={20_000}
-          placeholder={t.selectTextForComment}
-        />
+    <div className="draft-comments-content">
+      <Stack gap="sm" className="draft-pane-intro">
         <Button
-          type="submit"
           size="sm"
-          variant="primary"
+          variant="outline"
           icon={<DraftIcon name="comments" />}
-          disabled={!canComment || !text.trim()}
+          disabled={!canComment && !text}
+          aria-expanded={composing}
+          aria-controls="draft-comment-compose"
+          onClick={() => {
+            if (!composing) onStart()
+            setComposing((value) => !value)
+          }}
         >
-          {t.addComment}
+          {t.newComment}
         </Button>
-        {!canComment && (
-          <Text as="p" variant="caption">
-            {t.selectTextForComment}
-          </Text>
-        )}
-      </form>
+        {!canComment && <Text variant="caption">{t.selectTextForComment}</Text>}
+      </Stack>
+      {composing && (
+        <form id="draft-comment-compose" className="draft-comment-compose" onSubmit={submit}>
+          <TextArea
+            ref={composer}
+            label={t.newComment}
+            fullWidth
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            rows={3}
+            maxLength={20_000}
+            placeholder={t.selectTextForComment}
+          />
+          <Button
+            type="submit"
+            size="sm"
+            variant="primary"
+            icon={<DraftIcon name="comments" />}
+            disabled={!canComment || !text.trim()}
+          >
+            {t.addComment}
+          </Button>
+        </form>
+      )}
       <div className="draft-comment-list" aria-live="polite">
         {threads.length === 0 ? (
           <Text as="p" variant="body">
@@ -107,54 +119,96 @@ export function CommentsPanel({
           </Text>
         ) : (
           threads.map((thread) => (
-            <article className={`draft-comment-thread${thread.resolved ? ' is-resolved' : ''}`} key={thread.id}>
-              <button
+            <Card
+              role="article"
+              variant="outlined"
+              padding="sm"
+              className={`draft-comment-thread${thread.resolved ? ' is-resolved' : ''}`}
+              key={thread.id}
+            >
+              <Button
                 type="button"
+                variant="ghost"
                 className="draft-comment-anchor-link"
-                title={getDraftButtonTooltip(locale, t.goToComment)}
+                tooltip={getDraftButtonTooltip(locale, t.goToComment)}
                 onClick={() => selectThread(editor, thread.id)}
               >
-                <span className="draft-comment-author">{thread.author}</span>
-                {thread.resolved && <span className="draft-comment-resolved">{t.resolved}</span>}
-                <span className="draft-comment-body">{thread.text}</span>
-              </button>
+                <span className="draft-comment-byline">
+                  <Text as="span" className="draft-comment-author">
+                    {thread.author}
+                  </Text>
+                  {thread.resolved && <Badge size="sm">{t.resolved}</Badge>}
+                </span>
+                <Text as="span" className="draft-comment-body">
+                  {thread.text}
+                </Text>
+              </Button>
               {thread.replies.map((reply) => (
                 <div className="draft-comment-reply" key={reply.id}>
-                  <span className="draft-comment-author">{reply.author}</span>
-                  <span>{reply.text}</span>
+                  <Text as="span" className="draft-comment-author">
+                    {reply.author}
+                  </Text>
+                  <Text as="span" className="draft-comment-body">
+                    {reply.text}
+                  </Text>
                 </div>
               ))}
-              <form
-                className="draft-comment-reply-form"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  const value = (replies[thread.id] || '').trim()
-                  if (!value) return
-                  onReply(thread.id, value)
-                  setReplies((current) => ({ ...current, [thread.id]: '' }))
-                }}
-              >
-                <textarea
-                  className="draft-comment-input"
-                  aria-label={`${t.replyTo} ${thread.author}`}
-                  value={replies[thread.id] || ''}
-                  onChange={(event) => setReplies((current) => ({ ...current, [thread.id]: event.target.value }))}
-                  rows={2}
-                  maxLength={20_000}
-                />
-                <div className="draft-comment-actions">
-                  <Button type="submit" size="sm" variant="outline" disabled={!(replies[thread.id] || '').trim()}>
-                    {t.reply}
-                  </Button>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => onToggleResolved(thread.id)}>
-                    {thread.resolved ? t.reopenComment : t.resolveComment}
-                  </Button>
-                </div>
-              </form>
-            </article>
+              <Stack direction="row" gap="sm" wrap>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-expanded={Boolean(replying[thread.id])}
+                  onClick={() => setReplying((current) => ({ ...current, [thread.id]: !current[thread.id] }))}
+                >
+                  {t.reply}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => onToggleResolved(thread.id)}>
+                  {thread.resolved ? t.reopenComment : t.resolveComment}
+                </Button>
+              </Stack>
+              {replying[thread.id] && (
+                <form
+                  className="draft-comment-reply-form"
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    const value = (replies[thread.id] || '').trim()
+                    if (!value) return
+                    onReply(thread.id, value)
+                    setReplies((current) => ({ ...current, [thread.id]: '' }))
+                    setReplying((current) => ({ ...current, [thread.id]: false }))
+                  }}
+                >
+                  <TextArea
+                    ref={focusReply}
+                    fullWidth
+                    aria-label={`${t.replyTo} ${thread.author}`}
+                    value={replies[thread.id] || ''}
+                    onChange={(event) => setReplies((current) => ({ ...current, [thread.id]: event.target.value }))}
+                    rows={2}
+                    maxLength={20_000}
+                  />
+                  <div className="draft-comment-actions">
+                    <Button type="submit" size="sm" variant="primary" disabled={!(replies[thread.id] || '').trim()}>
+                      {t.reply}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </Card>
           ))
         )}
       </div>
-    </SidePanel>
+      <details className="draft-pane-settings">
+        <summary>{t.commentAuthor}</summary>
+        <Input
+          label={t.commentAuthor}
+          fullWidth
+          value={author}
+          onChange={(event) => onAuthorChange(event.target.value)}
+          maxLength={200}
+          autoComplete="off"
+        />
+      </details>
+    </div>
   )
 }

@@ -8,26 +8,8 @@ import { exportXlsxWorkbook } from './export'
 const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
 const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 const packageRel = 'http://schemas.openxmlformats.org/package/2006/relationships'
-const contentTypes = 'http://schemas.openxmlformats.org/package/2006/content-types'
 
-function preservationFixture(): Uint8Array {
-  // The test fixture is intentionally assembled as OOXML parts instead of using an XLSX writer.
-  // This makes unknown parts and relationships visible to the preservation assertions.
-  return zipSyncParts({
-    '[Content_Types].xml': `<Types xmlns="${contentTypes}"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/customXml/item1.xml" ContentType="application/xml"/></Types>`,
-    '_rels/.rels': `<Relationships xmlns="${packageRel}"><Relationship Id="root" Type="${rel}/officeDocument" Target="xl/workbook.xml"/><Relationship Id="custom" Type="${rel}/customXml" Target="customXml/item1.xml"/></Relationships>`,
-    'xl/workbook.xml': `<workbook xmlns="${main}" xmlns:r="${rel}"><workbookPr date1904="1"/><bookViews><workbookView activeTab="0"/></bookViews><sheets><sheet name="First" sheetId="1" r:id="rId1"/><sheet name="Second" sheetId="2" r:id="rId2"/></sheets><calcPr calcMode="auto"/></workbook>`,
-    'xl/_rels/workbook.xml.rels': `<Relationships xmlns="${packageRel}"><Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${rel}/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="${rel}/styles" Target="styles.xml"/></Relationships>`,
-    'xl/styles.xml': `<styleSheet xmlns="${main}"><numFmts count="1"><numFmt numFmtId="164" formatCode="0.00"/></numFmts><fonts count="1"><font/></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" applyNumberFormat="1"/></cellXfs></styleSheet>`,
-    'xl/worksheets/sheet1.xml': `<worksheet xmlns="${main}"><sheetFormatPr defaultRowHeight="18" defaultColWidth="9"/><cols><col min="2" max="2" width="20" customWidth="1"/></cols><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Text</t></is></c><c r="B1" s="1"><v>12.5</v></c><c r="C1"><f>SUM(B2,2)</f><v>7</v></c></row><row r="2"><c r="B2"><v>5</v></c></row></sheetData><mergeCells count="1"><mergeCell ref="A3:B3"/></mergeCells></worksheet>`,
-    'xl/worksheets/sheet2.xml': `<worksheet xmlns="${main}"><sheetData><row r="1"><c r="A1" t="b"><v>1</v></c></row></sheetData></worksheet>`,
-    'customXml/item1.xml': '<vendorPayload version="3"><opaque>keep these exact bytes</opaque></vendorPayload>',
-  })
-}
-
-function zipSyncParts(parts: Record<string, string>): Uint8Array {
-  return importZipSync(Object.fromEntries(Object.entries(parts).map(([name, text]) => [name, strToU8(text)])))
-}
+import { preservationFixture, tableAndNoteFixture, nonstandardNoteRelationshipFixture } from './fixtures/safety-corpus'
 
 function editFixturePart(bytes: Uint8Array, partName: string, update: (xml: string) => string): Uint8Array {
   const parts = unzipSync(bytes)
@@ -107,10 +89,6 @@ function chartPivotFixture(): Uint8Array {
   return zipSync(parts)
 }
 
-function importZipSync(parts: Record<string, Uint8Array>): Uint8Array {
-  return zipSync(parts)
-}
-
 async function openFixture() {
   const bytes = preservationFixture()
   const result = await parseXlsxWorkbook('source.xlsx', bytes)
@@ -119,6 +97,341 @@ async function openFixture() {
 }
 
 describe('Grid conservative XLSX export', () => {
+  it('preserves native table metadata and legacy note relationships across an unrelated edit and reopen', async () => {
+    const bytes = tableAndNoteFixture()
+    const imported = await parseXlsxWorkbook('table-notes.xlsx', bytes)
+    expect(imported.report.canOpen).toBe(true)
+    const sheet = imported.workbook!.sheetsById.get('xlsx-sheet-1')!
+    expect(sheet.tables).toMatchObject([
+      {
+        name: 'Orders',
+        range: { start: { row: 1, column: 1 }, end: { row: 3, column: 3 } },
+        columns: [{ name: 'Product' }, { name: 'Quantity' }, { name: 'Comment' }],
+        styleName: 'TableStyleMedium2',
+        autoFilter: true,
+      },
+    ])
+    expect(sheet.comments).toEqual([
+      {
+        address: 'D5',
+        author: 'Reviewer',
+        text: 'Check the supplier total',
+        sourcePartName: 'xl/comments1.xml',
+      },
+    ])
+
+    const session = new WorkbookSession(imported.workbook!)
+    session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'edited beside note' })
+    const output = await exportXlsxWorkbook(session.workbook, 'table-notes.xlsx')
+    expect(output.report.canSave, JSON.stringify(output.report)).toBe(true)
+    expect(output.bytes).toBeDefined()
+
+    const sourceParts = unzipSync(bytes)
+    const outputParts = unzipSync(output.bytes!)
+    for (const partName of [
+      '[Content_Types].xml',
+      '_rels/.rels',
+      'xl/worksheets/_rels/sheet1.xml.rels',
+      'xl/tables/table1.xml',
+      'xl/comments1.xml',
+      'xl/drawings/vmlDrawing1.vml',
+      'xl/vendor/payload.bin',
+    ]) {
+      expect([...outputParts[partName]], partName).toEqual([...sourceParts[partName]])
+    }
+    const worksheetXml = strFromU8(outputParts['xl/worksheets/sheet1.xml'])
+    expect(worksheetXml).toContain('<legacyDrawing r:id="vml1"')
+    expect(worksheetXml).toContain('<tableParts count="1"><tablePart r:id="table1"/></tableParts>')
+    const tableXml = strFromU8(outputParts['xl/tables/table1.xml'])
+    expect(tableXml).toContain('<filterColumn colId="0">')
+    expect(tableXml).toContain('totalsRowCount="1"')
+    expect(tableXml).toContain('totalsRowFunction="sum"')
+
+    const reopened = await parseXlsxWorkbook('reopened.xlsx', output.bytes!)
+    expect(reopened.report.canOpen).toBe(true)
+    expect(reopened.workbook!.sheetsById.get('xlsx-sheet-1')!.cells.get('E5')?.value).toEqual({
+      kind: 'string',
+      value: 'edited beside note',
+    })
+    expect(reopened.workbook!.sheetsById.get('xlsx-sheet-1')!.tables).toMatchObject(sheet.tables)
+    expect(reopened.workbook!.sheetsById.get('xlsx-sheet-1')!.comments).toEqual(sheet.comments)
+    expect(strFromU8(outputParts['customXml/item1.xml'])).toBe(strFromU8(sourceParts['customXml/item1.xml']))
+    expect([...outputParts['xl/vendor/payload.bin']]).toEqual([...sourceParts['xl/vendor/payload.bin']])
+  })
+
+  it('blocks structural edits to an unknown worksheet-related package part after an unrelated cell edit', async () => {
+    const bytes = tableAndNoteFixture(false, false)
+    const imported = await parseXlsxWorkbook('opaque-worksheet-part.xlsx', bytes)
+    expect(imported.report.canOpen).toBe(true)
+    const session = new WorkbookSession(imported.workbook!)
+    session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+    session.insertRows('xlsx-sheet-1', 1)
+
+    const opaquePart = session.workbook.preservation?.parts.find((part) => part.partName === 'xl/vendor/payload.bin')
+    expect(opaquePart?.status).toBe('unsafe')
+    expect(opaquePart?.invalidatedBy).toEqual(expect.arrayContaining(['cell-values', 'sheet-structure']))
+
+    const output = await exportXlsxWorkbook(session.workbook, 'opaque-worksheet-part.xlsx')
+    expect(output.report.canSave).toBe(false)
+    expect(output.bytes).toBeUndefined()
+    expect(output.report.outputBytes).toBeUndefined()
+    expect(output.report.entries).toContainEqual({
+      category: 'cannot-preserve',
+      code: 'unsupported-sheet-feature',
+    })
+  })
+
+  it.each([
+    ['insert a row', (session: WorkbookSession) => session.insertRows('xlsx-sheet-1', 1)],
+    ['delete a row', (session: WorkbookSession) => session.deleteRows('xlsx-sheet-1', 1)],
+    ['insert a column', (session: WorkbookSession) => session.insertColumns('xlsx-sheet-1', 1)],
+    ['delete a column', (session: WorkbookSession) => session.deleteColumns('xlsx-sheet-1', 1)],
+  ])(
+    'blocks structural edits that would leave a legacy note anchor stale when it tries to %s',
+    async (_label, edit) => {
+      const imported = await parseXlsxWorkbook('notes-only.xlsx', tableAndNoteFixture(false))
+      expect(imported.report.canOpen).toBe(true)
+      const session = new WorkbookSession(imported.workbook!)
+      expect(edit(session)).toBe(true)
+
+      const output = await exportXlsxWorkbook(session.workbook, 'notes-only.xlsx')
+      expect(output.report.canSave).toBe(false)
+      expect(output.bytes).toBeUndefined()
+      expect(output.report.outputBytes).toBeUndefined()
+      expect(output.report.entries).toContainEqual({
+        category: 'cannot-preserve',
+        code: 'unsupported-sheet-feature',
+      })
+    },
+  )
+
+  it.each([
+    ['insert a row', (session: WorkbookSession) => session.insertRows('xlsx-sheet-1', 1)],
+    ['delete a row', (session: WorkbookSession) => session.deleteRows('xlsx-sheet-1', 1)],
+    ['insert a column', (session: WorkbookSession) => session.insertColumns('xlsx-sheet-1', 1)],
+    ['delete a column', (session: WorkbookSession) => session.deleteColumns('xlsx-sheet-1', 1)],
+  ])(
+    'blocks structural edits that would change an imported native table range when it tries to %s',
+    async (_label, edit) => {
+      const imported = await parseXlsxWorkbook('table-only.xlsx', tableAndNoteFixture(true, false))
+      expect(imported.report.canOpen).toBe(true)
+      const session = new WorkbookSession(imported.workbook!)
+      expect(edit(session)).toBe(true)
+
+      const output = await exportXlsxWorkbook(session.workbook, 'table-only.xlsx')
+      expect(output.report.canSave).toBe(false)
+      expect(output.bytes).toBeUndefined()
+      expect(output.report.entries).toContainEqual({
+        category: 'cannot-preserve',
+        code: 'unsupported-sheet-feature',
+      })
+    },
+  )
+
+  it.each([
+    [
+      'edit an unrelated cell, then insert a row before D5',
+      (session: WorkbookSession) => {
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.insertRows('xlsx-sheet-1', 1)
+      },
+      true,
+    ],
+    [
+      'edit an unrelated cell, then insert a column before D5',
+      (session: WorkbookSession) => {
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.insertColumns('xlsx-sheet-1', 1)
+      },
+      true,
+    ],
+    [
+      'edit an unrelated cell, then delete a row before D5',
+      (session: WorkbookSession) => {
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.deleteRows('xlsx-sheet-1', 1)
+      },
+      true,
+    ],
+    [
+      'edit an unrelated cell, then delete the note column',
+      (session: WorkbookSession) => {
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.deleteColumns('xlsx-sheet-1', 4)
+      },
+      true,
+    ],
+    [
+      'insert a row, edit an unrelated cell, then undo that cell edit',
+      (session: WorkbookSession) => {
+        session.insertRows('xlsx-sheet-1', 1)
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.undo()
+      },
+      true,
+    ],
+    [
+      'edit an unrelated cell, insert a row, then undo and redo the row insertion',
+      (session: WorkbookSession) => {
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.insertRows('xlsx-sheet-1', 1)
+        session.undo()
+        session.redo()
+      },
+      true,
+    ],
+    [
+      'edit an unrelated cell, insert a column, then undo and redo the column insertion',
+      (session: WorkbookSession) => {
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.insertColumns('xlsx-sheet-1', 1)
+        session.undo()
+        session.redo()
+      },
+      true,
+    ],
+    [
+      'edit an unrelated cell, delete a row, then undo and redo the row deletion',
+      (session: WorkbookSession) => {
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.deleteRows('xlsx-sheet-1', 1)
+        session.undo()
+        session.redo()
+      },
+      true,
+    ],
+    [
+      'edit an unrelated cell, delete a column, then undo and redo the column deletion',
+      (session: WorkbookSession) => {
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.deleteColumns('xlsx-sheet-1', 4)
+        session.undo()
+        session.redo()
+      },
+      true,
+    ],
+    [
+      'edit an unrelated cell, insert a row, then undo the row insertion',
+      (session: WorkbookSession) => {
+        session.setCell('xlsx-sheet-1', 'E5', { kind: 'string', value: 'unrelated edit' })
+        session.insertRows('xlsx-sheet-1', 1)
+        session.undo()
+      },
+      false,
+    ],
+  ])('tracks unsafe structural history when it tries to %s', async (_label, edit, shouldBlock) => {
+    const bytes = tableAndNoteFixture(false)
+    const imported = await parseXlsxWorkbook('notes-only.xlsx', bytes)
+    expect(imported.report.canOpen).toBe(true)
+    const originalParts = unzipSync(bytes)
+    expect(strFromU8(originalParts['xl/comments1.xml'])).toContain('ref="D5"')
+    expect(strFromU8(originalParts['xl/drawings/vmlDrawing1.vml'])).toContain('<x:Row>4</x:Row>')
+
+    const session = new WorkbookSession(imported.workbook!)
+    edit(session)
+    const notePart = session.workbook.preservation?.parts.find((part) => part.partName === 'xl/comments1.xml')
+    expect(notePart?.status).toBe('unsafe')
+    if (shouldBlock) {
+      expect(notePart?.invalidatedBy).toContain('sheet-structure')
+    } else {
+      expect(notePart?.invalidatedBy).not.toContain('sheet-structure')
+    }
+    const output = await exportXlsxWorkbook(session.workbook, 'notes-only.xlsx')
+
+    if (shouldBlock) {
+      expect(output.report.canSave).toBe(false)
+      expect(output.bytes).toBeUndefined()
+      expect(output.report.outputBytes).toBeUndefined()
+      expect(output.report.entries).toContainEqual({
+        category: 'cannot-preserve',
+        code: 'unsupported-sheet-feature',
+      })
+    } else {
+      expect(output.report.canSave).toBe(true)
+      expect(output.bytes).toBeDefined()
+      const exportedParts = unzipSync(output.bytes!)
+      expect(strFromU8(exportedParts['xl/comments1.xml'])).toContain('ref="D5"')
+      expect(strFromU8(exportedParts['xl/drawings/vmlDrawing1.vml'])).toContain('<x:Row>4</x:Row>')
+      const reopened = await parseXlsxWorkbook('reopened-notes.xlsx', output.bytes!)
+      expect(reopened.workbook!.sheetsById.get('xlsx-sheet-1')!.comments?.[0].address).toBe('D5')
+      expect(reopened.workbook!.sheetsById.get('xlsx-sheet-1')!.cells.get('E5')?.value).toEqual({
+        kind: 'string',
+        value: 'unrelated edit',
+      })
+    }
+  })
+
+  it('blocks note-anchor edits when package-relative relationships resolve to nonstandard part names', async () => {
+    const bytes = nonstandardNoteRelationshipFixture()
+    const imported = await parseXlsxWorkbook('custom-note-targets.xlsx', bytes)
+    expect(imported.report.canOpen).toBe(true)
+    expect(imported.workbook!.sheetsById.get('xlsx-sheet-1')!.comments).toEqual([
+      {
+        address: 'D5',
+        author: 'Reviewer',
+        text: 'Check the supplier total',
+        sourcePartName: 'xl/notes/commentPayload.dat',
+      },
+    ])
+    expect(imported.workbook!.preservation?.inventory?.relationships).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourcePart: 'xl/worksheets/sheet1.xml',
+          type: `${rel}/comments`,
+          resolvedTarget: 'xl/notes/commentPayload.dat',
+        }),
+        expect.objectContaining({
+          sourcePart: 'xl/worksheets/sheet1.xml',
+          type: `${rel}/vmlDrawing`,
+          resolvedTarget: 'xl/drawings/misc/legacyShape.dat',
+        }),
+      ]),
+    )
+
+    const session = new WorkbookSession(imported.workbook!)
+    session.insertRows('xlsx-sheet-1', 1)
+    const output = await exportXlsxWorkbook(session.workbook, 'custom-note-targets.xlsx')
+
+    expect(output.report.canSave).toBe(false)
+    expect(output.bytes).toBeUndefined()
+    expect(output.report.outputBytes).toBeUndefined()
+    expect(output.report.entries).toContainEqual({
+      category: 'cannot-preserve',
+      code: 'unsupported-sheet-feature',
+    })
+  })
+
+  it('undoes a blocked note-dependent structural edit and restores the original package', async () => {
+    const bytes = tableAndNoteFixture(false)
+    const imported = await parseXlsxWorkbook('notes-only.xlsx', bytes)
+    const session = new WorkbookSession(imported.workbook!)
+    session.insertRows('xlsx-sheet-1', 1)
+    session.undo()
+
+    const output = await exportXlsxWorkbook(session.workbook, 'notes-only.xlsx')
+    expect(output.report.canSave).toBe(true)
+    expect([...unzipSync(output.bytes!)['xl/comments1.xml']]).toEqual([...unzipSync(bytes)['xl/comments1.xml']])
+    expect([...unzipSync(output.bytes!)['xl/drawings/vmlDrawing1.vml']]).toEqual([
+      ...unzipSync(bytes)['xl/drawings/vmlDrawing1.vml'],
+    ])
+  })
+
+  it('blocks edits to imported table and legacy note metadata until a writer can update their OOXML parts', async () => {
+    const tableImport = await parseXlsxWorkbook('table-notes.xlsx', tableAndNoteFixture())
+    const tableSession = new WorkbookSession(tableImport.workbook!)
+    tableSession.workbook.sheetsById.get('xlsx-sheet-1')!.tables[0].range.end.column = 4
+    const tableOutput = await exportXlsxWorkbook(tableSession.workbook, 'table-notes.xlsx')
+    expect(tableOutput.report.canSave).toBe(false)
+    expect(tableOutput.bytes).toBeUndefined()
+
+    const noteImport = await parseXlsxWorkbook('table-notes.xlsx', tableAndNoteFixture())
+    const noteSession = new WorkbookSession(noteImport.workbook!)
+    noteSession.workbook.sheetsById.get('xlsx-sheet-1')!.comments![0].text = 'edited note'
+    const noteOutput = await exportXlsxWorkbook(noteSession.workbook, 'table-notes.xlsx')
+    expect(noteOutput.report.canSave).toBe(false)
+    expect(noteOutput.bytes).toBeUndefined()
+  })
+
   it('reports unknown worksheet XML as at risk even when the worksheet also contains formulas', async () => {
     const bytes = editFixtureWorksheet(preservationFixture(), (xml) =>
       xml.replace('</worksheet>', '<vendor:payload xmlns:vendor="urn:vendor">keep</vendor:payload></worksheet>'),

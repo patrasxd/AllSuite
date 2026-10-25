@@ -16,3 +16,6 @@ tmp
 docs
 packages/tools/draft
 tests/legacy
+# V0 installs these as exact copies of canonical docs/ai sources.
+.agents/rules/08-evidence-first-verification.md
+tools/verify-prompt-ledger.mjs

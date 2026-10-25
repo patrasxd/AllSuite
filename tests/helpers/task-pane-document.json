@@ -1,0 +1,333 @@
+{
+  "type": "doc",
+  "attrs": {
+    "styleDefinitions": null,
+    "captionLabels": null,
+    "columns": 1,
+    "comments": "[{\"id\":\"comment-770c65b2-ebce-4e45-b722-e830b8c7eeed\",\"author\":\"Ada\",\"text\":\"Keep the invitation open to first-time contributors.\",\"resolved\":false,\"replies\":[]},{\"id\":\"comment-e05df10f-8c74-44d2-8358-b43ae1a1d3da\",\"author\":\"Marek\",\"text\":\"Can we confirm the workshop dates before publishing?\",\"resolved\":false,\"replies\":[]},{\"id\":\"comment-0b433afe-afb6-478d-9ed4-df6514dc4b4c\",\"author\":\"Ada\",\"text\":\"The library has offered its meeting room.\",\"resolved\":false,\"replies\":[]}]",
+    "coreProperties": null,
+    "pageSetup": "{\"width\":11906,\"height\":16838,\"orientation\":\"portrait\",\"top\":1134,\"right\":1134,\"bottom\":1134,\"left\":1134,\"header\":567,\"footer\":567,\"headerText\":\"\",\"footerText\":\"\",\"pageNumbers\":false}"
+  },
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "styleId": null,
+        "textAlign": null,
+        "anchorId": "heading_1",
+        "keepNext": null,
+        "keepLines": null,
+        "widowControl": null,
+        "pageBreakBefore": null,
+        "spacingBefore": null,
+        "spacingAfter": null,
+        "lineSpacing": null,
+        "indentLeft": null,
+        "indentRight": null,
+        "indentFirstLine": null,
+        "indentHanging": null,
+        "tabStops": [],
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Open Studio · project review"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "styleId": null,
+        "textAlign": null,
+        "captionLabel": null,
+        "captionPosition": null,
+        "anchorId": null,
+        "keepNext": null,
+        "keepLines": null,
+        "widowControl": null,
+        "pageBreakBefore": null,
+        "spacingBefore": null,
+        "spacingAfter": null,
+        "lineSpacing": null,
+        "indentLeft": null,
+        "indentRight": null,
+        "indentFirstLine": null,
+        "indentHanging": null,
+        "tabStops": []
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "comment",
+              "attrs": {
+                "id": "comment-770c65b2-ebce-4e45-b722-e830b8c7eeed"
+              }
+            }
+          ],
+          "text": "shared workspace"
+        },
+        {
+          "type": "text",
+          "text": " for independent makers."
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "suggestion",
+              "attrs": {
+                "id": "suggestion-b53420a7-4b83-4856-83fc-09b489c78d11",
+                "kind": "insert",
+                "author": "Ada",
+                "timestamp": "2026-10-23T20:00:03.838Z",
+                "before": null
+              }
+            }
+          ],
+          "text": " Community-led and open to everyone."
+        },
+        {
+          "type": "text",
+          "text": " Review the scope before our next studio meeting."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "styleId": null,
+        "textAlign": null,
+        "anchorId": "heading_2",
+        "keepNext": null,
+        "keepLines": null,
+        "widowControl": null,
+        "pageBreakBefore": null,
+        "spacingBefore": null,
+        "spacingAfter": null,
+        "lineSpacing": null,
+        "indentLeft": null,
+        "indentRight": null,
+        "indentFirstLine": null,
+        "indentHanging": null,
+        "tabStops": [],
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Scope and audience"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "styleId": null,
+        "textAlign": null,
+        "captionLabel": null,
+        "captionPosition": null,
+        "anchorId": null,
+        "keepNext": null,
+        "keepLines": null,
+        "widowControl": null,
+        "pageBreakBefore": null,
+        "spacingBefore": null,
+        "spacingAfter": null,
+        "lineSpacing": null,
+        "indentLeft": null,
+        "indentRight": null,
+        "indentFirstLine": null,
+        "indentHanging": null,
+        "tabStops": []
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The studio welcomes writers, designers and researchers. Review the "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "comment",
+              "attrs": {
+                "id": "comment-e05df10f-8c74-44d2-8358-b43ae1a1d3da"
+              }
+            }
+          ],
+          "text": "workshop schedule"
+        },
+        {
+          "type": "text",
+          "text": " together."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "styleId": null,
+        "textAlign": null,
+        "anchorId": "heading_3",
+        "keepNext": null,
+        "keepLines": null,
+        "widowControl": null,
+        "pageBreakBefore": null,
+        "spacingBefore": null,
+        "spacingAfter": null,
+        "lineSpacing": null,
+        "indentLeft": null,
+        "indentRight": null,
+        "indentFirstLine": null,
+        "indentHanging": null,
+        "tabStops": [],
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Workshop schedule"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "styleId": null,
+        "textAlign": null,
+        "captionLabel": null,
+        "captionPosition": null,
+        "anchorId": null,
+        "keepNext": null,
+        "keepLines": null,
+        "widowControl": null,
+        "pageBreakBefore": null,
+        "spacingBefore": null,
+        "spacingAfter": null,
+        "lineSpacing": null,
+        "indentLeft": null,
+        "indentRight": null,
+        "indentFirstLine": null,
+        "indentHanging": null,
+        "tabStops": []
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Weekly workshops begin in November."
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "suggestion",
+              "attrs": {
+                "id": "suggestion-aad3d426-4175-4952-af84-cce8cc19799d",
+                "kind": "insert",
+                "author": "Ada",
+                "timestamp": "2026-10-23T20:00:04.197Z",
+                "before": null
+              }
+            }
+          ],
+          "text": " Booking opens in October."
+        },
+        {
+          "type": "text",
+          "text": " Each session includes time to share ideas and review progress."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "styleId": null,
+        "textAlign": null,
+        "anchorId": "heading_4",
+        "keepNext": null,
+        "keepLines": null,
+        "widowControl": null,
+        "pageBreakBefore": null,
+        "spacingBefore": null,
+        "spacingAfter": null,
+        "lineSpacing": null,
+        "indentLeft": null,
+        "indentRight": null,
+        "indentFirstLine": null,
+        "indentHanging": null,
+        "tabStops": [],
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Next steps"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "styleId": null,
+        "textAlign": null,
+        "captionLabel": null,
+        "captionPosition": null,
+        "anchorId": null,
+        "keepNext": null,
+        "keepLines": null,
+        "widowControl": null,
+        "pageBreakBefore": null,
+        "spacingBefore": null,
+        "spacingAfter": null,
+        "lineSpacing": null,
+        "indentLeft": null,
+        "indentRight": null,
+        "indentFirstLine": null,
+        "indentHanging": null,
+        "tabStops": []
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "comment",
+              "attrs": {
+                "id": "comment-0b433afe-afb6-478d-9ed4-df6514dc4b4c"
+              }
+            }
+          ],
+          "text": "Confirm the venue"
+        },
+        {
+          "type": "text",
+          "text": ", invite the first contributors and publish the programme."
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "suggestion",
+              "attrs": {
+                "id": "suggestion-9bf54ef1-efc9-4ec0-b832-5e4eb3428691",
+                "kind": "insert",
+                "author": "Ada",
+                "timestamp": "2026-10-23T20:00:04.428Z",
+                "before": null
+              }
+            }
+          ],
+          "text": " Review invitations on Friday."
+        }
+      ]
+    }
+  ]
+}

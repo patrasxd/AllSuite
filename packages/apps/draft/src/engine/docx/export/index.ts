@@ -40,7 +40,7 @@ import {
   type IRunOptions,
 } from 'docx'
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate'
-import { DOMParser, type Element as XmlElement } from '@xmldom/xmldom'
+import { DOMParser, XMLSerializer, type Element as XmlElement } from '@xmldom/xmldom'
 import type { DraftDocument, DraftNode } from '../../document-model'
 import { commentRangeBoundaries, readCommentThreads, type CommentThread } from '../../comments'
 import { lineSpacingToTwips, pointsToTwips } from '../../paragraph'
@@ -873,7 +873,7 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
       {
         properties: {
           titlePage: stories.differentFirst,
-          column: { count: columns, equalWidth: true },
+          column: { count: columns, equalWidth: true, space: 480 },
           page: {
             pageNumbers: { start: stories.start, formatType: stories.format },
             // docx swaps width/height when writing landscape; our model is already oriented.
@@ -957,7 +957,22 @@ export async function exportDocxArrayBuffer(input: DraftDocument, language?: str
     },
   }
   const file = new Document(options)
-  const result = await Packer.toArrayBuffer(file)
+  let result = await Packer.toArrayBuffer(file)
+  // Retain imported core metadata (including dates and author) in memory and in
+  // the package. Only the supported, editable document title is updated.
+  if (typeof document.attrs?.coreProperties === 'string') {
+    const core = new DOMParser().parseFromString(document.attrs.coreProperties, 'application/xml')
+    const dc = 'http://purl.org/dc/elements/1.1/'
+    let title = core.getElementsByTagNameNS(dc, 'title')[0]
+    if (!title && stories.title) {
+      title = core.createElementNS(dc, 'dc:title')
+      core.documentElement!.appendChild(title)
+    }
+    if (title) title.textContent = stories.title
+    const parts = unzipSync(new Uint8Array(result))
+    parts['docProps/core.xml'] = strToU8(new XMLSerializer().serializeToString(core))
+    result = zipSync(parts).buffer as ArrayBuffer
+  }
   const withRevisions = revisionExport.revisionNumbers.size ? attachTrackedChanges(result, revisionExport) : result
   return commentThreads.length ? attachCommentParts(withRevisions, commentThreads, commentNumbers) : withRevisions
 }

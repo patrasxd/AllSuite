@@ -1,6 +1,16 @@
+import { CHART_CONTENT_TYPE, DRAWING_CONTENT_TYPE, columnChartXml, columnDrawingXml } from './chart-xml'
+import { validateChartAnchor, chartData } from '../workbook/chart'
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate'
+import { FILTER_NAMESPACE } from '../workbook/filter'
+import { supportedFrozenPane } from '../workbook/freeze'
+import { simpleTableXml, TABLE_CONTENT_TYPE } from './table-xml'
 import { DOMParser, XMLSerializer, type Element as XmlElement, type Node as XmlNode } from '@xmldom/xmldom'
-import { formatRangeAddress, formatSheetQualifiedAddress, parseCellAddress } from '../workbook/address'
+import {
+  columnNumberToName,
+  formatRangeAddress,
+  formatSheetQualifiedAddress,
+  parseCellAddress,
+} from '../workbook/address'
 import type {
   Cell,
   CellStyle,
@@ -109,6 +119,17 @@ export async function exportXlsxWorkbook(
     requiresSaveAs: false,
   }
   try {
+    if (hasUnsafeStructuralOpaqueParts(workbook.preservation) || hasUnsafeCommentAnchorStructure(workbook.preservation))
+      return cannotPreserve(fileName, 'unsupported-sheet-feature')
+    for (const sheet of workbook.sheetsById.values()) {
+      const charts = sheet.drawings.filter((drawing) => drawing.chart)
+      if (charts.length && sheet.drawings.length !== 1) return cannotPreserve(fileName, 'unsupported-sheet-feature')
+      for (const drawing of charts) {
+        validateChartAnchor(drawing.range)
+        chartData(sheet, drawing.chart!)
+      }
+    }
+    if (workbook.formulaStructureUnsafe) return cannotPreserve(fileName, 'formula-structure-unsafe')
     const originalBytes = workbook.preservation?.originalArchiveBytes
     if (!originalBytes) {
       onProgress({ phase: 'patch', percent: 10 })
@@ -231,6 +252,71 @@ function cannotPreserve(fileName: string, code: XlsxSaveDiffCode): XlsxExportRes
   }
 }
 
+function hasUnsafeStructuralOpaqueParts(preservation: OOXMLPreservationState | undefined): boolean {
+  if (!preservation) return false
+  const partByName = new Map(preservation.parts.map((part) => [part.partName, part]))
+  const relationshipsBySource = new Map<string, NonNullable<OOXMLPreservationState['inventory']>['relationships']>()
+  for (const relationship of preservation.inventory?.relationships ?? []) {
+    const relationships = relationshipsBySource.get(relationship.sourcePart) ?? []
+    relationships.push(relationship)
+    relationshipsBySource.set(relationship.sourcePart, relationships)
+  }
+
+  const pendingParts = [...(preservation.sheetMappings ?? []).map((mapping) => mapping.partName)]
+  const visitedParts = new Set<string>()
+  while (pendingParts.length) {
+    const sourcePart = pendingParts.pop()!
+    if (visitedParts.has(sourcePart)) continue
+    visitedParts.add(sourcePart)
+
+    for (const relationship of relationshipsBySource.get(sourcePart) ?? []) {
+      const targetPart = relationship.resolvedTarget
+      if (relationship.targetMode === 'External' || !targetPart || visitedParts.has(targetPart)) continue
+      const descriptor = partByName.get(targetPart)
+      if (
+        descriptor?.status === 'unsafe' &&
+        descriptor.classification !== 'supported' &&
+        hasStructuralInvalidation(descriptor)
+      )
+        return true
+      pendingParts.push(targetPart)
+    }
+  }
+  return false
+}
+
+function hasUnsafeCommentAnchorStructure(preservation: OOXMLPreservationState | undefined): boolean {
+  if (!preservation) return false
+  const worksheetParts = new Set((preservation.sheetMappings ?? []).map((mapping) => mapping.partName))
+  const anchorPartNames = new Set<string>()
+  const isAnchorRelationship = (type: string) => /\/(?:comments|vmlDrawing|threadedComment|person)$/iu.test(type)
+
+  for (const relationship of preservation.inventory?.relationships ?? []) {
+    if (
+      relationship.targetMode === 'External' ||
+      !relationship.resolvedTarget ||
+      !worksheetParts.has(relationship.sourcePart) ||
+      !isAnchorRelationship(relationship.type)
+    )
+      continue
+    anchorPartNames.add(relationship.resolvedTarget)
+  }
+
+  const anchorContentType = (contentType: string) =>
+    /(?:spreadsheetml\.(?:threaded)?comments\+xml|vmlDrawing|spreadsheetml\.persons\+xml)$/iu.test(contentType)
+  for (const contentType of preservation.inventory?.contentTypes ?? []) {
+    if (!contentType.isDefault && anchorContentType(contentType.contentType)) anchorPartNames.add(contentType.partName)
+  }
+
+  return preservation.parts.some(
+    (part) => anchorPartNames.has(part.partName) && part.status === 'unsafe' && hasStructuralInvalidation(part),
+  )
+}
+
+function hasStructuralInvalidation(part: OOXMLPreservationState['parts'][number]): boolean {
+  return part.invalidatedBy?.some((impact) => impact === 'cell-addresses' || impact === 'sheet-structure') ?? false
+}
+
 async function validateExport(
   bytes: Uint8Array,
   fileName: string,
@@ -289,6 +375,53 @@ function supportedValuesMatch(expected: Workbook, actual: Workbook): boolean {
       (left.visibility ?? 'visible') !== (right.visibility ?? 'visible')
     )
       return false
+    if (!deepEqual(left.frozenPane, right.frozenPane)) return false
+    const chartSemantics = (sheet: Worksheet) =>
+      sheet.drawings
+        .filter((d) => d.chart)
+        .map((drawing) => ({
+          id: drawing.id,
+          sourcePart: drawing.sourcePartName,
+          drawingPart: drawing.drawingPartName,
+          anchor: formatRangeAddress(drawing.range),
+          title: drawing.chart!.title,
+          type: drawing.chart!.type,
+          source: formatRangeAddress(drawing.chart!.sourceRange).replaceAll('$', ''),
+          headers: drawing.chart!.headers,
+        }))
+    if (!deepEqual(chartSemantics(left), chartSemantics(right))) return false
+    if (
+      left.tables.length !== right.tables.length ||
+      left.tables.some((table, i) => {
+        const other = right.tables[i]
+        return (
+          !other ||
+          table.id !== other.id ||
+          table.name !== other.name ||
+          table.ownership !== other.ownership ||
+          table.nativeId !== other.nativeId ||
+          !deepEqual(table.range, other.range) ||
+          !deepEqual(table.columns, other.columns) ||
+          table.styleName !== other.styleName ||
+          table.autoFilter !== other.autoFilter
+        )
+      })
+    )
+      return false
+    if (left.autoFilter?.criteria) {
+      if (
+        !deepEqual(left.autoFilter.range, right.autoFilter?.range) ||
+        !deepEqual(left.autoFilter.criteria, right.autoFilter?.criteria)
+      )
+        return false
+      const rows = new Set([...left.rowMetadata.keys(), ...right.rowMetadata.keys()])
+      for (const row of rows) {
+        const a = left.rowMetadata.get(row)
+        const b = right.rowMetadata.get(row)
+        if (Boolean(a?.hidden) !== Boolean(b?.hidden) || Boolean(a?.filterHidden) !== Boolean(b?.filterHidden))
+          return false
+      }
+    }
     for (const [address, cell] of left.cells) {
       const reopened = right.cells.get(address)
       if (!reopened ? cell.value.kind !== 'blank' : !equal(cell.value, reopened.value)) return false
@@ -566,7 +699,12 @@ function patchWorksheets(
     if (!sheet) return { ok: false, code: 'output-invalid' }
     const mapping = mappings.get(sheetId)
     if (!mapping) {
-      if (sheet.tables.length || sheet.drawings.length || sheet.pivots.length || sheet.comments?.length) {
+      if (
+        sheet.tables.some((t) => t.ownership !== 'simple') ||
+        sheet.drawings.some((drawing) => !drawing.chart) ||
+        sheet.pivots.length ||
+        sheet.comments?.length
+      ) {
         return { ok: false, code: 'unsupported-sheet-feature' }
       }
       const partName = nextSheetPath(usedPaths, nextSheetNumber++)
@@ -583,6 +721,8 @@ function patchWorksheets(
         return { ok: false, code: 'unsupported-style' }
       }
       writeNewSheetFeatures(parts, partName, document, sheet)
+      patchNativeTables(parts, partName, document, sheet)
+      patchNativeCharts(parts, partName, document, sheet)
       parts[partName] = encodeXml(document)
       createdParts.set(sheetId, partName)
       updatedParts.push(partName)
@@ -593,10 +733,30 @@ function patchWorksheets(
     const sourceBytes = parts[mapping.partName]
     if (!originalSheet || !sourceBytes) return { ok: false, code: 'output-invalid' }
     if (sameSheetContent(sheet, originalSheet)) continue
+    // Header renaming is outside the owned subset; retain imported headers until conversion to a range.
+    for (const table of originalSheet.tables) {
+      if (table.ownership === 'simple' && !sheet.tables.some((t) => t.id === table.id)) continue
+      const tableBytes = parts[table.id]
+      if (!tableBytes) return { ok: false, code: 'unsupported-sheet-feature' }
+      const tableRoot = parseXml(tableBytes, table.id).documentElement
+      if (tableRoot?.getAttribute('headerRowCount') === '0') continue
+      for (let column = table.range.start.column; column <= table.range.end.column; column++) {
+        const address = `${columnNumberToName(column)}${table.range.start.row}`
+        if (
+          !sameCellValue(
+            sheet.cells.get(address)?.value ?? { kind: 'blank' },
+            originalSheet.cells.get(address)?.value ?? { kind: 'blank' },
+          )
+        )
+          return { ok: false, code: 'unsupported-table-header' }
+      }
+    }
     const document = parseXml(sourceBytes, mapping.partName)
     if (!patchWorksheetDocument(document, sheet, originalSheet, styleWriter)) {
       return { ok: false, code: 'unsupported-sheet-feature' }
     }
+    updatedParts.push(...patchNativeTables(parts, mapping.partName, document, sheet, originalSheet))
+    updatedParts.push(...patchNativeCharts(parts, mapping.partName, document, sheet, originalSheet))
     parts[mapping.partName] = encodeXml(document)
     updatedParts.push(mapping.partName)
   }
@@ -611,12 +771,50 @@ function patchWorksheetDocument(
 ): boolean {
   const root = document.documentElement
   if (!root || root.namespaceURI !== NS.spreadsheet || localName(root) !== 'worksheet') return false
+  if (
+    !deepEqual(sheet.frozenPane, original?.frozenPane) &&
+    (original?.unsupportedSheetViews ||
+      sheet.unsupportedSheetViews ||
+      !supportedFrozenPane(original?.frozenPane) ||
+      !supportedFrozenPane(sheet.frozenPane))
+  )
+    return false
   if (!patchSheetData(root, sheet, original, styleWriter)) return false
   patchSheetFormat(root, sheet, original)
   if (!patchColumns(root, sheet, original, styleWriter)) return false
   if (!patchMerges(root, sheet, original)) return false
   patchFrozenPane(root, sheet, original)
   patchDimension(root, sheet, original)
+  if (!patchAutoFilter(root, sheet, original)) return false
+  return true
+}
+
+function patchAutoFilter(root: XmlElement, sheet: Worksheet, original?: Worksheet): boolean {
+  if (deepEqual(sheet.autoFilter, original?.autoFilter)) return true
+  if (sheet.autoFilter?.unsupported || (original?.autoFilter && !original.autoFilter.criteria)) return false
+  const old = directChild(root, 'autoFilter')
+  if (old) root.removeChild(old)
+  const filter = sheet.autoFilter
+  if (sheet.tables.some((t) => t.ownership === 'simple')) return true
+  if (!filter) return true
+  const document = root.ownerDocument!
+  const node = document.createElementNS(NS.spreadsheet, 'autoFilter')
+  node.setAttribute('ref', formatRangeAddress(filter.range))
+  for (const criterion of filter.criteria ?? []) {
+    const column = document.createElementNS(NS.spreadsheet, 'filterColumn')
+    column.setAttribute('colId', String(criterion.column - filter.range.start.column))
+    const filters = document.createElementNS(NS.spreadsheet, 'filters')
+    if (criterion.blank) filters.setAttribute('blank', '1')
+    for (const value of criterion.values) {
+      if (containsInvalidXmlCharacters(value)) return false
+      const item = document.createElementNS(NS.spreadsheet, 'filter')
+      item.setAttribute('val', value)
+      filters.appendChild(item)
+    }
+    column.appendChild(filters)
+    node.appendChild(column)
+  }
+  insertInWorksheetOrder(root, node, WORKSHEET_CHILD_ORDER)
   return true
 }
 
@@ -662,6 +860,7 @@ function patchSheetData(
     entries.push([address, cell])
     byRow.set(parsedAddress.row, entries)
   }
+  for (const row of sheet.rowMetadata.keys()) if (!byRow.has(row)) byRow.set(row, [])
   for (const [rowNumber, entries] of byRow) {
     let row = rowElements.find((candidate) => Number(candidate.getAttribute('r')) === rowNumber)
     if (!row) {
@@ -695,6 +894,8 @@ function patchSheetData(
     const metadata = sheet.rowMetadata.get(rowNumber)
     const oldMetadata = original?.rowMetadata.get(rowNumber)
     if (!deepEqual(metadata, oldMetadata) && !patchRowMetadata(row, metadata, styleWriter)) return false
+    if (sheet.autoFilter?.criteria || original?.autoFilter?.criteria)
+      patchRowVisibility(row, metadata, Boolean(sheet.autoFilter?.criteria))
     const hasCells = directChildren(row).some((node) => localName(node) === 'c')
     const hasMetadata = metadata !== undefined
     const hasUnknownChildren = Array.from(row.childNodes).some(
@@ -811,7 +1012,7 @@ function setCellStyle(
 
 function patchRowMetadata(row: XmlElement, metadata: RowMetadata | undefined, styleWriter?: StyleWriter): boolean {
   setNumberAttribute(row, 'ht', metadata?.height)
-  setBooleanAttribute(row, 'hidden', metadata?.hidden)
+  patchRowVisibility(row, metadata)
   setNumberAttribute(row, 'outlineLevel', metadata?.outlineLevel)
   if (metadata?.height !== undefined) row.setAttribute('customHeight', '1')
   else row.removeAttribute('customHeight')
@@ -826,6 +1027,31 @@ function patchRowMetadata(row: XmlElement, metadata: RowMetadata | undefined, st
     row.removeAttribute('customFormat')
   }
   return true
+}
+
+function patchRowVisibility(row: XmlElement, metadata: RowMetadata | undefined, owned = false) {
+  setBooleanAttribute(row, 'hidden', metadata?.hidden || metadata?.filterHidden)
+  if (metadata?.filterHidden || (owned && metadata?.hidden)) {
+    const root = row.ownerDocument!.documentElement!
+    root.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:asgrid', FILTER_NAMESPACE)
+    root.setAttributeNS(
+      'http://www.w3.org/2000/xmlns/',
+      'xmlns:mc',
+      'http://schemas.openxmlformats.org/markup-compatibility/2006',
+    )
+    const ignorable = new Set((root.getAttribute('mc:Ignorable') ?? '').split(' ').filter(Boolean))
+    ignorable.add('asgrid')
+    root.setAttributeNS(
+      'http://schemas.openxmlformats.org/markup-compatibility/2006',
+      'mc:Ignorable',
+      [...ignorable].join(' '),
+    )
+    row.setAttributeNS(FILTER_NAMESPACE, 'asgrid:filterHidden', metadata.filterHidden ? '1' : '0')
+    row.setAttributeNS(FILTER_NAMESPACE, 'asgrid:manualHidden', metadata.hidden ? '1' : '0')
+  } else {
+    row.removeAttributeNS(FILTER_NAMESPACE, 'filterHidden')
+    row.removeAttributeNS(FILTER_NAMESPACE, 'manualHidden')
+  }
 }
 
 function patchSheetFormat(root: XmlElement, sheet: Worksheet, original?: Worksheet): void {
@@ -950,6 +1176,11 @@ function patchFrozenPane(root: XmlElement, sheet: Worksheet, original?: Workshee
     directChild(directChild(sheetViews, 'sheetView'), 'pane')?.parentNode?.removeChild(
       directChild(directChild(sheetViews, 'sheetView'), 'pane')!,
     )
+    const view = directChild(sheetViews, 'sheetView')
+    if (view)
+      for (const selection of directChildren(view).filter((child) => localName(child) === 'selection')) {
+        selection.removeAttribute('pane')
+      }
     return
   }
   if (!sheetViews) {
@@ -978,6 +1209,18 @@ function patchFrozenPane(root: XmlElement, sheet: Worksheet, original?: Workshee
   else pane.removeAttribute('activePane')
   if (sheet.frozenPane.state) pane.setAttribute('state', sheet.frozenPane.state)
   else pane.removeAttribute('state')
+  // Supported transformation: one simple selection becomes the canonical active pane.
+  for (const selection of directChildren(sheetView).filter((child) => localName(child) === 'selection'))
+    sheetView.removeChild(selection)
+  const selection = document.createElementNS(NS.spreadsheet, 'selection')
+  selection.setAttribute(
+    'pane',
+    sheet.frozenPane.activePane ??
+      (sheet.frozenPane.xSplit ? (sheet.frozenPane.ySplit ? 'bottomRight' : 'topRight') : 'bottomLeft'),
+  )
+  selection.setAttribute('activeCell', sheet.frozenPane.topLeftCell)
+  selection.setAttribute('sqref', sheet.frozenPane.topLeftCell)
+  sheetView.appendChild(selection)
 }
 
 function patchDimension(root: XmlElement, sheet: Worksheet, original?: Worksheet): void {
@@ -1437,6 +1680,7 @@ function createBlankPackage(workbook: Workbook): Parts {
   parts['xl/workbook.xml'] = encodeXml(book)
   parts['xl/_rels/workbook.xml.rels'] = encodeXml(createWorkbookRelationships(workbook.sheetOrder.length, true))
   parts['xl/styles.xml'] = encodeXml(createDefaultStyles())
+  parts['[Content_Types].xml'] = encodeXml(contentTypes)
 
   const styleWriter = new StyleWriter(parts, 'xl/styles.xml')
   for (let index = 0; index < workbook.sheetOrder.length; index += 1) {
@@ -1449,19 +1693,161 @@ function createBlankPackage(workbook: Workbook): Parts {
     if (!patchWorksheetDocument(document, sheet, undefined, styleWriter))
       throw new Error('Unsupported cell content or style.')
     writeNewSheetFeatures(parts, `xl/worksheets/sheet${index + 1}.xml`, document, sheet)
+    patchNativeTables(parts, `xl/worksheets/sheet${index + 1}.xml`, document, sheet)
+    patchNativeCharts(parts, `xl/worksheets/sheet${index + 1}.xml`, document, sheet)
     parts[`xl/worksheets/sheet${index + 1}.xml`] = encodeXml(document)
   }
   if (styleWriter.changed) parts['xl/styles.xml'] = styleWriter.serialize()
-  parts['[Content_Types].xml'] = encodeXml(contentTypes)
   return parts
+}
+
+function patchNativeTables(
+  parts: Parts,
+  sheetPart: string,
+  document: XmlDocument,
+  sheet: Worksheet,
+  original?: Worksheet,
+): string[] {
+  if (!sheet.tables.some((t) => t.ownership === 'simple') && !original?.tables.some((t) => t.ownership === 'simple'))
+    return []
+  if (sheet.tables.some((t) => t.ownership !== 'simple') || original?.tables.some((t) => t.ownership !== 'simple'))
+    throw new Error('Mixed table ownership.')
+  const updated = [sheetPart, relationshipPart(sheetPart), '[Content_Types].xml']
+  const relPath = relationshipPart(sheetPart)
+  const rels = parts[relPath]
+    ? parseXml(parts[relPath], relPath)
+    : newXmlDocument('Relationships', NS.packageRelationships)
+  const root = document.documentElement!
+  const oldParts = directChild(root, 'tableParts')
+  if (oldParts) root.removeChild(oldParts)
+  const types = parseXml(parts['[Content_Types].xml'], '[Content_Types].xml')
+  for (const table of original?.tables ?? []) {
+    for (const rel of directChildren(rels.documentElement!)) {
+      if (
+        rel.getAttribute('Type') === `${NS.officeRelationships}/table` &&
+        resolveRelationshipPath(sheetPart, rel.getAttribute('Target') ?? '') === table.id
+      )
+        rels.documentElement!.removeChild(rel)
+    }
+    if (!sheet.tables.some((t) => t.id === table.id)) {
+      delete parts[table.id]
+      updated.push(table.id)
+      for (const node of directChildren(types.documentElement!))
+        if (node.getAttribute('PartName') === `/${table.id}`) types.documentElement!.removeChild(node)
+    }
+  }
+  parts['[Content_Types].xml'] = encodeXml(types)
+  if (sheet.tables.length) {
+    const refs = document.createElementNS(NS.spreadsheet, 'tableParts')
+    refs.setAttribute('count', String(sheet.tables.length))
+    for (const table of sheet.tables) {
+      if (!table.nativeId || table.id !== `xl/tables/table${table.nativeId}.xml`)
+        throw new Error('Invalid native table identity.')
+      const ids = new Set(directChildren(rels.documentElement!).map((r) => r.getAttribute('Id')))
+      let number = 1
+      while (ids.has(`rIdTable${number}`)) number++
+      const id = `rIdTable${number}`
+      addRelationship(rels, id, `${NS.officeRelationships}/table`, relativeTarget(sheetPart, table.id))
+      const ref = document.createElementNS(NS.spreadsheet, 'tablePart')
+      ref.setAttributeNS(NS.officeRelationships, 'r:id', id)
+      refs.appendChild(ref)
+      parts[table.id] = strToU8(simpleTableXml(table, sheet.autoFilter))
+      ensureContentType(parts, table.id, TABLE_CONTENT_TYPE)
+      updated.push(table.id)
+    }
+    insertInWorksheetOrder(root, refs, WORKSHEET_CHILD_ORDER)
+  }
+  if (directChildren(rels.documentElement!).length) parts[relPath] = encodeXml(rels)
+  else delete parts[relPath]
+  return updated
+}
+
+function patchNativeCharts(
+  parts: Parts,
+  sheetPart: string,
+  document: XmlDocument,
+  sheet: Worksheet,
+  original?: Worksheet,
+): string[] {
+  const before = original?.drawings.find((drawing) => drawing.chart)
+  const after = sheet.drawings.find((drawing) => drawing.chart)
+  if (!before && !after) return []
+  if (sheet.drawings.some((drawing) => !drawing.chart) || original?.drawings.some((drawing) => !drawing.chart))
+    throw new Error('Opaque drawing graph.')
+  const relPath = relationshipPart(sheetPart)
+  const rels = parts[relPath]
+    ? parseXml(parts[relPath], relPath)
+    : newXmlDocument('Relationships', NS.packageRelationships)
+  const root = document.documentElement!
+  const refs = directChildren(root).filter((node) => localName(node) === 'drawing')
+  if (
+    !before &&
+    (refs.length ||
+      directChildren(rels.documentElement!).some(
+        (node) => node.getAttribute('Type') === `${NS.officeRelationships}/drawing`,
+      ))
+  )
+    throw new Error('Existing opaque worksheet drawing.')
+  for (const ref of refs) root.removeChild(ref)
+  for (const rel of directChildren(rels.documentElement!).filter(
+    (node) => node.getAttribute('Type') === `${NS.officeRelationships}/drawing`,
+  ))
+    rels.documentElement!.removeChild(rel)
+  const updated = [relPath, '[Content_Types].xml']
+  if (before && !after) {
+    for (const path of [before.sourcePartName!, before.drawingPartName!, relationshipPart(before.drawingPartName!)]) {
+      delete parts[path]
+      const types = parseXml(parts['[Content_Types].xml'], '[Content_Types].xml')
+      for (const node of directChildren(types.documentElement!).filter(
+        (item) => item.getAttribute('PartName') === `/${path}`,
+      ))
+        types.documentElement!.removeChild(node)
+      parts['[Content_Types].xml'] = encodeXml(types)
+      updated.push(path)
+    }
+  }
+  if (after) {
+    const chartPart = after.sourcePartName!
+    const drawingPart = after.drawingPartName!
+    if (
+      !/^xl\/charts\/chart[1-9]\d*\.xml$/.test(chartPart) ||
+      !/^xl\/drawings\/drawing[1-9]\d*\.xml$/.test(drawingPart) ||
+      after.id !== chartPart ||
+      after.relationshipId !== 'rIdChart1'
+    )
+      throw new Error('Unsupported chart part.')
+    if (!before && [chartPart, drawingPart, relationshipPart(drawingPart)].some((path) => parts[path]))
+      throw new Error('Chart part collision.')
+    if (before && (before.sourcePartName !== chartPart || before.drawingPartName !== drawingPart))
+      throw new Error('Unsupported chart relocation.')
+    let number = 1
+    const ids = new Set(directChildren(rels.documentElement!).map((rel) => rel.getAttribute('Id')))
+    while (ids.has(`rIdDrawing${number}`)) number++
+    const id = `rIdDrawing${number}`
+    addRelationship(rels, id, `${NS.officeRelationships}/drawing`, relativeTarget(sheetPart, drawingPart))
+    const ref = document.createElementNS(NS.spreadsheet, 'drawing')
+    ref.setAttributeNS(NS.officeRelationships, 'r:id', id)
+    insertInWorksheetOrder(root, ref, WORKSHEET_CHILD_ORDER)
+    const drawingRels = newXmlDocument('Relationships', NS.packageRelationships)
+    addRelationship(drawingRels, 'rIdChart1', `${NS.officeRelationships}/chart`, relativeTarget(drawingPart, chartPart))
+    parts[relationshipPart(drawingPart)] = encodeXml(drawingRels)
+    parts[chartPart] = strToU8(columnChartXml(sheet, after))
+    parts[drawingPart] = strToU8(columnDrawingXml(after))
+    ensureContentType(parts, chartPart, CHART_CONTENT_TYPE)
+    ensureContentType(parts, drawingPart, DRAWING_CONTENT_TYPE)
+    updated.push(chartPart, drawingPart, relationshipPart(drawingPart))
+  }
+  if (directChildren(rels.documentElement!).length) parts[relPath] = encodeXml(rels)
+  else delete parts[relPath]
+  return updated
 }
 
 function writeNewSheetFeatures(parts: Parts, partName: string, document: XmlDocument, sheet: Worksheet): void {
   if (
-    sheet.tables.length ||
+    sheet.tables.some((t) => t.ownership !== 'simple') ||
     sheet.validations.length ||
     sheet.conditionalFormats.length ||
-    sheet.drawings.length ||
+    sheet.drawings.some((drawing) => !drawing.chart) ||
     sheet.pivots.length ||
     sheet.comments?.length
   )
@@ -1477,7 +1863,6 @@ function writeNewSheetFeatures(parts: Parts, partName: string, document: XmlDocu
     insertInWorksheetOrder(root, node, WORKSHEET_CHILD_ORDER)
     return node
   }
-  if (sheet.autoFilter) add('autoFilter', { ref: formatRangeAddress(sheet.autoFilter.range) })
   if (sheet.hyperlinks?.length) {
     const links = add('hyperlinks')
     const rels = newXmlDocument('Relationships', NS.packageRelationships)
@@ -1702,13 +2087,29 @@ function patchWorkbookParts(
 
 function structuralSheetDependenciesChanged(left: Worksheet, right: Worksheet): boolean {
   return (
-    !deepEqual(left.tables, right.tables) ||
+    !deepEqual(
+      left.tables.filter((t) => t.ownership !== 'simple'),
+      right.tables.filter((t) => t.ownership !== 'simple'),
+    ) ||
     !deepEqual(left.validations, right.validations) ||
     !deepEqual(left.conditionalFormats, right.conditionalFormats) ||
-    !deepEqual(left.drawings, right.drawings) ||
+    !deepEqual(
+      left.drawings.filter((drawing) => !drawing.chart),
+      right.drawings.filter((drawing) => !drawing.chart),
+    ) ||
     !deepEqual(left.pivots, right.pivots) ||
     !deepEqual(left.hyperlinks, right.hyperlinks) ||
-    !deepEqual(left.autoFilter, right.autoFilter) ||
+    (!deepEqual(left.autoFilter, right.autoFilter) &&
+      !(
+        left.tables.length === 0 &&
+        !left.autoFilter &&
+        right.tables.length === 1 &&
+        right.tables[0].ownership === 'simple'
+      ) &&
+      (!left.autoFilter?.criteria ||
+        left.autoFilter.unsupported ||
+        right.autoFilter?.unsupported ||
+        (right.autoFilter && !right.autoFilter.criteria))) ||
     !deepEqual(left.printSettings, right.printSettings) ||
     !deepEqual(left.comments, right.comments)
   )
@@ -1877,7 +2278,11 @@ function parseXml(bytes: Uint8Array, partName: string): XmlDocument {
 }
 
 function encodeXml(document: XmlDocument): Uint8Array {
-  const serialized = new XMLSerializer().serializeToString(document).replace(/^<\?xml[^?]*\?>/u, '')
+  // XML readers normalize literal CR/CRLF. References preserve exact imported cell text.
+  const serialized = new XMLSerializer()
+    .serializeToString(document)
+    .replace(/^<\?xml[^?]*\?>/u, '')
+    .replaceAll('\r', '&#13;')
   return strToU8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>${serialized}`)
 }
 

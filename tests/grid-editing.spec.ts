@@ -1,3 +1,4 @@
+import { gridCommand } from './helpers/grid-command'
 import { expect, test } from '@playwright/test'
 
 test('@smoke Grid shares a cancellable draft between editors and commits real multiline input as one undo step', async ({
@@ -26,6 +27,7 @@ test('@smoke Grid shares a cancellable draft between editors and commits real mu
   await expect(formulaBar).toHaveValue('first\nsecond')
   await formulaBar.press('Tab')
   await expect(page.getByRole('textbox', { name: 'Name box' })).toHaveValue('B1')
+  await expect(grid).toHaveAttribute('aria-activedescendant', 'grid-cell-B1')
   await expect(page.locator('[data-cell-address="A1"]')).toContainText('first\nsecond')
   await grid.press('Control+z')
   await expect(page.locator('[data-cell-address="A1"]')).toHaveAttribute('aria-label', 'A1, empty')
@@ -57,15 +59,15 @@ test('@smoke Grid mobile editing retains literal input through sheet changes and
     await expect(formulaBar).toHaveValue("'=literal")
     await formulaBar.press('Escape')
     await expect(page.getByRole('grid')).toBeFocused()
-    await page.getByRole('tab', { name: 'File', exact: true }).tap()
+    await page.getByRole('button', { name: 'File', exact: true }).tap()
     page.once('dialog', (dialog) => dialog.dismiss())
-    await page.getByRole('button', { name: 'New', exact: true }).tap()
+    await (await gridCommand(page, 'New')).tap()
     await expect(page.getByRole('gridcell', { name: 'A1, =literal' })).toBeVisible()
     page.once('dialog', (dialog) => dialog.accept())
-    await page.getByRole('button', { name: 'New', exact: true }).tap()
+    await (await gridCommand(page, 'New')).tap()
     await expect(page.getByRole('gridcell', { name: 'A1, empty' })).toBeVisible()
     await expect(page.getByRole('grid')).toBeFocused()
-    await page.getByRole('tab', { name: 'Format', exact: true }).tap()
+    await page.getByRole('tab', { name: 'Home', exact: true }).tap()
     await expect(page.getByRole('button', { name: 'Undo (Ctrl+Z or ⌘Z)' })).toBeDisabled()
   } finally {
     await context.close()

@@ -8,7 +8,14 @@ AllSuite is a private, offline office suite. Its current app is Draft, a paginat
 - Shell: `apps/shell`; app packages: `packages/apps/<slug>`; shared primitives/tokens: the AllUI submodule (`AllUI/`). Initialize submodules before `npm ci`.
 - Draft is loaded through metadata plus a lazy runtime import. Keep heavy editor, import and export libraries in its lazy bundle. See [architecture](.agents/rules/00-architecture.md).
 - Grid's spreadsheet contract and implementation boundaries are in [the Grid rule](.agents/rules/07-grid-spreadsheet.md).
+- For UI work, read [visual identity and control conventions](.agents/rules/02-themes-motion.md) and [UI verification](.agents/rules/04-testing-gating.md) before implementation.
 - Commands: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e:deploy`. In Windows PowerShell, use `npm.cmd` when `npm` is not resolved (for example, `npm.cmd run typecheck`).
+
+## Verification references
+
+- Canonical prompt plan: [`docs/ai/START.md`](docs/ai/START.md); execute only the prompt requested for the task.
+- Active evidence contract: [`.agents/rules/08-evidence-first-verification.md`](.agents/rules/08-evidence-first-verification.md).
+- Quality gates and report template: [`docs/verification/QUALITY_GATES.md`](docs/verification/QUALITY_GATES.md) and [`docs/verification/TEMPLATE.md`](docs/verification/TEMPLATE.md).
 
 ## Effort and scope
 

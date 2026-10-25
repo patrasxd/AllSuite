@@ -73,8 +73,10 @@ export type XlsxSaveDiffCode =
   | 'unsafe-part-preserved'
   | 'formula-not-recalculated'
   | 'formula-cache-stale'
+  | 'formula-structure-unsafe'
   | 'output-invalid'
   | 'unsupported-sheet-feature'
+  | 'unsupported-table-header'
   | 'unsupported-style'
   | 'save-as-required'
 

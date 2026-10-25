@@ -1026,8 +1026,13 @@ function importPageSetup(
   const sections = Array.from(doc.getElementsByTagNameNS(word, 'sectPr'))
   const section = sections[0]
   const page: PageSetup = { ...DEFAULT_PAGE_SETUP }
+  const stories = emptyStories()
+  if (files['docProps/core.xml']) {
+    const core = parseXml(strFromU8(files['docProps/core.xml']), 'properties')
+    stories.title = Array.from(core.getElementsByTagName('*')).find((node) => name(node) === 'title')?.textContent || ''
+  }
   if (sections.length > 1) report('pageSetupMultipleSections')
-  if (!section) return JSON.stringify(page)
+  if (!section) return JSON.stringify({ ...page, stories: validateStories(stories) || emptyStories() })
   const size = children(section, 'pgSz')[0]
   const margins = children(section, 'pgMar')[0]
   page.width = int(attr(size, 'w')) ?? page.width
@@ -1038,7 +1043,6 @@ function importPageSetup(
   if (Number(attr(margins, 'gutter') || 0) !== 0) report('pageSetupGutter')
   const type = attr(children(section, 'type')[0], 'val')
   if (type && type !== 'nextPage') report('pageSetupSectionBreak')
-  const stories = emptyStories()
   const numbering = children(section, 'pgNumType')[0]
   const format = attr(numbering, 'fmt') || 'decimal'
   if (['decimal', 'lowerRoman', 'upperRoman'].includes(format)) stories.format = format as Stories['format']
@@ -1052,10 +1056,6 @@ function importPageSetup(
   if (settings && enabled(first(settings, 'mirrorMargins'))) report('pageSetupMirrored')
   stories.differentFirst = enabled(children(section, 'titlePg')[0])
   stories.differentEven = !!settings && enabled(first(settings, 'evenAndOddHeaders'))
-  if (files['docProps/core.xml']) {
-    const core = parseXml(strFromU8(files['docProps/core.xml']), 'properties')
-    stories.title = Array.from(core.getElementsByTagName('*')).find((node) => name(node) === 'title')?.textContent || ''
-  }
   const rels = files['word/_rels/document.xml.rels']
     ? parseXml(strFromU8(files['word/_rels/document.xml.rels']), 'relationships')
     : undefined
@@ -1244,6 +1244,16 @@ export function importDocx(bytes: ArrayBuffer | Uint8Array): ImportResult {
   if (Object.keys(files).some((file) => /(?:vbaProject\.bin|macros)/i.test(file))) unsupported.push({ kind: 'macro' })
   if (Object.keys(files).some((file) => /word\/embeddings\//i.test(file))) unsupported.push({ kind: 'embedded object' })
   const columns = Math.max(1, Math.min(3, int(attr(first(doc, 'cols'), 'num')) || 1))
+  const columnDefinition = first(doc, 'cols')
+  if (
+    columnDefinition &&
+    (Number(attr(columnDefinition, 'num') || 1) > 3 ||
+      ['0', 'false'].includes(attr(columnDefinition, 'equalWidth') || '') ||
+      children(columnDefinition, 'col').length > 0 ||
+      ['1', 'true'].includes(attr(columnDefinition, 'sep') || '') ||
+      (columns > 1 && Number(attr(columnDefinition, 'space') || 720) !== 480))
+  )
+    unsupported.push({ kind: 'pageSetupColumns' })
   const pageSetup = importPageSetup(doc, files, unsupported, styles)
   let captionLabelSetting: string | undefined
   if (files['docProps/custom.xml'])
@@ -1294,6 +1304,7 @@ export function importDocx(bytes: ArrayBuffer | Uint8Array): ImportResult {
       type: 'doc',
       attrs: {
         columns,
+        ...(files['docProps/core.xml'] ? { coreProperties: strFromU8(files['docProps/core.xml']) } : {}),
         pageSetup,
         styleDefinitions: JSON.stringify([...styles.values()]),
         ...(parsedComments.threads.length ? { comments: serializeCommentThreads(parsedComments.threads) } : {}),

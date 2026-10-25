@@ -15,7 +15,8 @@ export const printLabels = {
     pdf: 'Download PDF',
     zoom: 'Preview zoom',
     fit: 'Fit width',
-    columns: 'Print preview requires a single-column document.',
+    columns:
+      'Column preview/PDF supports text, headings and lists. Remove body objects and margin comments, or switch to one column.',
   },
   pl: {
     preview: 'Podgląd wydruku',
@@ -24,7 +25,8 @@ export const printLabels = {
     pdf: 'Pobierz PDF',
     zoom: 'Powiększenie podglądu',
     fit: 'Dopasuj szerokość',
-    columns: 'Podgląd wydruku wymaga dokumentu z jedną kolumną.',
+    columns:
+      'Podgląd/PDF kolumn obsługuje tekst, nagłówki i listy. Usuń obiekty treści i komentarze na marginesie lub wybierz jedną kolumnę.',
   },
 }
 export type PreviewDocument = { layout: PrintLayout; fonts: ExportFont[]; license: string }

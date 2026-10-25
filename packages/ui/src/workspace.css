@@ -1,0 +1,127 @@
+/* AllSuite editor composition over AllUI primitives; no editor behavior. */
+.allsuite-editor-workspace > .all-fullbleed-layout__canvas-area {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.allsuite-editor-toolbar .all-toolbar-group {
+  align-self: stretch;
+  gap: var(--all-space-1);
+  padding: var(--all-space-1) var(--all-space-2);
+  border: var(--all-border-width-sm) solid var(--all-border);
+  border-radius: var(--all-radius);
+  background: var(--all-surface-2);
+}
+
+.allsuite-editor-toolbar .all-toolbar-group__controls {
+  justify-content: flex-start;
+  gap: var(--all-space-1);
+  min-height: 32px;
+}
+
+.allsuite-editor-toolbar .all-toolbar-group__caption {
+  padding-top: 2px;
+  color: var(--all-text-muted);
+  font-weight: var(--all-font-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* AllUI pages whole groups. An individual group can still exceed the page
+   width; keep its controls reachable by horizontal gestures and keyboard. */
+.allsuite-editor-workspace .allsuite-editor-toolbar.all-controls-bar {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.allsuite-editor-workspace .allsuite-editor-toolbar.all-controls-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* AllUI's shadow-only button ring is suppressed in E-ink and Grid reduced
+   motion. Keep keyboard focus structural, including selected tabs. */
+.allsuite-editor-workspace .all-btn:focus-visible,
+.allsuite-editor-workspace .all-input-wrapper:has(:focus-visible),
+.allsuite-editor-workspace .all-select-wrapper:has(:focus-visible) {
+  outline: 2px solid var(--all-text);
+  outline-offset: 0;
+}
+
+/* Pager edges touch an overflow-hidden boundary; draw their ring inside it. */
+.allsuite-editor-workspace .all-toolbar-pager__edge:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Opt-in ribbon geometry for editor compositions. AllUI still owns controls. */
+.allsuite-ribbon-surface {
+  height: 114px;
+  padding: 8px 12px;
+  border-block: var(--all-border-width-sm) solid var(--all-border);
+  overflow: auto hidden;
+  box-sizing: border-box;
+}
+.allsuite-editor-workspace .allsuite-ribbon-toolbar.all-controls-bar {
+  display: flex;
+  width: max-content;
+  max-width: none;
+  height: 96px;
+  padding: 0;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 12px;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+}
+.allsuite-ribbon-toolbar .all-toolbar-group__controls {
+  height: 68px;
+  align-items: flex-start;
+}
+.allsuite-ribbon-toolbar .all-toolbar-group__caption {
+  color: var(--all-text-dim);
+  font-size: calc((var(--all-text-xs) + var(--all-text-sm)) / 2);
+  font-weight: var(--all-font-medium);
+}
+.allsuite-ribbon-toolbar .all-btn,
+.allsuite-ribbon-toolbar .all-input-field,
+.allsuite-ribbon-toolbar .all-select-field {
+  height: 32px;
+  min-height: 32px;
+  font-size: 12px;
+}
+.allsuite-ribbon-toolbar .all-icon-btn {
+  width: 32px;
+  min-width: 32px;
+  padding: 6px;
+}
+.allsuite-ribbon-toolbar .all-btn svg {
+  width: 18px;
+  height: 18px;
+}
+.allsuite-ribbon-toolbar .allsuite-ribbon-menu--large > .all-btn {
+  height: 68px;
+  min-height: 68px;
+}
+.allsuite-ribbon-toolbar .allsuite-ribbon-menu--large > .all-btn:first-child svg {
+  width: 26px;
+  height: 26px;
+}
+@media (pointer: coarse) and (min-width: 600px) {
+  .allsuite-ribbon-surface {
+    height: 138px;
+  }
+  .allsuite-editor-workspace .allsuite-ribbon-toolbar.all-controls-bar {
+    height: 120px;
+  }
+  .allsuite-ribbon-toolbar .all-toolbar-group__controls {
+    height: 92px;
+  }
+  .allsuite-ribbon-toolbar .all-btn,
+  .allsuite-ribbon-toolbar .all-input-field,
+  .allsuite-ribbon-toolbar .all-select-field {
+    min-width: 44px;
+    min-height: 44px;
+    height: 44px;
+  }
+}

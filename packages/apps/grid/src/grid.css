@@ -1,3 +1,5 @@
+﻿@import '../../../ui/src/workspace.css';
+
 .grid-app {
   display: flex;
   position: relative;
@@ -18,14 +20,73 @@
 }
 
 .grid-workspace > .all-fullbleed-layout__canvas-area {
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
   min-width: 0;
 }
 
 .grid-workspace .all-workspace-status__end {
   gap: var(--all-space-4, 16px);
+}
+
+.grid-selection-summary {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--all-space-3);
+  min-width: 0;
+  max-width: min(52vw, 34rem);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.grid-selection-summary::-webkit-scrollbar {
+  display: none;
+}
+
+.grid-selection-summary__item {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.grid-selection-summary__value {
+  color: var(--all-text);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--all-font-semibold);
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .grid-workspace .all-workspace-status {
+    flex-wrap: wrap;
+    row-gap: var(--all-space-1);
+  }
+
+  .grid-workspace .all-workspace-status__end {
+    position: static;
+    flex: 1 0 100%;
+    justify-content: space-between;
+    margin-left: 0;
+    padding-left: 0;
+    box-shadow: none;
+  }
+}
+
+/* A wide, short touch viewport has room for one footer row. Forcing a second
+   row here consumes the sheet below its column headers. Keep touch sizes. */
+@media (min-width: 641px) and (max-height: 480px) {
+  .grid-workspace .grid-formula-bar {
+    padding-block: 0;
+  }
+
+  .grid-workspace .all-workspace-status {
+    flex-wrap: nowrap;
+  }
+
+  .grid-workspace .all-workspace-status__end {
+    flex: 0 1 auto;
+    margin-left: auto;
+  }
 }
 
 .grid-command-panel {
@@ -60,29 +121,6 @@
   flex: 0 0 auto;
   min-width: 32px;
   min-height: 32px;
-}
-
-.grid-toolbar .all-toolbar-group {
-  align-self: stretch;
-  gap: var(--all-space-1);
-  padding: var(--all-space-1) var(--all-space-2);
-  border: var(--all-border-width-sm) solid var(--all-border);
-  border-radius: var(--all-radius);
-  background: var(--all-surface-2);
-}
-
-.grid-toolbar .all-toolbar-group__controls {
-  justify-content: flex-start;
-  gap: var(--all-space-1);
-  min-height: 32px;
-}
-
-.grid-toolbar .all-toolbar-group__caption {
-  padding-top: 2px;
-  color: var(--all-text-muted);
-  font-weight: var(--all-font-semibold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .grid-toolbar .all-select-container {
@@ -347,6 +385,8 @@
 }
 
 .grid-formula-bar {
+  /* AllUI compact controls are 32px; use one outer size including borders. */
+  --grid-formula-control-height: 32px;
   gap: var(--all-space-3);
   border-bottom-color: var(--all-border-2);
 }
@@ -355,8 +395,21 @@
   flex: 0 0 auto;
   align-self: center;
   min-width: 44px;
-  min-height: 44px;
-  height: 44px;
+  min-height: var(--grid-formula-control-height);
+  height: var(--grid-formula-control-height);
+}
+
+.grid-name-box {
+  flex: 0 0 8.5rem;
+  min-width: 5rem;
+}
+
+.grid-name-box .all-input-container {
+  width: 100%;
+}
+
+.grid-name-box .all-input-field {
+  height: calc(var(--grid-formula-control-height) - 2px);
 }
 
 .grid-formula-input {
@@ -370,15 +423,6 @@
 
 .grid-formula-input {
   flex: 1 1 auto;
-}
-
-.grid-name-box {
-  flex: 0 0 8.5rem;
-  min-width: 5rem;
-}
-
-.grid-name-box .all-input-container {
-  width: 100%;
 }
 
 .grid-formula-input > label {
@@ -411,7 +455,16 @@
 }
 
 .grid-formula-field .all-input-field--multiline {
+  min-height: calc(var(--grid-formula-control-height) - 2px);
+  padding-block: 4.5px;
   padding-inline: 10px;
+}
+
+@media (pointer: coarse), (max-width: 640px), (max-width: 899px) and (max-height: 499px) {
+  .grid-formula-bar {
+    /* Preserve a 44px input hit area plus AllUI's two 1px wrapper borders. */
+    --grid-formula-control-height: 46px;
+  }
 }
 
 .grid-cell-editor:focus-visible {
@@ -432,9 +485,14 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.grid-sheet-scroll:focus-visible {
-  outline: 2px solid var(--all-accent);
-  outline-offset: -2px;
+/* This active-descendant grid draws focus on the active cell. The browser's
+   outer scroller outline was clipped to a stray line below the formula bar. */
+.grid-sheet-scroll:focus {
+  outline: none;
+}
+
+.grid-sheet-scroll:focus-visible .grid-cell--active {
+  outline-width: 3px;
 }
 
 .grid-app[data-range-selection='true'] .grid-sheet-scroll {
@@ -596,13 +654,14 @@
 }
 
 .grid-context-menu {
+  box-sizing: border-box;
   display: flex;
   position: fixed;
   z-index: 30;
   flex-direction: column;
   width: min(260px, calc(100vw - 16px));
   max-height: calc(100vh - 16px);
-  gap: 2px;
+  gap: var(--all-space-1);
   overflow: auto;
   padding: var(--all-space-2);
   color: var(--all-text);
@@ -708,7 +767,7 @@
   .grid-formula-input {
     flex-direction: column;
     align-items: stretch;
-    gap: 2px;
+    gap: var(--all-space-1);
   }
 
   .grid-formula-input > label {
@@ -814,6 +873,35 @@ html[data-motion='none'] .grid-app *::after {
   filter: none !important;
 }
 
+.grid-delimited-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.grid-sort-dialog :is(button, select):focus-visible,
+.grid-filter-dialog :is(button, select, input):focus-visible {
+  outline: 2px solid var(--all-accent) !important;
+  outline-offset: 2px;
+}
+
+.grid-delimited-dialog .all-btn,
+.grid-delimited-dialog select {
+  min-height: 44px;
+}
+
+.grid-delimited-preview {
+  max-height: 280px;
+  overflow: auto;
+}
+
+.grid-delimited-preview td {
+  border: 1px solid var(--all-border);
+  padding: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .grid-app[data-theme='e-ink-light'] .grid-cell--selected,
 .grid-app[data-theme='e-ink-dark'] .grid-cell--selected,
 .grid-app[data-theme='e-ink-light'] .grid-axis-selected,
@@ -821,4 +909,472 @@ html[data-motion='none'] .grid-app *::after {
   background: var(--all-surface-2);
   outline: 1px dashed var(--all-accent);
   outline-offset: -2px;
+}
+.grid-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 12px;
+}
+
+.grid-filter-values {
+  max-height: 35vh;
+  overflow: auto;
+}
+
+.grid-filter-values label {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.grid-filter-values input {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+}
+.grid-cell[data-table-role='header'] {
+  background-color: var(--all-surface-2);
+  border-bottom: 2px solid var(--all-accent);
+  font-weight: 700;
+}
+.grid-cell[data-table-role='band'] {
+  background-color: var(--all-surface-2);
+}
+.grid-table-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--all-text);
+}
+
+.grid-workspace .all-toolbar-pager {
+  height: 72px;
+}
+.grid-workspace .grid-toolbar .all-select-container {
+  width: 7rem;
+}
+.grid-workspace .grid-toolbar .grid-font-size {
+  width: 3.5rem;
+}
+.grid-format-toolbar .all-toolbar-group__controls {
+  gap: var(--all-space-1);
+}
+.grid-toolbar .grid-format-color input {
+  width: 32px;
+}
+/* Match Draft's shared WorkspaceTabs and editor ribbon composition. */
+.grid-workspace .grid-toolbar {
+  min-height: 0;
+  justify-content: flex-start;
+  gap: var(--all-space-2);
+  padding: var(--all-space-1) var(--all-space-3);
+  background: var(--all-surface);
+  box-sizing: border-box;
+}
+.grid-workspace .grid-toolbar .all-toolbar-group:last-child {
+  padding-inline: var(--all-space-2);
+  border: var(--all-border-width-sm) solid var(--all-border);
+}
+.grid-toolbar svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+.grid-toolbar .all-btn__text,
+.grid-command-menu .all-btn__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grid-workspace .grid-toolbar .all-btn[aria-pressed='true'] {
+  color: var(--all-text);
+  background: var(--all-surface-2);
+  border-color: var(--all-border-2);
+}
+
+.grid-workspace .grid-formula-bar {
+  min-height: 44px;
+  padding: 4px 12px;
+  gap: 12px;
+}
+
+.grid-name-box {
+  flex-basis: 96px;
+}
+.grid-name-box .all-input-label,
+.grid-formula-input > label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.grid-cell {
+  font-family: var(--all-font-sans);
+}
+.grid-cell[data-table-role] {
+  border-inline-color: var(--all-border-2);
+}
+.grid-cell[data-table-role='header'] {
+  padding-right: 30px;
+  border-bottom-color: var(--all-border-2);
+}
+.grid-cell[data-table-role='header']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-top: 1px solid var(--all-border-2);
+}
+.grid-cell.grid-cell--active {
+  outline-color: var(--all-accent);
+}
+.grid-table-filter.all-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 28px;
+  min-width: 28px;
+  height: 100%;
+  min-height: 0;
+  padding: 4px;
+  border: 0;
+  border-left: 1px solid var(--all-border);
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+}
+.grid-app[data-theme^='e-ink'] .grid-cell[data-table-role='header'] {
+  background-color: var(--all-text);
+  color: var(--all-bg);
+}
+.grid-table-filter svg {
+  width: 18px;
+  height: 18px;
+}
+.grid-mobile-dock {
+  display: none;
+}
+
+.grid-delimited-dialog.all-dialog {
+  max-width: 620px;
+  max-height: calc(100dvh - 32px);
+}
+.grid-delimited-dialog .all-dialog__header {
+  padding: 24px 24px 8px;
+}
+.grid-delimited-dialog .all-dialog__title {
+  font-size: 20px;
+}
+.grid-delimited-dialog .all-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 24px 24px;
+  min-height: 0;
+}
+.grid-delimited-dialog .all-dialog__body > p {
+  margin: 0;
+}
+.grid-delimited-dialog .all-dialog__footer {
+  flex: 0 0 auto;
+  padding: 16px 24px;
+  border-top: 1px solid var(--all-border);
+}
+.grid-dialog-fields,
+.grid-delimited-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.grid-dialog-fields > *,
+.grid-delimited-controls > * {
+  min-width: 0;
+}
+.grid-delimited-controls > :last-child:nth-child(3) {
+  grid-column: 1 / -1;
+}
+.grid-dialog-policy {
+  color: var(--all-text-muted);
+  font-size: 12px;
+}
+.grid-dialog-policy summary {
+  cursor: pointer;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+.grid-delimited-preview {
+  flex: 0 1 auto;
+  min-height: 0;
+  border: 1px solid var(--all-border);
+  border-radius: var(--all-radius-sm);
+}
+.grid-delimited-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.grid-delimited-preview:focus-visible {
+  outline: 2px solid var(--all-text);
+  outline-offset: -2px;
+}
+.grid-delimited-preview :is(th, td) {
+  padding: 10px;
+  border: 0;
+  border-bottom: 1px solid var(--all-border);
+  text-align: left;
+  white-space: nowrap;
+}
+.grid-delimited-preview th,
+.grid-delimited-preview tr:first-child {
+  background: var(--all-surface-2);
+}
+.grid-filter-values {
+  border: 1px solid var(--all-border);
+  border-radius: var(--all-radius-sm);
+}
+.grid-filter-values label {
+  padding: 0 12px;
+  border-bottom: 1px solid var(--all-border);
+}
+
+@media (max-width: 599px), (max-width: 899px) and (max-height: 499px) {
+  .grid-workspace > .all-fullbleed-layout__canvas-area {
+    display: contents;
+  }
+  .grid-workspace .grid-formula-bar {
+    order: 0;
+    min-height: 52px;
+    padding: 4px 8px;
+  }
+  .grid-workspace .grid-name-box {
+    flex-basis: 78px;
+  }
+  .grid-workspace .grid-sheet-scroll {
+    order: 1;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+  .grid-workspace .grid-touch-controls {
+    order: 2;
+    padding: 0;
+    min-height: 44px;
+  }
+  .grid-workspace > .all-fullbleed-layout__footer {
+    order: 3;
+  }
+  .grid-workspace .all-workspace-status {
+    flex-wrap: nowrap;
+    padding-block: 0;
+  }
+  .grid-workspace .all-workspace-status__end {
+    flex: 0 1 auto;
+    width: auto;
+  }
+  .grid-workspace .grid-selection-summary {
+    max-width: 90px;
+  }
+  .grid-workspace .all-workspace-sheet-tabs--footer {
+    max-width: 50vw;
+  }
+  .grid-workspace .all-workspace-sheet-tabs--footer .all-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .grid-workspace .grid-selection-summary > :not(:nth-child(2)) {
+    display: none;
+  }
+  .grid-workspace .grid-command-panel {
+    order: 5;
+    flex: 0 0 auto;
+  }
+  .grid-workspace .grid-command-panel > .all-toolbar-pager {
+    display: none;
+  }
+
+  .grid-workspace .grid-mobile-dock {
+    order: 6;
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-around;
+    gap: 4px;
+    min-height: 64px;
+    padding: 4px 8px max(4px, env(safe-area-inset-bottom));
+    background: var(--all-surface);
+    border-top: 1px solid var(--all-border);
+  }
+  .grid-workspace .grid-mobile-dock .all-btn {
+    flex: 1 1 0;
+    min-width: 44px;
+    min-height: 52px;
+    padding: 4px;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+  }
+  .grid-mobile-dock > .grid-command-menu {
+    flex: 1 1 0;
+  }
+  .grid-workspace .grid-toolbar :is(.all-btn, select, input) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .grid-table-filter.all-btn {
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    top: 0;
+  }
+  .grid-cell[data-table-role='header'] {
+    padding-right: 44px;
+  }
+  .grid-delimited-dialog.all-dialog {
+    max-width: 100%;
+    max-height: calc(100dvh - 16px);
+    margin-top: auto;
+    border-radius: var(--all-radius) var(--all-radius) 0 0;
+  }
+  .all-dialog-overlay:has(.grid-delimited-dialog) {
+    padding: 8px 8px 0;
+    align-items: flex-end;
+  }
+  .grid-delimited-dialog .all-dialog__header,
+  .grid-delimited-dialog .all-dialog__body,
+  .grid-delimited-dialog .all-dialog__footer {
+    padding: 16px;
+  }
+  .grid-dialog-fields,
+  .grid-delimited-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .grid-delimited-controls > :last-child:nth-child(3) {
+    grid-column: auto;
+  }
+  .grid-dialog-policy summary {
+    min-height: 44px;
+  }
+}
+
+.grid-ribbon-standalone {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+}
+.grid-table-context {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-inline: var(--all-space-2);
+  font-size: var(--all-font-size-xs);
+  white-space: nowrap;
+}
+.grid-table-context > span {
+  color: var(--all-text-muted);
+}
+
+/* Home follows a two-row ribbon: selectors above small formatting commands,
+   large clipboard actions beside stacked cell insertion commands. */
+.grid-workspace #grid-panel-home > .all-toolbar-pager {
+  height: 110px;
+}
+.grid-ribbon-row {
+  display: flex;
+  align-items: center;
+  gap: var(--all-space-1);
+}
+.grid-workspace
+  .grid-format-toolbar
+  :is(.grid-ribbon-font, .grid-ribbon-alignment, .grid-ribbon-number, .grid-ribbon-cells)
+  > .all-toolbar-group__controls {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--all-space-1);
+  flex: 1;
+}
+.grid-workspace .grid-ribbon-font .all-select-container:first-child {
+  width: 10rem;
+}
+.grid-workspace .grid-ribbon-font .grid-font-size {
+  width: 4rem;
+}
+.grid-workspace .grid-ribbon-alignment .all-select-container,
+.grid-workspace .grid-ribbon-number .all-select-container {
+  width: 10rem;
+}
+.grid-workspace .grid-ribbon-cells .all-btn {
+  justify-content: flex-start;
+}
+.grid-workspace .grid-format-color {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 32px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.grid-workspace .grid-format-color > span {
+  position: absolute;
+  top: 1px;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  pointer-events: none;
+  font-weight: var(--all-font-semibold);
+  line-height: 18px;
+  text-align: center;
+}
+.grid-workspace .grid-format-color input {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 20px 2px 1px;
+  border: 0;
+  background: transparent;
+}
+.grid-workspace .grid-command-panel--compact > .all-toolbar-pager {
+  height: 56px;
+}
+.grid-workspace .grid-command-panel--compact .all-toolbar-group {
+  border: 0;
+  background: transparent;
+  padding-block: 0;
+}
+.grid-workspace .grid-command-panel--compact .all-btn {
+  min-height: 44px;
+}
+.grid-workspace .grid-command-panel--compact .all-toolbar-group:last-child {
+  border: 0;
+}
+.grid-workspace .grid-command-panel--compact .all-btn:has(> svg) {
+  gap: var(--all-space-2);
+}
+@media (pointer: coarse), (max-width: 640px) {
+  .grid-workspace #grid-panel-home > .all-toolbar-pager {
+    height: 132px;
+  }
+  .grid-workspace .grid-format-color {
+    width: 44px;
+    min-height: 44px;
+  }
+  .grid-workspace .grid-format-color input {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+@media (max-width: 599px), (max-width: 899px) and (max-height: 499px) {
+  .grid-workspace #grid-panel-home > .all-toolbar-pager {
+    height: auto;
+  }
+  .grid-workspace .grid-ribbon-row {
+    flex-wrap: wrap;
+  }
 }

@@ -172,6 +172,10 @@ export class WorkbookSession {
     const command = planWorkbookAction(this.currentWorkbook, action, {
       createId: (kind) => this.createId(kind),
     })
+    return this.applyCommand(command)
+  }
+
+  private applyCommand(command: WorkbookCommand): boolean {
     if (command.patches.length === 0) return false
     if (command.estimatedBytes > this.historyBudgetBytes) {
       throw new HistoryBudgetError(command.estimatedBytes, this.historyBudgetBytes)
@@ -254,6 +258,17 @@ export class WorkbookSession {
 
   insertRows(sheetId: string, start: number, count = 1): boolean {
     return this.execute({ type: 'insert-rows', sheetId, start, count })
+  }
+
+  get currentRevision(): number {
+    return this.revision
+  }
+
+  /** Commit an adapter-preflighted plan only against the exact revision it inspected. */
+  applyPreparedCommand(command: WorkbookCommand, revision: number): boolean {
+    if (revision !== this.revision)
+      throw new Error('The workbook changed while checking rows. Retry the row operation.')
+    return this.applyCommand(command)
   }
 
   deleteRows(sheetId: string, start: number, count = 1): boolean {
@@ -393,20 +408,20 @@ export class WorkbookSession {
   }
 
   /** New/Open adapters replace the in-memory model through this method; history and archive ownership reset together. */
-  replaceWorkbook(workbook: Workbook): void {
+  replaceWorkbook(workbook: Workbook, options: { markDirty?: boolean } = {}): void {
     const wasDirty = this.isDirty
     this.currentWorkbook = workbook
     this.undoStack.length = 0
     this.redoStack.length = 0
     this.historyBytes = 0
     this.currentToken = this.tokenCounter++
-    this.savedToken = this.currentToken
+    this.savedToken = options.markDirty ? -1 : this.currentToken
     this.emit({
       kind: 'replace',
       dirtyRegions: workbook.sheetOrder.map((sheetId) => ({ kind: 'sheet', sheetId })),
       affectedSheetIds: [...workbook.sheetOrder],
       impacts: ['all'],
-      dirtyChanged: wasDirty,
+      dirtyChanged: wasDirty !== this.isDirty,
     })
   }
 

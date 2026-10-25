@@ -1,0 +1,143 @@
+import { expect, test } from '@playwright/test'
+
+test('phone shell navigation remains usable while a clean More panel is open', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('./#/grid')
+  await page.getByRole('button', { name: 'More', exact: true }).click()
+  await page.getByRole('button', { name: 'Back to AllSuite', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Open Grid', exact: true })).toBeVisible()
+  await expect(page.locator('.grid-app')).toHaveCount(0)
+  await page.goBack()
+  await expect(page.getByRole('grid')).toBeVisible()
+  await page.getByRole('button', { name: 'More', exact: true }).click()
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'More', exact: true })).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByRole('grid')).toBeVisible()
+})
+
+test('File disclosure preserves the tool tab, draft and keyboard focus', async ({ page }) => {
+  await page.goto('./#/grid')
+  const bar = page.getByRole('textbox', { name: 'Formula bar', exact: true })
+  await bar.fill('Keep this edit')
+  await bar.press('Control+Enter')
+  await page.getByRole('tab', { name: 'Data', exact: true }).click()
+  const file = page.getByRole('button', { name: 'File', exact: true })
+  await file.focus()
+  await file.press('Enter')
+  for (const name of ['New', 'Open', 'Save', 'Save As', 'Import CSV/TSV', 'Export CSV/TSV'])
+    await expect(page.getByRole('button', { name, exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'New', exact: true })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(file).toBeFocused()
+  await expect(page.getByRole('tab', { name: 'Data', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(bar).toHaveValue('Keep this edit')
+  await file.click()
+  const confirmation = page.waitForEvent('dialog')
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('Discard unsaved workbook changes')
+    await dialog.dismiss()
+  })
+  await page.getByRole('button', { name: 'New', exact: true }).click()
+  await confirmation
+  await expect(file).toHaveAttribute('aria-expanded', 'false')
+  await expect(bar).toHaveValue('Keep this edit')
+})
+
+test('phone More scrolls independently, nested Escape stays in panel, Back preserves dirty guard', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 })
+  await page.goto('./#/grid')
+  const bar = page.getByRole('textbox', { name: 'Formula bar', exact: true })
+  await bar.fill('42')
+  await bar.press('Control+Enter')
+  const more = page.getByRole('button', { name: 'More', exact: true })
+  const sheet = page.getByRole('grid', { name: 'Spreadsheet grid', exact: true })
+  const sheetScroll = await sheet.evaluate((e) => e.scrollTop)
+  await more.click()
+  const panel = page.locator('#grid-panel-home')
+  const scroller = panel.locator('.grid-ribbon-surface')
+  const insert = panel.getByRole('button', { name: 'Insert column before', exact: true })
+  await insert.scrollIntoViewIfNeeded()
+  await expect.poll(() => scroller.evaluate((e) => e.scrollTop)).toBeGreaterThan(0)
+  expect(await sheet.evaluate((e) => e.scrollTop)).toBe(sheetScroll)
+  for (const target of await panel.locator('button,select,input').all()) {
+    const bounds = (await target.boundingBox())!
+    expect(bounds.width).toBeGreaterThanOrEqual(44)
+    expect(bounds.height).toBeGreaterThanOrEqual(44)
+  }
+  const copy = panel.getByRole('button', { name: 'Copy options', exact: true })
+  await copy.click()
+  await page.keyboard.press('Escape')
+  await expect(copy).toBeFocused()
+  await expect(more).toHaveAttribute('aria-expanded', 'true')
+  await page.keyboard.press('Escape')
+  await expect(more).toBeFocused()
+  await expect(panel).toBeHidden()
+  await more.click()
+  await page.goBack()
+  await expect(panel).toBeHidden()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(bar).toHaveValue('42')
+  await page.goBack()
+  await expect(page.getByRole('dialog', { name: 'Unsaved changes', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Stay', exact: true }).click()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320)
+})
+
+test('phone history and sheet management survive More dismissal and reduced editing viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('./#/grid')
+  const bar = page.getByRole('textbox', { name: 'Formula bar', exact: true })
+  await bar.fill('42')
+  await bar.press('Control+Enter')
+  await page.getByRole('button', { name: 'More', exact: true }).click()
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
+  await page.getByRole('button', { name: 'Undo (Ctrl+Z or ⌘Z)', exact: true }).click()
+  await expect(bar).toHaveValue('')
+  await page.getByRole('button', { name: 'Redo (Ctrl+Y or ⌘Y)', exact: true }).click()
+  await expect(bar).toHaveValue('42')
+  await page.getByRole('button', { name: 'Add sheet', exact: true }).click()
+  await page.getByRole('button', { name: 'Rename sheet', exact: true }).click()
+  await page.getByRole('textbox', { name: 'Sheet name', exact: true }).fill('Touch sheet')
+  await page.getByRole('button', { name: 'Rename', exact: true }).click()
+  await expect(page.getByRole('tab', { name: 'Touch sheet', exact: true })).toBeVisible()
+  // Chrome Android can shrink only visualViewport when the OS keyboard opens.
+  await page.evaluate(() => {
+    Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: 480 })
+    window.visualViewport?.dispatchEvent(new Event('resize'))
+  })
+  await expect
+    .poll(
+      async () =>
+        (await page.locator('.grid-mobile-dock').boundingBox())!.y +
+        (await page.locator('.grid-mobile-dock').boundingBox())!.height,
+    )
+    .toBeLessThanOrEqual(480)
+  await page.getByRole('tab', { name: 'View', exact: true }).click()
+  await page.getByRole('button', { name: 'Freeze panes', exact: true }).click()
+  const keyboardMenu = (await page.locator('.allsuite-ribbon-menu__items').boundingBox())!
+  expect(keyboardMenu.y).toBeGreaterThanOrEqual(0)
+  expect(keyboardMenu.y + keyboardMenu.height).toBeLessThanOrEqual(480)
+  await page.keyboard.press('Escape')
+  await page.evaluate(() => {
+    Reflect.deleteProperty(window.visualViewport!, 'height')
+    window.visualViewport?.dispatchEvent(new Event('resize'))
+  })
+  await page.setViewportSize({ width: 390, height: 480 })
+  await bar.fill('Zażółć')
+  await expect(bar).toBeFocused()
+  await expect(page.getByRole('grid')).toBeVisible()
+  expect((await page.getByRole('grid').boundingBox())!.height).toBeGreaterThan(60)
+  await bar.press('Control+Enter')
+  await expect(page.locator('[data-cell-address="A1"]')).toHaveText('Zażółć')
+  await page.getByRole('tab', { name: 'View', exact: true }).click()
+  await page.getByRole('button', { name: 'Freeze panes', exact: true }).click()
+  const menu = page.locator('.allsuite-ribbon-menu__items')
+  const bounds = (await menu.boundingBox())!
+  expect(bounds.y).toBeGreaterThanOrEqual(0)
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(480)
+  await page.getByRole('button', { name: 'Freeze first row', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Freeze first row', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+})

@@ -8,6 +8,7 @@ import { formatPage, storiesFor, resolveStory, storyVariant, storyLayout } from 
 import { renderHTMLBody } from '../engine/export/html'
 import { loadDocumentFonts } from '../engine/fonts'
 import { PAGE_GAP } from '../engine/pagination'
+import { columnCount, supportsColumnLayout } from '../engine/columns'
 
 export function hasReferenceFields(document: DraftDocument): boolean {
   return document.content.some(function visit(node): boolean {
@@ -25,9 +26,9 @@ export async function prepareReferenceExport(
 ): Promise<DraftDocument> {
   let result = updateReferenceFields(input)
   if (!hasReferenceFields(result) && !consume) return result
-  if (Number(input.attrs?.columns || 1) !== 1) {
-    if (requirePagination) throw new Error('Reference page layout requires one column')
-    // Preserve existing multi-column exports until the ADR's column fragmentation exists.
+  const columns = columnCount(input)
+  if (columns > 1 && !supportsColumnLayout(input)) {
+    if (requirePagination) throw new Error('printColumns')
     return result
   }
   const abort = () => {
@@ -52,7 +53,10 @@ export async function prepareReferenceExport(
     bands = document.createElement('div')
   area.className = 'draft-document-area'
   page.className = 'draft-page'
-  paper.className = 'draft-paper draft-paper--paged' + (options.hyphenation ? ' draft-paper--hyphenate' : '')
+  paper.className =
+    'draft-paper draft-paper--paged' +
+    (columns > 1 ? ' draft-paper--columns' : '') +
+    (options.hyphenation ? ' draft-paper--hyphenate' : '')
   page.style.cssText = `width:${setup.width / 15}px;zoom:1;--draft-page-width:${setup.width / 15}px;--draft-page-height:${setup.height / 15}px;--draft-margin-left:${setup.left / 15}px;--draft-margin-right:${setup.right / 15}px`
   bands.style.width = `${(setup.width - setup.left - setup.right) / 15}px`
   page.append(bands, paper)

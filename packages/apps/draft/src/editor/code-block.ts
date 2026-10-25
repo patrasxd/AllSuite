@@ -72,7 +72,14 @@ async function loadGrammar(prism: PrismApi, language: CodeLanguage) {
 }
 
 async function loadPrism(language: CodeLanguage): Promise<PrismApi> {
-  prismPromise ||= import('prismjs').then((module) => module.default as PrismApi)
+  if (!prismPromise) {
+    // Prism reads this flag during module initialization. Its default startup
+    // highlightAll rewrites editable DOM and loses the live browser selection.
+    // ProseMirror owns that DOM; use Prism only to tokenize for decorations.
+    const scope = globalThis as typeof globalThis & { Prism?: { manual?: boolean } }
+    ;(scope.Prism ??= {}).manual = true
+    prismPromise = import('prismjs').then((module) => module.default as PrismApi)
+  }
   const prism = await prismPromise
   await loadGrammar(prism, language)
   return prism
